@@ -1,8 +1,8 @@
 {
-  "name"          : "fluentReports",
+  "name"          : "fluentreports",
   "description"   : "A simple, Fluent API for creating PDF Reports",
-  "url"           : "http://github.com/nathanaela/fluentReport",
-  "keywords"      : ["pdf", "report"],
+  "url"           : "http://github.com/nathanaela/fluentreports",
+  "keywords"      : ["pdf", "report", "reporting", "print"],
   "author"        : "Nathanael Anderson <nathanael.anderson@kellpro.com>",
   "contributors"  : ["Alan Henager <alan.henager@kellpro.com>"],
   "licenses"      : ["MIT"],
