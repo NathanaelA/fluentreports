@@ -4,7 +4,7 @@
   "url"           : "http://github.com/nathanaela/fluentReport",
   "keywords"      : ["pdf", "report"],
   "author"        : "Nathanael Anderson <nathanael.anderson@kellpro.com>",
-  "contributors"  : ["Alan"],
+  "contributors"  : ["Alan Henager <alan.henager@kellpro.com>"],
   "licenses"      : ["MIT"],
   "dependencies"  : ["pdfkit"],
   "lib"           : "lib",
