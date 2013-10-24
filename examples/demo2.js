@@ -201,6 +201,7 @@ function printreport() {
   var finalSummary = function(rpt, data) {
 
   rpt.standardFooter([
+    ['sale.no',1,3],
     ['current', 4, 3],
     ['thirty', 5, 3],
     ['sixty', 6, 3],
@@ -210,11 +211,12 @@ function printreport() {
   ]);
   rpt.newline();
   rpt.newline();
-  rpt.print('Thank You for Choosing us!', {align: 'right'});
+  rpt.print('Thank You for Choosing us!', {align: 'right'});      
 };
 
     var totalFormatter = function(data, callback) {
         for (var key in data) {
+            if (key == 'sale.no') continue;
             if (data.hasOwnProperty(key)) {
                 // Simple Stupid Money formatter.  It is really dumb.  ;-)
                 data[key] = '$ '+data[key];
@@ -229,6 +231,8 @@ function printreport() {
 
   // Optional -- If you don't pass a report name, it will default to "report.pdf"
   var rptName =  "demo2.pdf";
+
+
 
   var resultReport = new Report(rptName)
       .data(mydata)
@@ -249,6 +253,7 @@ function printreport() {
       .sum('ninety')
       .sum('hundredtwenty')
       .sum('sale.balance_due')
+      .count('sale.no')
       .footer(finalSummary)
       .header(header, {pageBreakBefore: true})
   ;
