@@ -19,7 +19,7 @@
     "url": "http://github.com/giano/fluentreports/issues"
   },
   "dependencies": {
-    "pdfkit": "git://github.com/devongovett/pdfkit.git#master"
+    "pdfkit": "~0.2.6"
   },
   "repository": {
     "type": "git",
