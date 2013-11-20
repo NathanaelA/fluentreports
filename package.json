@@ -1,33 +1,16 @@
 {
-  "name": "fluentreports",
-  "description": "A simple, Fluent API for creating PDF Reports",
-  "url": "http://github.com/giano/fluentreports",
-  "keywords": [
-    "pdf",
-    "report",
-    "reporting",
-    "print"
-  ],
-  "author": "Nathanael Anderson <nathanael.anderson@kellpro.com> (http://fluentreports.com/)",
-  "contributors": [
-    "Alan Henager <alan.henager@kellpro.com>",
-    "Mark Getz <mark.getz@kellpro.com>"
-  ],
-  "licenses": "MIT",
-  "lib": "lib",
-  "bugs": {
-    "url": "http://github.com/giano/fluentreports/issues"
-  },
-  "dependencies": {
-    "pdfkit": "~0.2.6"
-  },
-  "repository": {
-    "type": "git",
-    "url": "http://github.com/giano/fluentreports.git"
-  },
-  "main": "lib/fluentReports",
-  "version": "0.0.2",
-  "engines": {
-    "node": ">= 0.6.0"
-  }
+  "name"          : "fluentreports",
+  "description"   : "A simple, Fluent API for creating PDF Reports",
+  "url"           : "http://github.com/Nathanaela/fluentreports",
+  "keywords"      : ["pdf", "report", "reporting", "print"],
+  "author"        : "Nathanael Anderson <nathanael.anderson@kellpro.com> (http://fluentreports.com/)",
+  "contributors"  : ["Alan Henager <alan.henager@kellpro.com>","Mark Getz <mark.getz@kellpro.com>"],
+  "licenses"      : "MIT",
+  "lib"           : "lib",
+  "bugs"          : {"url": "http://github.com/Nathanaela/fluentreports/issues"},
+  "dependencies"  : {"pdfkit": "git://github.com/Nathanaela/pdfkit.git#Release"},
+  "repository"    : {"type": "git", "url": "http://github.com/Nathanaela/fluentreports.git"},
+  "main"          : "lib/fluentReports",
+  "version"       : "0.0.2",
+  "engines"       : {"node": ">= 0.6.0" }
 }
