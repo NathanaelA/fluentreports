@@ -107,7 +107,8 @@ function printreport() {
       thirty_original: 0,
       sixty_original: 0,
       ninety_original: 0,
-      hundredtwenty_original: 0 } ];
+      hundredtwenty_original: 0 }
+       ];
 
 
 
@@ -133,7 +134,7 @@ function printreport() {
          'Thank you in advance for your cooperation in this matter.'];
 
    for (var i=0;i<msg.length;i++) {
-      if(msg[i]) { rpt.print(msg[i]); }
+      if(msg[i]) { rpt.print(msg[i], {textColor: 'blue'}); }
       else { rpt.newLine(); }
     }
   };
@@ -178,7 +179,7 @@ function printreport() {
     {data: '91-120 Days', width: 65, align: 3},
     {data: '>120 Days', width: 60, align: 3},
     {data: 'Total Due', width: 60, align: 3}
-  ], {border: 0, width: 0});
+  ]);
   rpt.fontNormal();
   rpt.bandLine();
 };
@@ -216,18 +217,24 @@ function printreport() {
 
     var totalFormatter = function(data, callback) {
         for (var key in data) {
-            if (key == 'sale.no') continue;
+            if (key === 'sale.no') { continue; }
             if (data.hasOwnProperty(key)) {
                 // Simple Stupid Money formatter.  It is really dumb.  ;-)
                 data[key] = '$ '+data[key];
                 var idx = data[key].indexOf('.');
-                if (idx < 0) data[key] += '.00';
-                else if (idx < data[key].length - 1) data[key] += '0';
+                if (idx < 0) {
+                    data[key] += '.00';
+                } else if (idx < data[key].length - 1) {
+                    data[key] += '0';
+                }
             }
         }
 
         callback(null, data);
     };
+
+
+
 
   // Optional -- If you don't pass a report name, it will default to "report.pdf"
   var rptName =  "demo2.pdf";
@@ -263,7 +270,7 @@ function printreport() {
 
 
   console.time("Rendered");
-  var a= resultReport.render(function(err, name) {
+  resultReport.render(function(err, name) {
       console.timeEnd("Rendered");
     if (err) {
         console.error("Error was", err);

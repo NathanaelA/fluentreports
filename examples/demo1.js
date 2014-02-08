@@ -63,7 +63,8 @@ function printreport() {
   };
 
   var weekdetail = function ( report, data ) {
-    report.print( ["Week Number: " + data.week], {x: 100} );
+    // We could do this -->  report.setCurrentY(report.getCurrentY()+2);   Or use the shortcut below of addY: 2
+    report.print( ["Week Number: " + data.week], {x: 100, addY: 2} );
   };
 
   var totalFormatter = function(data, callback) {
@@ -72,11 +73,13 @@ function printreport() {
   };
 
 
+
+
   // You don't have to pass in a report name; it will default to "report.pdf"
   var reportName = "demo1.pdf";
 
   var rpt = new Report(reportName)
-	  .autoPrint(false) // Optional
+      .autoPrint(false) // Optional
       .pageHeader( ["Employee Hours"] )// Optional
       .finalSummary( ["Total Hours:", "hours", 3] )// Optional
       .userdata( {hi: 1} )// Optional 
@@ -87,11 +90,14 @@ function printreport() {
       .fontSize(8); // Optional
 
   rpt.groupBy( "name" )
-      .sum( "hours" )
+      .sum('hours')
       .header( nameheader )
       .footer( namefooter )
       .groupBy( "week" )
          .header( weekdetail );
+
+
+
 
   // Debug output is always nice (Optional, to help you see the structure)
   rpt.printStructure();
