@@ -11,7 +11,7 @@ var secondary_data = {
        {week: 20, day: "Monday", hours: 4},
        {week: 20, day: "Tuesday", hours: 8},
        {week: 20, day: "Wednesday", hours: 8},
-       {week: 21, day: "Thursday", hours: 2},
+       {week: 21, day: "Thursday", hours: -2},
        {week: 21, day: "Friday", hours: 8},
 
        {week: 22, day: "Monday", hours: 4},
@@ -67,10 +67,10 @@ function printreport() {
 
   var daydetail = function ( report, data, state ) {
     report.band( [
-      ["", 80],
-      [data.day, 100],
-      [data.hours, 100, 3]
-    ], {border:1, width: 0, wrap: 1, fill: '#00ffff', textColor: '#ff0000'} );
+        {data: "", width: 80},
+        {data: data.day, width: 100},
+        {data: data.hours, width: 100, align: 3, textColor: data.hours < 0 ? '#FF0000' : "#000000"}
+    ], {border:1, width: 0, wrap: 1, fill: '#aaaaaa', textColor: '#0000ff'} );
   };
 
   var namefooter = function ( report, data, state ) {
