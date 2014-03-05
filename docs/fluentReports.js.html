@@ -1,4 +1,31 @@
-/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: fluentReports.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: fluentReports.js</h1>
+
+    
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
  --------------------------------------
  (c)2012-2014, Kellpro, Inc.
  --------------------------------------
@@ -23,6 +50,7 @@
  THE SOFTWARE.
  */
 
+//noinspection ThisExpressionReferencesGlobalObjectJS,ThisExpressionReferencesGlobalObjectJS,ThisExpressionReferencesGlobalObjectJS
 /**
  * @module fluentReports
  * @author Nathanael Anderson, Mark Getz, Alan Henager
@@ -100,7 +128,7 @@
             return;
         }
         var i, j, added = (2 * level), pad = "", spad = '';
-        for (i = 0; i < added; i++) {
+        for (i = 0; i &lt; added; i++) {
             pad += "-";
             spad += " ";
         }
@@ -116,26 +144,26 @@
         } else {
             console.log(pad + "> Unknown");
         }
-        if (reportObject._detail !== null && reportObject._detail !== undefined) {
+        if (reportObject._detail !== null &amp;&amp; reportObject._detail !== undefined) {
             console.log(spad + "  | Has Detail");
         }
-        if (reportObject._theader !== null && reportObject._theader !== undefined) {
+        if (reportObject._theader !== null &amp;&amp; reportObject._theader !== undefined) {
             console.log(spad + "  | Has Title Header");
         }
-        if (reportObject._header !== null && reportObject._header !== undefined) {
+        if (reportObject._header !== null &amp;&amp; reportObject._header !== undefined) {
             console.log(spad + "  | Has Header");
         }
-        if (reportObject._footer !== null && reportObject._footer !== undefined) {
+        if (reportObject._footer !== null &amp;&amp; reportObject._footer !== undefined) {
             console.log(spad + "  | Has Footer");
         }
-        if (reportObject._tfooter !== null && reportObject._tfooter !== undefined) {
+        if (reportObject._tfooter !== null &amp;&amp; reportObject._tfooter !== undefined) {
             console.log(spad + "  | Has Summary Footer");
         }
 
         if (reportObject._child) {
             printStructure(reportObject._child, level + 1);
         } else if (reportObject._children) {
-            for (j = 0; j < reportObject._children.length; j++) {
+            for (j = 0; j &lt; reportObject._children.length; j++) {
                 printStructure(reportObject._children[j], level + 1);
             }
         }
@@ -156,7 +184,7 @@
      * @return {Boolean}
      */
     function isNumber(num) {
-        return ((typeof num === 'string' || typeof num === 'number') && num !== null && !isNaN((num - 0)) && num !== '' );
+        return ((typeof num === 'string' || typeof num === 'number') &amp;&amp; num !== null &amp;&amp; !isNaN((num - 0)) &amp;&amp; num !== '' );
     }
 
     /**
@@ -171,7 +199,7 @@
             return value;
         }
         if (isArray(value)) {
-            for (i = 0; i < value.length; i++) {
+            for (i = 0; i &lt; value.length; i++) {
                 aTarget.push(clone(value[i]));
             }
             return (aTarget);
@@ -258,7 +286,7 @@
                 this._landscape = true;
                 opt.layout = "landscape";
             }
-            if (options.margins && options.margins !== this._margins) {
+            if (options.margins &amp;&amp; options.margins !== this._margins) {
                 this._margins = options.margins;
                 opt.margin = options.margins;
             }
@@ -381,7 +409,7 @@
         this._keys = null;
         this._dataType = 0;
         this._child = new ReportGroup(this);
-        if (this._parent && this._parent._parent === null) {
+        if (this._parent &amp;&amp; this._parent._parent === null) {
             this._child.header = this._child.pageHeader;
             this._child.footer = this._child.pageFooter;
         }
@@ -405,7 +433,7 @@
         this._formatters = null;
         this._result = null;
 
-        if (formattingState !== null && formattingState !== undefined) {
+        if (formattingState !== null &amp;&amp; formattingState !== undefined) {
             this._formattingState = formattingState;
         } else {
             this._formattingState = 0;
@@ -609,14 +637,14 @@
                 };
                 testit.band = function(data, options) {
                     if (offset) { return; }
-                    if (this.checkY(options && options.y)) {
+                    if (this.checkY(options &amp;&amp; options.y)) {
                         offset = true; return;
                     }
                     oBand.call(this, data, options);
                 };
                 testit.print = function(data, options) {
                     if (offset) { return; }
-                    if (this.checkY(options && options.y)) {
+                    if (this.checkY(options &amp;&amp; options.y)) {
                         offset = true; return;
                     }
                     oPrint.call(this, data, options);
@@ -823,7 +851,7 @@
         },
 
         // --------------------------------------
-        // Internal Private Variables & Functions
+        // Internal Private Variables &amp; Functions
         // --------------------------------------
 
         _calculateFixedSizes: function (Rpt) {
@@ -925,7 +953,7 @@
                 this._child._renderIt(Rpt, State, currentData, function() {
                     var parent = self;
                     // Find the first group above this report
-                    while (parent._parent != null && !parent._isGroup) {
+                    while (parent._parent != null &amp;&amp; !parent._isGroup) {
                         parent = parent._parent;
                     }
                     // iterate through the groups above this group and add this value to them so they get this sub-reports totals
@@ -1014,9 +1042,9 @@
                     if (Rpt._bandFields.length) { Rpt.band(); }
                 } catch (err) {
                     if (this._isHeader) {
-                        Report.error("REPORTAPI: Error running header in report", err, err && err.stack);
+                        Report.error("REPORTAPI: Error running header in report", err, err &amp;&amp; err.stack);
                     } else {
-                        Report.error("REPORTAPI: Error running footer in report", err, err && err.stack);
+                        Report.error("REPORTAPI: Error running footer in report", err, err &amp;&amp; err.stack);
                     }
 
                 }
@@ -1042,7 +1070,7 @@
             var NowDate = new Date();
 
             var mins = NowDate.getMinutes();
-            if (mins < 9) {
+            if (mins &lt; 9) {
                 mins = "0" + mins;
             }
             var hours = NowDate.getHours();
@@ -1067,7 +1095,7 @@
             Header = "on " + NowDate.toLocaleDateString();
             y = Rpt.getCurrentY();
             Rpt.print(Header);
-            if (isArray(headers) && headers.length > 1) {
+            if (isArray(headers) &amp;&amp; headers.length > 1) {
                 Rpt.print(headers[1], {align: "center", y: y});
             }
             Rpt.newLine();
@@ -1089,7 +1117,7 @@
                 return;
             }
 
-            if (isArray(footer) && footer.length >= 1) {
+            if (isArray(footer) &amp;&amp; footer.length >= 1) {
 
                 // Handle a Single Array
                 if (!isArray(footer[0])) {
@@ -1099,14 +1127,14 @@
 
                 var bndArray = [];
                 // Handle a Array of Arrays
-                for (i = 0; i < footer.length; i++) {
+                for (i = 0; i &lt; footer.length; i++) {
                     var id = footer[i][1] - 1;
                     while (id > bndArray.length) {
                         bndArray.push(["", bndSizes[bndArray.length]]);
                     }
                     bndArray[id] = [Rpt.totals[footer[i][0]], bndSizes[id]];
                     // Fix Alignment, if set
-                    if (footer[i][2] >= 0 && footer[i][2] <= 3) {
+                    if (footer[i][2] >= 0 &amp;&amp; footer[i][2] &lt;= 3) {
                         bndArray[id][2] = footer[i][2];
                     }
                 }
@@ -1120,7 +1148,7 @@
             var offset = 0, i;
             if (part.length === 3) {
                 if (bndSizes[(part[2] - 1)]) {
-                    for (i = 0; i < part[2] - 1; i++) {
+                    for (i = 0; i &lt; part[2] - 1; i++) {
                         offset += bndSizes[i];
                     }
                 }
@@ -1159,7 +1187,7 @@
                 }
                 if (arguments.hasOwnProperty(a)) {
                     if (isArray(arguments[a])) {
-                        for (var i = 0; i < arguments[a]; i++) {
+                        for (var i = 0; i &lt; arguments[a]; i++) {
                             args.push(arguments[a][i]);
                         }
                     } else if (typeof arguments[a] === 'string') {
@@ -1171,7 +1199,7 @@
                     }
                 }
             }
-            if (console && console.error) {
+            if (console &amp;&amp; console.error) {
                 console.error.apply(console, args.slice(2));
             }
             this._scope.funcs.logclient.apply(this, args);
@@ -1200,7 +1228,7 @@
                 var firstRow = results[0];
                 if (firstRow) {
                     mcolumns = Object.keys(firstRow);
-                    for (var i = 0; i < mcolumns.length; i++) {
+                    for (var i = 0; i &lt; mcolumns.length; i++) {
                         columns.push(mcolumns[i]);
                     }
                 }
@@ -1242,7 +1270,7 @@
             var self = this;
             if (this._dataType === 2) {
                 if (data !== null) {
-                    for (var i=0;i<data.length;i++) {
+                    for (var i=0;i&lt;data.length;i++) {
                         if (typeof this._data.where.values[0] === "string") {
                             this._data.where.values[0] = data[i];
                         } else {
@@ -1263,7 +1291,7 @@
                         }
 
                         // Single Record
-                        if (!data.length && Object.prototype.toString.apply(data) === "[object Object]") {
+                        if (!data.length &amp;&amp; Object.prototype.toString.apply(data) === "[object Object]") {
                             self._result = [];
                             self._result.push(data);
                         } else {
@@ -1281,7 +1309,7 @@
         // Used to get a record count (Required)
         count: function (callback) {
             if (this._dataType === 2) {
-                if (this._result && this._result.length) {
+                if (this._result &amp;&amp; this._result.length) {
                     callback(null, this._result.length);
                 } else {
                     var self = this;
@@ -1306,7 +1334,7 @@
                     callback(err, data[0]);
                 }, [data], self._formatters, self._formattingState);
             } catch (tferr) {
-                this.error("REPORTAPI: Error in totalFormatter", tferr, tferr && tferr.stack);
+                this.error("REPORTAPI: Error in totalFormatter", tferr, tferr &amp;&amp; tferr.stack);
                 callback(null, data);
             }
         }
@@ -1486,7 +1514,7 @@
          */
         fontNormal: function () {
             var font = this._fonts[this._PDF._font.filename];
-            if (font && font.normal) {
+            if (font &amp;&amp; font.normal) {
                 this.font(font.normal);
             }
             this._heightOfString = this._PDF.currentLineHeight(true);
@@ -1570,11 +1598,11 @@
                 this.saveState();
             }
             this._pageBreaking = true;
-            if (this._primaryReport && this._primaryReport._footer) {
+            if (this._primaryReport &amp;&amp; this._primaryReport._footer) {
                 this._primaryReport._footer.run(this, this._primaryReport.state(), null);
             }
             this._addPage();
-            if (this._primaryReport && this._primaryReport._header) {
+            if (this._primaryReport &amp;&amp; this._primaryReport._header) {
                 this._primaryReport._header.run(this, this._primaryReport.state(), null);
             }
             this._pageBreaking = false;
@@ -1661,7 +1689,7 @@
          */
         newLine: function (lines) {
             lines = lines || 1;
-            for (var i = 0; i < lines; ++i) {
+            for (var i = 0; i &lt; lines; ++i) {
                 this._PDF.moveDown();
                 if (this._PDF.y >= this.maxY()) {
                     this.newPage();
@@ -1697,7 +1725,7 @@
             this._PDF.x = this._PDF.page.margins.left;
             this.saveState();
 
-            if (options && typeof options === "object") {
+            if (options &amp;&amp; typeof options === "object") {
                 if (options.x) {
                     this._PDF.x = options.x;
                 }
@@ -1758,15 +1786,15 @@
 
             var cachedMaxY = this.maxY() - this._heightOfString;
             if (isArray(data)) {
-                for (i = 0, max = data.length; i < max; i++) {
-                    if (data[i] !== null && data[i] !== undefined) {
+                for (i = 0, max = data.length; i &lt; max; i++) {
+                    if (data[i] !== null &amp;&amp; data[i] !== undefined) {
                         if (this._PDF.y > cachedMaxY) {
                             this.newPage(true);
                         }
                         this._PDF.text(this._processText(data[i]), textOptions);
                     }
                 }
-            } else if (data !== null && data !== undefined) {
+            } else if (data !== null &amp;&amp; data !== undefined) {
                 if (this._PDF.y > cachedMaxY) {
                     this.newPage(true);
                 }
@@ -1790,7 +1818,7 @@
             thickness = thickness || 2;
             var i, bndSizes = this._bandWidth(), width, y = this.getCurrentY(), x = this._bandOffset();
 
-            for (i = 0, width = 0; i < bndSizes.length; i++) {
+            for (i = 0, width = 0; i &lt; bndSizes.length; i++) {
                 width += bndSizes[i];
             }
             if (verticalGap) {
@@ -1891,7 +1919,7 @@
 
                 for (var i = cdata.length - 1; i >= 0; i--) {
                     if (data[i].force === true || data[i].force === 1) { continue; }
-                    if (data[i].data === cdata[i].data && data[i].data !== '' && data[i].data !== null && data[i].data !== undefined) {
+                    if (data[i].data === cdata[i].data &amp;&amp; data[i].data !== '' &amp;&amp; data[i].data !== null &amp;&amp; data[i].data !== undefined) {
                         data[i].data = options.duplicatedTextValue || ' " ';
                     }
                     //else break;
@@ -1922,13 +1950,13 @@
             }
 
             options = options || {};
-            if (options.defaultSize != null && !isNaN(options.defaultSize + 0)) {
+            if (options.defaultSize != null &amp;&amp; !isNaN(options.defaultSize + 0)) {
                 defaultSize = parseInt(options.defaultSize, 10);
             }
 
             // Convert old style [[data, width, alignment],[...],...] to [{data:data, width:width, ..},{...},...]
             if (isArray(dataIn[0])) {
-                for (i = 0; i < max; i++) {
+                for (i = 0; i &lt; max; i++) {
                     data[i] = {
                         data: dataIn[i][0] || '',
                         width: dataIn[i][1] || defaultSize,
@@ -1936,7 +1964,7 @@
                     };
                 }
             } else {
-                for (i = 0; i < max; i++) {
+                for (i = 0; i &lt; max; i++) {
                     if (typeof dataIn[i] === 'string') {
                         data[i] = {data: dataIn[i], width: defaultSize, align: 1};
                     } else {
@@ -1950,7 +1978,7 @@
 
             // Check to see if we have a "Settings"
             var padding = 1, border = 0, gutter = 0, collapse = true;
-            if (arguments.length > 1 && typeof options === 'object') {
+            if (arguments.length > 1 &amp;&amp; typeof options === 'object') {
                 if (options.gutter > 0) {
                     gutter = options.gutter + 0;
                     if (gutter !== 0) {
@@ -1962,23 +1990,23 @@
                 }
                 if (options.border > 0 || options.fill) {
                     maxWidth = 0;
-                    for (i = 0; i < max; i++) {
+                    for (i = 0; i &lt; max; i++) {
                         maxWidth += (data[i].width || defaultSize);
                         if (i > 0) {
                             maxWidth += gutter;
                         }
                     }
                 }
-                if (options.border != null && !isNaN(options.border + 0)) {
+                if (options.border != null &amp;&amp; !isNaN(options.border + 0)) {
                     border = lineWidth = options.border + 0;
                 }
-                if (options.padding != null && !isNaN(options.padding + 0)) {
+                if (options.padding != null &amp;&amp; !isNaN(options.padding + 0)) {
                     padding = options.padding + 0;
                 }
-                if (options.x != null && !isNaN(options.x + 0)) {
+                if (options.x != null &amp;&amp; !isNaN(options.x + 0)) {
                     startX += (options.x+0);
                 }
-                if (options.y != null && !isNaN(options.y + 0)) {
+                if (options.y != null &amp;&amp; !isNaN(options.y + 0)) {
                     this._PDF.y = options.y + 0;
                 }
                 if (options.font) {
@@ -2023,7 +2051,7 @@
                 if (options.borderColor){
                     this.strokeColor(options.borderColor);
                 }
-                if (options.fill && options.border > 0) {
+                if (options.fill &amp;&amp; options.border > 0) {
                     this._PDF.rect(x, y, maxWidth-1, height);
                     this.fillAndStroke(options.fill, (options.borderColor || options.fill));
                 }
@@ -2048,7 +2076,7 @@
                 this.fillColor(textColor);
             }
 
-            for (i = 0; i < max; i++) {
+            for (i = 0; i &lt; max; i++) {
                 var curWidth = (data[i].width || defaultSize);
                 var savedState = false;
                 if (data[i].fill) {
@@ -2100,7 +2128,7 @@
                         textOffset = borderPadding - 1;
                     }
                 }
-                if (textOffset < 0) {
+                if (textOffset &lt; 0) {
                     textOffset = borderPadding - 1;
                 }
 
@@ -2127,24 +2155,24 @@
                 this.strokeColor(options.borderColor || options.bordercolor);
             }
 
-            for (i = 0; i < max; i++) {
+            for (i = 0; i &lt; max; i++) {
                 var dataElement = data[i];
 
                 var currentWidth;
-                if ((currentWidth = ((dataElement.border && dataElement.border.left) || lineWidth)) && (!collapse || (collapse && i === 0))) {
+                if ((currentWidth = ((dataElement.border &amp;&amp; dataElement.border.left) || lineWidth)) &amp;&amp; (!collapse || (collapse &amp;&amp; i === 0))) {
                     this.lineWidth(currentWidth);
                     this.line(x + offset, y, x + offset, y + height);
                 }
-                if ((currentWidth = ((dataElement.border && dataElement.border.top) || lineWidth)) > 0) {
+                if ((currentWidth = ((dataElement.border &amp;&amp; dataElement.border.top) || lineWidth)) > 0) {
                     this.lineWidth(currentWidth);
                     this.line((x + offset) - 0.5, y, x + (offset + (dataElement.width || defaultSize)) - 0.5, y);
                 }
-                if ((currentWidth = ((dataElement.border && dataElement.border.bottom) || lineWidth)) > 0) {
+                if ((currentWidth = ((dataElement.border &amp;&amp; dataElement.border.bottom) || lineWidth)) > 0) {
                     this.lineWidth(currentWidth);
                     this.line(x + offset - 0.5, y + height, x + (offset + (dataElement.width || defaultSize)) - 0.5, y + height);
                 }
                 offset += (dataElement.width || defaultSize);
-                if ((currentWidth = ((dataElement.border && dataElement.border.right) || lineWidth)) > 0) {
+                if ((currentWidth = ((dataElement.border &amp;&amp; dataElement.border.right) || lineWidth)) > 0) {
                     this.lineWidth(currentWidth);
                     this.line(x + offset - currentWidth, y, x + offset - currentWidth, y + height);
                 }
@@ -2182,7 +2210,7 @@
          */
         getLastBandWidth: function () {
             var width, i, sizes = this._bandWidth();
-            for (i = 0, width = 0; i < sizes.length; i++) {
+            for (i = 0, width = 0; i &lt; sizes.length; i++) {
                 width += sizes[i];
             }
             return width;
@@ -2258,7 +2286,7 @@
                     return value.format();
                 }
             }
-            if (this._negativeParentheses && isNumber(value) && value < 0) {
+            if (this._negativeParentheses &amp;&amp; isNumber(value) &amp;&amp; value &lt; 0) {
                 return '(' + Math.abs(value).toString() + ')';
             }
             return value.toString();
@@ -2300,7 +2328,7 @@
             var wos = this.widthOfString(curData);
             if (wos >= width) {
                 var len = 1;
-                while (wos >= width && len > 0) {
+                while (wos >= width &amp;&amp; len > 0) {
                     var wos_c = parseInt(wos / width, 10) + 1;
                     len = parseInt(curData.length / wos_c, 10) - 1;
                     curData = curData.substr(0, len);
@@ -2325,7 +2353,7 @@
 
             var formatText;
             var lineData = {width: 0, height: this.maxY()};
-            if (options && options.wrap) {
+            if (options &amp;&amp; options.wrap) {
                 formatText = this._wrapText;
             } else {
                 formatText = this._truncateText;
@@ -2333,7 +2361,7 @@
 
             var maxLines = 1, curLines, maxFontSize= 1, bp = borderPadding * 2;
             var originalFontSize = this.fontSize();
-            for (var i = 0; i < len; i++) {
+            for (var i = 0; i &lt; len; i++) {
                 data[i].data = this._processText(data[i].data);
                 var curFontSize = data[i].fontSize || data[i].fontsize || originalFontSize;
                 if (curFontSize > maxFontSize) {
@@ -2361,7 +2389,7 @@
             if (value) {
                 this._PDF.store.root.data.OpenAction = this._PDF.ref({Type: 'Action', S: 'Named', N: 'Print'});
             } else {
-                if (this._PDF.store && this._PDF.store.root && this._PDF.store.root.data && this._PDF.store.root.data.OpenAction) {
+                if (this._PDF.store &amp;&amp; this._PDF.store.root &amp;&amp; this._PDF.store.root.data &amp;&amp; this._PDF.store.root.data.OpenAction) {
                     delete this._PDF.store.root.data.OpenAction;
                 }
             }
@@ -2376,7 +2404,7 @@
             if (value) {
                 this._PDF.store.root.data.PageMode = "FullScreen";
             } else {
-                if (this._PDF.store && this._PDF.store.root && this._PDF.store.root.data && this._PDF.store.root.data.PageMode) {
+                if (this._PDF.store &amp;&amp; this._PDF.store.root &amp;&amp; this._PDF.store.root.data &amp;&amp; this._PDF.store.root.data.PageMode) {
                     delete this._PDF.store.root.data.PageMode;
                 }
             }
@@ -2465,7 +2493,7 @@
             if (isArray(value)) {
                 this._dataType = 0; // Normal passed preset data set
             } else if (typeof value === 'function' || typeof value === 'object') {
-                if (value.count && (value.loadRange || value.loadrange)) {
+                if (value.count &amp;&amp; (value.loadRange || value.loadrange)) {
                     this._dataType = 1;  // Pagable Dataset
                 } else if (typeof value === 'function') {
                     this._dataType = 2;  // Functional Dataset
@@ -2480,12 +2508,12 @@
                 Report.error("REPORTAPI: Unknown data type; treating as plain old data.");
             }
 
-            if (value.totalFormatter && typeof value.totalFormatter === 'function') {
+            if (value.totalFormatter &amp;&amp; typeof value.totalFormatter === 'function') {
                 this._totalFormatter = function (data, callback) {
                     self._data.totalFormatter(data, callback);
                 };
             }
-            if (value.error && typeof value.error === 'function') {
+            if (value.error &amp;&amp; typeof value.error === 'function') {
                 Report.error = function () {
                     self._data.error.apply(self._data, arguments);
                 };
@@ -2663,7 +2691,7 @@
                             groupContinue();
                         } else {
                             pagedGroups = parseInt(length / 100, 10);
-                            if (pagedGroups * 100 < length) {
+                            if (pagedGroups * 100 &lt; length) {
                                 pagedGroups++;
                             }
                             loadPageData(0);
@@ -2691,7 +2719,7 @@
                        renderData(null, ndata);
                    }
                });
-               if (data && !handleCb) {
+               if (data &amp;&amp; !handleCb) {
                    handleCb = true;
                    dataLength = data.length;
                    renderData(null, data);
@@ -2765,7 +2793,7 @@
 
         dataSets: function() {
             var children=[];
-            for (var i=0;i<this._children.length;i++) {
+            for (var i=0;i&lt;this._children.length;i++) {
                 if (this._children[i]._isDataSet) {
                     children.push(this._children[i]);
                 }
@@ -2775,7 +2803,7 @@
 
         sections: function() {
             var children=[];
-            for (var i=0;i<this._children.length;i++) {
+            for (var i=0;i&lt;this._children.length;i++) {
                 if (this._children[i]._isSection) {
                     children.push(this._children[i]);
                 }
@@ -2785,7 +2813,7 @@
 
         subReports: function() {
           var children=[];
-          for (var i=0;i<this._children.length;i++) {
+          for (var i=0;i&lt;this._children.length;i++) {
               if (this._children[i]._isReport) {
                   children.push(this._children[i]);
               }
@@ -2809,7 +2837,7 @@
                 while (rootReport._parent !== null) {
                     rootReport = rootReport._parent;
                 }
-                while (parent._parent !== null && parent._parent !== myParent && parent._parent !== rootReport) {
+                while (parent._parent !== null &amp;&amp; parent._parent !== myParent &amp;&amp; parent._parent !== rootReport) {
                     parent = parent._parent;
                 }
                 if (parent._parent === null) {
@@ -2830,7 +2858,7 @@
             var cnt = -1;
             var renderGroup = function () {
                 cnt++;
-                if (cnt < self._children.length) {
+                if (cnt &lt; self._children.length) {
                     State.currentY = Rpt.getCurrentY();
                     State.currentX = Rpt.getCurrentX();
                     self._children[cnt]._renderIt(Rpt, State, currentData, renderGroup);
@@ -2853,7 +2881,7 @@
                     callback();
                 }
             };
-            for (i = 0; i < cnt; i++) {
+            for (i = 0; i &lt; cnt; i++) {
                 this._children[i]._renderFooter(Rpt, State, callbacktracker);
             }
         },
@@ -2861,7 +2889,7 @@
         // Used to figure out the page usage size of header/footers
         _calculateFixedSizes: function (Rpt) {
             var i;
-            for (i = 0; i < this._children.length; i++) {
+            for (i = 0; i &lt; this._children.length; i++) {
                 this._children[i]._calculateFixedSizes(Rpt);
             }
         }
@@ -2952,7 +2980,7 @@
          * @param options
          */
         addReport: function(rpt, options) {
-            if (options && options.isSibling) {
+            if (options &amp;&amp; options.isSibling) {
                 var parentReport = this._parent;
                 while (!parentReport._isReport) {
                     parentReport = parentReport._parent;
@@ -2961,9 +2989,9 @@
             } else {
                 if (this._groupOnField === null || this._child ) {
                     this._addToNullGroup(rpt);
-                } else if (this._child != null && this._child._isSection) {
+                } else if (this._child != null &amp;&amp; this._child._isSection) {
                     this._child.addReport(this);
-                } else if (this._child != null && this._child._isGroup ) {
+                } else if (this._child != null &amp;&amp; this._child._isGroup ) {
                     var child = this._child;
                     while (child._groupOnField !== null) {
                         child = child._child;
@@ -3320,7 +3348,7 @@
             var i, max, field;
 
             // Make sure to Zero out any keys if this is a new structure
-            for (i = 0, max = this._math.length; i < max; i++) {
+            for (i = 0, max = this._math.length; i &lt; max; i++) {
                 field = this._math[i][1];
                 this._totals[field] = 0;
 
@@ -3358,7 +3386,7 @@
          */
         _calcTotals: function (currentData) {
             var i, max, field, srcField;
-            for (i = 0, max = this._math.length; i < max; i++) {
+            for (i = 0, max = this._math.length; i &lt; max; i++) {
                 field = this._math[i][1];
                 srcField = field;
                 if (currentData[field + "_original"] !== undefined) {
@@ -3375,13 +3403,13 @@
                         this._totals[field] = this._totals[field + "_sum"] / this._totals[field + "_cnt"];
                         break;
                     case 3: // Min
-                        if (this._totals[field + "_min"] === 0 || currentData[srcField] < this._totals[field]) {
+                        if (this._totals[field + "_min"] === 0 || currentData[srcField] &lt; this._totals[field]) {
                             this._totals[field + "_min"] = 1;
                             this._totals[field] = currentData[srcField];
                         }
                         break;
                     case 4: // max
-                        if (this._totals[field] < currentData[srcField]) {
+                        if (this._totals[field] &lt; currentData[srcField]) {
                             this._totals[field] = currentData[srcField];
                         }
                         break;
@@ -3442,7 +3470,7 @@
             };
 
 
-            if (this._child !== null && this._child._renderFooter) {
+            if (this._child !== null &amp;&amp; this._child._renderFooter) {
                 this._child._renderFooter(Rpt, State, setupTotals);
             } else {
                 setupTotals();
@@ -3466,7 +3494,7 @@
 
             // This handles the remainder of the rending of this detail section
             var finishRenderGroup = function () {
-                if (self._afterSubgroup && self._detail !== null) {
+                if (self._afterSubgroup &amp;&amp; self._detail !== null) {
                     try {
                         Rpt._level = self._level;
                         if (Report.trace) {
@@ -3476,7 +3504,7 @@
                         self._detail(Rpt, currentData, State);
                         if (Rpt._bandFields.length) { Rpt.band(); }
                     } catch (err) {
-                        Report.error("REPORTAPI: Error when calling group Detail", err, err && err.stack);
+                        Report.error("REPORTAPI: Error when calling group Detail", err, err &amp;&amp; err.stack);
                     }
                 }
 
@@ -3498,7 +3526,7 @@
             // this handles doing the pre-detail (if set)
             var continueRendering = function () {
                 // Run our Detail before a subgroup
-                if (!self._afterSubgroup && self._detail !== null) {
+                if (!self._afterSubgroup &amp;&amp; self._detail !== null) {
                     try {
                         Rpt._level = self._level;
                         if (Report.trace) {
@@ -3509,7 +3537,7 @@
                         self._detail(Rpt, currentData, State);
                         if (Rpt._bandFields.length) { Rpt.band(); }
                     } catch (err) {
-                        Report.error("REPORTAPI: Error when calling group Detail", err, err && err.stack);
+                        Report.error("REPORTAPI: Error when calling group Detail", err, err &amp;&amp; err.stack);
                     }
                 }
                 if (self._child !== null) {
@@ -3654,7 +3682,7 @@
          */
         _findParentReport: function (start) {
             var parent = this._parent;
-            if (arguments.length && start !== null) {
+            if (arguments.length &amp;&amp; start !== null) {
                 if (start.isRootReport()) {
                     return (start);
                 } else {
@@ -3690,14 +3718,14 @@
                 if (target.hasOwnProperty(prop)) {
                     var propSplit = prop.split('.');
                     var count = propSplit.length;
-                    if (count <= 1) { continue; }
+                    if (count &lt;= 1) { continue; }
 
                     var lastObj = target;
-                    for (var i = 0; i < count; i++) {
+                    for (var i = 0; i &lt; count; i++) {
                         var obj = lastObj[propSplit[i]];
                         obj = lastObj[propSplit[i]] = (i === (count - 1)) ?
                             target[prop] :
-                            (obj !== null && obj !== undefined && typeof obj === 'object') ?
+                            (obj !== null &amp;&amp; obj !== undefined &amp;&amp; typeof obj === 'object') ?
                                 obj :
                             {};
                         lastObj = obj;
@@ -3796,3 +3824,26 @@
     _global.Report = Report;
 
 }(typeof exports === 'undefined' ? this : exports));
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Modules</h3><ul><li><a href="module-fluentReports.html">fluentReports</a></li></ul><h3>Classes</h3><ul><li><a href="Report.html">Report</a></li><li><a href="ReportDataSet.html">ReportDataSet</a></li><li><a href="ReportGroup.html">ReportGroup</a></li><li><a href="ReportHeaderFooter.html">ReportHeaderFooter</a></li><li><a href="ReportRenderer.html">ReportRenderer</a></li><li><a href="ReportSection.html">ReportSection</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Wed Mar 05 2014 10:10:44 GMT-0600 (Central Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

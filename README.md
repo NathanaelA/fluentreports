@@ -30,7 +30,7 @@ Features:
 * Colorization (& other cell changes) of text per cell in Bands
 
 
-See the simple/stupid examples for a overview on how to generate a somewhat complex report.  
+See the simple & stupid examples for a overview on how to generate a somewhat complex report.
 In these reports I tried to throw in a chunk of the kitchen sink to try and give you and
 idea how powerful the engine is.
 
@@ -41,7 +41,4 @@ Currently has 5 example reports showing:
 * Simple Fax Cover Sheet (w/ image)
 * Grid Report showing off Sub-Reports with auto-queries
 * More complex invoice/proposal with grouping, headers, footers.
-
-
-
 
