@@ -8,9 +8,9 @@
   "licenses"      : "MIT",
   "lib"           : "lib",
   "bugs"          : {"url": "http://github.com/Nathanaela/fluentreports/issues"},
-  "dependencies"  : {"pdfkit": "git://github.com/Nathanaela/pdfkit.git#Release"},
+  "dependencies"  : {"pdfkit": "latest"},
   "repository"    : {"type": "git", "url": "http://github.com/Nathanaela/fluentreports.git"},
   "main"          : "lib/fluentReports",
-  "version"       : "0.0.5",
+  "version"       : "0.0.6",
   "engines"       : {"node": ">= 0.6.0" }
 }

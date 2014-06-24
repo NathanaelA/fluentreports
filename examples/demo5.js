@@ -3,7 +3,7 @@ var Report = require('../lib/fluentReports' ).Report;
 var primary_data  = [
     {no: 1, date: '08-17-2014', name: "John Doe", address_1: "add 1", address_2: "addd_2", city: "city", state: 'ok', zip: '00000', qty: 5, price: 2.21, amount: 5.55, description: "product 1", "product.product_type": 1},
     {no: 1, date: '08-18-2014', name: "John Doe", address_1: "add 1", address_2: "addd_2", city: "city", state: 'ok', zip: '00000', qty: 1, price: 2.21, amount: 2.21, description: "product 1", "product.product_type": 1},
-    {no: 1, date: '08-19-2014', name: "John Doe", address_1: "add 1", address_2: "addd_2", city: "city", state: 'ok', zip: '00000', qty: 15, price: 4.21, amount: 15.55, description: "product 2", "product.product_type": 2},
+    {no: 1, date: '08-19-2014', name: "John Doe", address_1: "add 1", address_2: "addd_2", city: "city", state: 'ok', zip: '00000', qty: 15, price: 4.21, amount: 15.55, description: "product 2", "product.product_type": 2}
 ];
 
 
@@ -32,7 +32,7 @@ function printreport() {
             x.fontBold();
             x.band([
                 {data: r.name+' Total:', width: 130, align: 3},
-                {data: x.totals.amount, width: 90, align: 3},
+                {data: x.totals.amount, width: 90, align: 3}
             ], {x: 270});
             x.fontNormal();
         };
