@@ -29,7 +29,8 @@ Features:
 * Ability to put data over images; gradients, etc.
 * Quickly generate complex reports with minimal lines of code.
 * Colorization (& other cell changes) of text per cell in Bands
-* Synchronous and Asynchronous support.  If your report doesn't need to do anything Async, you can just code it without any callbacks.   
+* Synchronous and Asynchronous support.  If your report doesn't need to do anything Async, you can just code it without any callbacks.
+* Group Headers can be (re)printed on every new page, to just only once.  
 
 See the simple & stupid examples for a overview on how to generate a somewhat complex report.
 In these reports I tried to throw in a chunk of the kitchen sink to try and give you and

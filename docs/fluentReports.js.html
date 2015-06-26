@@ -27,7 +27,7 @@
         <article>
             <pre class="prettyprint source linenums"><code>/*
  --------------------------------------
- (c)2012-2014, Kellpro, Inc.
+ (c)2012-2015, Kellpro, Inc.
  --------------------------------------
  FluentReports is under The MIT License (MIT)
 
@@ -50,28 +50,26 @@
  THE SOFTWARE.
  */
 
-//noinspection ThisExpressionReferencesGlobalObjectJS,ThisExpressionReferencesGlobalObjectJS,ThisExpressionReferencesGlobalObjectJS
+//noinspection ThisExpressionReferencesGlobalObjectJS
 /**
  * @module fluentReports
  * @author Nathanael Anderson, Mark Getz, Alan Henager
- * @copyright 2012-2014, Kellpro Inc.
+ * @copyright 2012-2015, Kellpro Inc.
  * @license MIT
  */
 (function (_global) {
-
-
     "use strict";
 
 // Layout:
     /*
      Report ->
-       Section ->
-        DataSet ->
-         Group   ->
+     Section ->
+     DataSet ->
+     Group   ->
 
-        (Optional) DataSet (or Sub-Report) ->
-         Group  ->
-         ...
+     (Optional) DataSet (or Sub-Report) ->
+     Group  ->
+     ...
      */
 
 // ------------------------------------------------------
@@ -100,7 +98,10 @@
         return defaultValue;
     }
 
-
+    /**
+     * This creates a lower case version of the prototypes
+     * @param prototype
+     */
     function lowerPrototypes(prototype) {
         var proto, lowerProto;
         for (proto in prototype) {
@@ -123,7 +124,7 @@
     }
 
     /** Debug Code **/
-    function printStructure(reportObject, level) {
+    function printStructure(reportObject, level, outputType) {
         if (reportObject === null) {
             return;
         }
@@ -133,8 +134,22 @@
             spad += " ";
         }
 
+        var loopChildren = function() {
+            if (reportObject._child) {
+                printStructure(reportObject._child, level + 1, outputType);
+            } else if (reportObject._children) {
+                for (j = 0; j &lt; reportObject._children.length; j++) {
+                    printStructure(reportObject._children[j], level + 1, outputType);
+                }
+            }
+        };
+
         if (reportObject._isReport) {
-            console.log(pad + "> Report");
+            if (reportObject._parent) {
+                console.log(pad + "> Subreport");
+            } else {
+                console.log(pad + "> Report");
+            }
         } else if (reportObject._isSection) {
             console.log(pad + "> Section");
         } else if (reportObject._isDataSet) {
@@ -144,29 +159,34 @@
         } else {
             console.log(pad + "> Unknown");
         }
-        if (reportObject._detail !== null &amp;&amp; reportObject._detail !== undefined) {
-            console.log(spad + "  | Has Detail");
-        }
         if (reportObject._theader !== null &amp;&amp; reportObject._theader !== undefined) {
-            console.log(spad + "  | Has Title Header");
+            console.log(spad + "  | Has Title Header ", typeof reportObject._theader._part === "function" ? reportObject._theader._part.length === 4 ? "(Async)" : "(Sync)" : "(Auto)", reportObject._theader._partHeight > 0 ? reportObject._theader._partHeight : '', reportObject._theader._isHeightExempt);
         }
         if (reportObject._header !== null &amp;&amp; reportObject._header !== undefined) {
-            console.log(spad + "  | Has Header");
-        }
-        if (reportObject._footer !== null &amp;&amp; reportObject._footer !== undefined) {
-            console.log(spad + "  | Has Footer");
-        }
-        if (reportObject._tfooter !== null &amp;&amp; reportObject._tfooter !== undefined) {
-            console.log(spad + "  | Has Summary Footer");
-        }
-
-        if (reportObject._child) {
-            printStructure(reportObject._child, level + 1);
-        } else if (reportObject._children) {
-            for (j = 0; j &lt; reportObject._children.length; j++) {
-                printStructure(reportObject._children[j], level + 1);
+            if (reportObject._isReport) {
+                console.log(spad + "  | Has Page Header", typeof reportObject._header._part === "function" ? reportObject._header._part.length === 4 ? "(Async)" : "(Sync)" : "(Auto)", reportObject._header._partHeight > 0 ? reportObject._header._partHeight : '', reportObject._header._isHeightExempt);
+            } else {
+                console.log(spad + "  | Has Header", typeof reportObject._header._part === "function" ? reportObject._header._part.length === 4 ? "(Async)" : "(Sync)" : "(Auto)", reportObject._header._partHeight > 0 ? reportObject._header._partHeight : '', reportObject._header._isHeightExempt);
             }
         }
+        if (reportObject._detail !== null &amp;&amp; reportObject._detail !== undefined) {
+            console.log(spad + "  | Has Detail", reportObject._renderDetail === reportObject._renderAsyncDetail ? "(Async)" : reportObject._renderDetail === reportObject._renderSyncDetail ? "(Sync)" : reportObject._renderDetail === reportObject._renderBandDetail ? "(Auto Band)" : reportObject._renderDetail === reportObject._renderStringDetail ? "(Auto String)" : "Unknown");
+        }
+
+        if (outputType) { loopChildren(); }
+
+        if (reportObject._footer !== null &amp;&amp; reportObject._footer !== undefined) {
+            if (reportObject._isReport) {
+                console.log(spad + "  | Has Page Footer", typeof reportObject._footer._part === "function" ? reportObject._footer._part.length === 4 ? "(Async)" : "(Sync)" : "(Auto)", reportObject._footer._partHeight > 0 ? reportObject._footer._partHeight : '', reportObject._footer._isHeightExempt);
+            } else {
+                console.log(spad + "  | Has Footer", typeof reportObject._footer._part === "function" ? reportObject._footer._part.length === 4 ? "(Async)" : "(Sync)" : "(Auto)", reportObject._footer._partHeight > 0 ? reportObject._footer._partHeight : '', reportObject._footer._isHeightExempt);
+            }
+        }
+        if (reportObject._tfooter !== null &amp;&amp; reportObject._tfooter !== undefined) {
+            console.log(spad + "  | Has Summary Footer", typeof reportObject._tfooter._part === "function" ? reportObject._tfooter._part.length === 4 ? "(Async)" : "(Sync)" : "(Auto)", reportObject._tfooter._partHeight > 0 ? reportObject._tfooter._partHeight : '', reportObject._tfooter._isHeightExempt);
+        }
+
+        if (!outputType) { loopChildren(); }
     }
 
     /**
@@ -216,13 +236,82 @@
         }
     }
 
-
+    /**
+     * Generic Error function that can be overridden with your own error code
+     */
     function error() {
         if (!console || !console.error || arguments.length === 0) {
             return;
         }
         console.error.apply(console, arguments);
     }
+
+    /**
+     * This is a callback that just prints any errors, used for places a callback may not have been passed in.
+     * @param err
+     */
+    function dummyCallback(err) {
+        if (err) {
+            Report.error(err);
+        }
+    }
+
+    /**
+     * This does a loop, used for Async code
+     * @param total number of loops
+     * @param runFunction - this is the function that will be called for each iteration
+     * @param doneCallback - this is called when the loop is done
+     */
+    function startLoopingAsync(total, runFunction, doneCallback) {
+        var counter = -1;
+        var callbackLoop = function() {
+            counter++;
+            if (counter &lt; total) {
+                // Unwind this stack every so often
+                if (counter % 10 === 0) {
+                    setImmediate(function() { runFunction(counter, callbackLoop); });
+                } else {
+                    runFunction(counter, callbackLoop);
+                }
+            } else {
+                doneCallback();
+            }
+        };
+        callbackLoop();
+    }
+
+    /**
+     * This does a loop, used for Sync code
+     * @param total number of loops
+     * @param runFunction - this is the function that will be called for each iteration
+     * @param doneCallback - this is called when the loop is done
+     */
+    function startLoopingSync(total, runFunction, doneCallback) {
+        var counter= 0;
+        var hasAnotherLoop = true;
+        var callbackLoop = function(skipInc) {
+            if (skipInc !== true) { counter++; }
+            if (counter &lt; total) {
+                // Unwind this stack every so ofter
+                if (skipInc !== true &amp;&amp; counter % 10 === 0) {
+                    // Technically we don't have to reset this to true; as it is already true; but this is so that
+                    // this function is readable by use mere humans several months from here.
+                    hasAnotherLoop = true;
+                } else {
+                    runFunction(counter, callbackLoop);
+                }
+            } else {
+                hasAnotherLoop = false;
+            }
+        };
+        while (hasAnotherLoop) {
+            callbackLoop(true);
+        }
+        doneCallback();
+    }
+
+    var reportRenderingMode = {UNDEFINED: 0, SYNC: 1, ASYNC: 2};
+
 
 // -------------------------------------------------------
 // Report Objects
@@ -254,7 +343,8 @@
     function ReportRenderer(primaryReport, options) {
         this.totals = {};
         this._priorValues = {};
-        this._pageHasRendering = false;
+        this._pageHasRendering = 0;
+        this._pageHeaderRendering = 0;
         this._curBand = [];
         this._curBandOffset = 0;
         this._primaryReport = primaryReport;
@@ -266,13 +356,15 @@
         this._level = 0;
         this._totalLevels = 0;
         this._negativeParentheses = false;
-        this._footerSize = 0;
-        this._bandFields = [];
         this._heightOfString = 0;
         this._graphicState = [];
         this._fillColor = "black";
         this._strokeColor = "black";
         this._fillOpacity = 1;
+        this._height = 0;
+        this._reportHeight = 0;
+        this._printedLines = [];
+        this._reportRenderMode = reportRenderingMode.UNDEFINED;
 
         var opt = {};
         if (options) {
@@ -288,7 +380,11 @@
             }
             if (options.margins &amp;&amp; options.margins !== this._margins) {
                 this._margins = options.margins;
-                opt.margin = options.margins;
+                if (typeof options.margins === 'number') {
+                    opt.margin = options.margins;
+                } else {
+                    opt.margins = options.margins;
+                }
             }
             if (options.fonts) {
                 this._fonts = options.fonts;
@@ -310,39 +406,52 @@
 
         this._PDF = new this._PDFKit(opt);
         this._heightOfString = this._PDF.currentLineHeight(true);
+        this._height = this._reportHeight = this._PDF.page.maxY();
+        this._PDF.page.height = 99999;
+
+        var self = this;
 
         //noinspection JSHint
         for (var key in this._registeredFonts) {
-           if (!this._registeredFonts.hasOwnProperty(key)) { continue; }
-           //noinspection JSHint
-           for (var style in this._registeredFonts[key]) {
-                 if (!this._registeredFonts[key].hasOwnProperty(style)) { continue; }
-                 if (style === 'normal') {
-                     this._PDF.registerFont(key, this._registeredFonts[key][style], key);
-                 } else {
-                     this._PDF.registerFont(key+'-'+style, this._registeredFonts[key][style], key+'-'+style);
-                 }
+            if (!this._registeredFonts.hasOwnProperty(key)) { continue; }
+            //noinspection JSHint
+            for (var style in this._registeredFonts[key]) {
+                if (!this._registeredFonts[key].hasOwnProperty(style)) { continue; }
+                if (style === 'normal') {
+                    this._PDF.registerFont(key, this._registeredFonts[key][style], key);
+                } else {
+                    this._PDF.registerFont(key+'-'+style, this._registeredFonts[key][style], key+'-'+style);
+                }
 
-           }
+            }
         }
 
         // This is a PDFDoc emulated page wrapper so that we can detect how it will wrap things.
-        //noinspection JSPotentiallyInvalidUsageOfThis
-        var lwdoc = this._LWDoc = {
+        var lwDoc = this._LWDoc = {
             count: 0, pages: 1, x: this._PDF.page.margins.left, y: this._PDF.page.margins.top, page: this._PDF.page, _PDF: this._PDF,
-            currentLineHeight: function (val) { return this._PDF.currentLineHeight(val); },
-            widthOfString: function (d, o) { return this._PDF.widthOfString(d, o); },
-            addPage: function () { this.pages++;  this.x = this._PDF.page.margins.left; this.y = this._PDF.page.margins.top; },
+            currentLineHeight: function (val) { //noinspection JSPotentiallyInvalidUsageOfThis
+                return this._PDF.currentLineHeight(val); },
+            widthOfString: function (d, o) { //noinspection JSPotentiallyInvalidUsageOfThis
+                return this._PDF.widthOfString(d, o); },
+            addPage: function () { this.pages++;
+                //noinspection JSPotentiallyInvalidUsageOfThis
+                this.x = this._PDF.page.margins.left;
+                //noinspection JSPotentiallyInvalidUsageOfThis
+                this.y = this._PDF.page.margins.top; },
             reset: function () { this.count = 0; this.pages = 0;  this.addPage(); }
         };
 
-        // Create a new Line Wrapper Object
-        this._LineWrapper = new this._LineWrapperObject(lwdoc);
+        // Create a new Line Wrapper Object, this allows us to handle Bands
+        this._LineWrapper = new this._LineWrapperObject(lwDoc,{width:this._PDF.page.width - this._PDF.page.margins.right - this._PDF.page.margins.left, columns:1, columnGap: 18});
         this._LineWrapper.on('line', function () {
-            lwdoc.count++;
+            lwDoc.count++;
         });
 
-
+        // creae the Print wrapper; this allows us to wrap long print() calls onto multiple sheed.
+        this._PrintWrapper = new this._LineWrapperObject(lwDoc,{width:this._PDF.page.width - this._PDF.page.margins.right - this._PDF.page.margins.left, columns:1, columnGap: 18});
+        this._PrintWrapper.on('line', function (line, options) {
+            self._printedLines.push({L:line, O: options});
+        });
     }
 
     /**
@@ -352,8 +461,9 @@
      * @alias ReportHeaderFooter
      * @memberof Report
      * @param isHeader
+     * @param {boolean} [isSizeExempt] - is Size Exempt, this ONLY applies to page footers; as we don't want to "break" the page on a page footer.
      */
-    function ReportHeaderFooter(isHeader) {
+    function ReportHeaderFooter(isHeader, isSizeExempt) {
         this._part = null;
         this._isFunction = false;
         this._partHeight = -1;
@@ -362,6 +472,11 @@
         this._pageBreakBefore = false;
         this._pageBreakAfter = false;
         this._isHeader = isHeader;
+        // This only applies to Page FOOTERS, and the final summary FOOTER.   These are the only items that won't cause a page-break before/during printing.
+        // Normally this is not a issue; but some people might use absolute Y coords and end up overflowing the page in the footer;
+        // which then causes a major glitch in the rendering.   So instead we are just going to let the footer overflow the page and ignore the rest of the footer.
+        // This is a much "cleaner" looking solution.
+        this._isHeightExempt = !(isHeader &amp;&amp; !isSizeExempt);
     }
 
     /**
@@ -384,8 +499,10 @@
         this._groupLastValue = null;
         this._child = null;
         this._hasRanHeader = false;
-        this._afterSubgroup = false;
+        this._runDetailAfterSubgroup = false;
+        this._runHeaderWhen = Report.show.newPageOnly;
         this._lastData = {};
+        this._currentData = null;
         this._math = [];
         this._totals = {};
         this._curBandWidth = [];
@@ -418,7 +535,6 @@
         };
         return (this._child);
     }
-
 
     /*
      *  This can be used as an a example method that is a paged data object.
@@ -465,13 +581,25 @@
     function Report(parent, options) {
         options = options || {};
         this._reportName = "report.pdf";
+        this._outputType = Report.renderType.file;
+        this._runHeaderWhen = Report.show.always;
 
         if (arguments.length) {
             if (typeof parent === "string" || typeof parent === "number") {
                 this._parent = null;
-                this._reportName = parent.toString();
+                if (parent.toString() === "buffer") {
+                    this._outputType = Report.renderType.buffer;
+                } else {
+                    this._reportName = parent.toString();
+                }
+            } else if (typeof parent === "object" &amp;&amp; typeof parent.write === "function" &amp;&amp; typeof parent.end === "function") {
+                this._parent = null;
+                this._outputType = Report.renderType.pipe;
+                this._pipe = parent;
             } else {
-                if (parent._isReport) {
+                if (parent == null) {
+                    this._parent = null;
+                } else if (parent._isReport) {
                     if (parent._child === null) {
                         parent._child = this;
                         this._parent = parent;
@@ -503,6 +631,7 @@
             this._parent = null;
         }
 
+        this._reportMode = reportRenderingMode.UNDEFINED;
         this._theader = null;
         this._tfooter = null;
         this._header = null;
@@ -525,6 +654,7 @@
 
         // We want to return a fully developed simple report (Report->Section->DataSet->Group) so we create it and then return the Group Object
         if (options.autocreate === false || options.autoCreate === false) {
+            // TODO: This path might need to be deleted/modified; it doesn't setup _child or _detailGroup which will break code later in the code base.
             this._child = null;
             return this;
         } else {
@@ -533,7 +663,6 @@
             return (this._detailGroup);
         }
     }
-
 
     Report.prototype =
     /** @lends Report */
@@ -582,11 +711,47 @@
          * @returns {*}
          */
         negativeParentheses: function(value) {
-          if (arguments.length) {
-              this._negativeParentheses = value;
-              return this;
-          }
-          return this._negativeParentheses;
+            if (arguments.length) {
+                this._negativeParentheses = value;
+                return this;
+            }
+            return this._negativeParentheses;
+        },
+
+        /**
+         * set the output Type
+         * @param type {Report.renderType} - Type of output
+         * @param to - Pipe or Filename
+         */
+        outputType: function(type, to) {
+            if (arguments.length === 0) {
+                return this._outputType;
+            }
+            if (typeof type === 'string') {
+                if (type.toLowerCase() === 'buffer') {
+                    this._outputType = Report.renderType.buffer;
+                } else {
+                    this._outputType = Report.renderType.file;
+                    this._reportName = type;
+                }
+                return this;
+            }
+            if (typeof type === 'object' &amp;&amp; typeof type.write === 'function' &amp;&amp; typeof type.end === 'function') {
+                this._outputType = Report.renderType.pipe;
+                this._pipe = type;
+                return this;
+            }
+            if (type === Report.renderType.pipe) {
+                this._outputType = Report.renderType.pipe;
+                this._pipe = to;
+            } else if (type === Report.renderType.buffer) {
+                this._outputType = Report.renderType.buffer;
+            } else if (type === Report.renderType.file) {
+                this._outputType = Report.renderType.file;
+            } else {
+                this._outputType = Report.renderType.file;
+            }
+            return this;
         },
 
         /**
@@ -598,110 +763,166 @@
 
             if (this.isRootReport()) {
                 var self = this;
-                if (!callback) {
-                    callback = null;
-                }
 
-                this._state = { isTitle: false, isFinal: false, headerSize: 0, footerSize: 0, isCalc: false,
-                    resetGroups: true, startX: 0, startY: 0, currentX: 0, currentY: 0, priorStart: [], parentData: {}};
+                this._state = { isTitle: false, isFinal: false, headerSize: 0, footerSize: 0, additionalHeaderSize: 0, isCalc: false,
+                    resetGroups: true, startX: 0, startY: 0, currentX: 0, currentY: 0, priorStart: [], parentData: {}, report: this, currentGroup: null, reportRenderMode: this._reportRenderMode()};
 
                 this._info.Producer = "fluentReports";
 
                 if (Report.trace) {
-                    console.log("Starting Tracing on Report",this._reportName);
+                    console.error("Starting Tracing on Report to a ",this._outputType === Report.renderType.buffer ? "Buffer" : this._outputType === Report.renderType.pipe ? "Pipe" : "File "+this._reportName);
+                    if (Report.callbackDebugging) {
+                        console.error(" - Render callback is ", callback &amp;&amp; typeof callback === "function" ? "valid" : "invalid");
+                    }
                 }
 
                 // These get passed into the two page Wrappers for Page building information
                 var pageDefaults = {paper: this._paper, landscape: this._landscape, margins: this._margins, fonts: this._fonts, registeredFonts: this._registeredFonts, info: this._info};
 
+                // Set the rendering mode if no functions are defined
+                if (this._reportRenderMode() === reportRenderingMode.UNDEFINED) {
+                    this._reportRenderMode(reportRenderingMode.ASYNC);
+                }
+
                 // Find out Sizes of all the Headers/Footers
                 var testit = new ReportRenderer(this, pageDefaults);
 
+                testit._reportRenderMode = this._reportRenderMode();
                 testit.font(this._font, this._fontSize);
+                testit.saveState();
 
                 // Catch the Printing so that we can see if we can track the "offset" of the Footer in case the footer
                 // is moved to a literal Y position (without it being based on the prior Y position)
-                var offset = false;
                 var oPrint = testit.print;
                 var oBand = testit.band;
+                var oAddPage = testit._addPage;
+                var onewLine = testit.newLine;
 
-                testit.checkY = function(y) {
-                    if (y == null) { return false; }
-                    // Try and guess to see if the report is moving the Y based on a calculation or just a fixed location
-                    // If it is "guessed" it is a fixed location, we will ignore it for calculating page sizes since it will always
-                    // be a fixed location.
-                    var cY = ReportRenderer.prototype.getCurrentY.call(testit);
-                    var pS = this._PDF.page.height || 700;
-                    return y > cY + (pS / 3);
+
+                // We are eliminating the height restriction for our sizing tests
+                testit._height = 90000;
+
+                testit._addPage = function() {
+                    oAddPage.call(this);
+                    this._height = 90000;
+                };
+
+                testit.newLine = function(lines, callback) {
+                    this._firstMoveState = true;
+                    onewLine.call(this, lines, callback);
+                };
+
+                testit.checkY = function(opt) {
+                    if (opt == null) { return; }
+                    var cY, y;
+                    y = cY = this.getCurrentY();
+                    if (opt.y) {
+                        y = opt.y;
+                    }
+                    if (opt.addy) {
+                        y += opt.addy;
+                    }
+                    if (opt.addY) {
+                        y += opt.addY;
+                    }
+
+                    if (y > cY + (this._reportHeight / 3)) {
+                        // Did our move - move us over a 1/3 of the page down?  If so then, it is something we need to track.
+                        if (!this._firstMoveState &amp;&amp; !this._savedFirstMove) {
+                            this._savedFirstMove = y;
+                        } else if (this._firstMoveState &amp;&amp; y &lt; this._savedFirstMove) {
+                            // You never know, a user might do a print: y = 700; then a band: y: 680.  So we actually want to save the 680 as the smallest coord.
+                            this._savedFirstMove = y;
+                        } else if (!this._savedFirstMove) {
+                            opt.addY = 0;
+                            opt.y = 0;
+                            Report.error("REPORTAPI: Your footer starts with printing some text, then uses an absolute move of greater than a third of the page.");
+                        }
+                    }
+
+                    this._firstMoveState = true;
+                    //return y > cY + (this._reportHeight / 3);
 
                 };
-                testit.band = function(data, options) {
-                    if (offset) { return; }
-                    if (this.checkY(options &amp;&amp; options.y)) {
-                        offset = true; return;
-                    }
-                    oBand.call(this, data, options);
+
+                testit.band = function(data, options, callback) {
+                    this.checkY(options);
+                    oBand.call(this,data, options, callback);
                 };
-                testit.print = function(data, options) {
-                    if (offset) { return; }
-                    if (this.checkY(options &amp;&amp; options.y)) {
-                        offset = true; return;
-                    }
-                    oPrint.call(this, data, options);
+
+                testit.print = function(data, options, callback) {
+                    this.checkY(options);
+                    oPrint.call(this,data, options, callback);
                 };
+
                 testit.setCurrentY = function(y) {
-                    if (this.checkY(y)) {
-                        offset = true;
-                    }
-                    else {
-                        ReportRenderer.prototype.setCurrentY.call(testit, y);
-                    }
+                    this.checkY({y: y});
+                    ReportRenderer.prototype.setCurrentY.call(this, y);
                 };
 
-                this._calculateFixedSizes(testit);
-                testit = null;
-                if (this._footer !== null) {
-                    this._state.footerSize = this._footer._partHeight;
-                }
-                if (this._header !== null) {
-                    this._state.headerSize = this._header._partHeight;
-                }
 
-                if (Report.trace) {
-                    console.log("Generating real Report",this._reportName);
-                }
 
-                // Lets Run the Header
-                var renderedReport = new ReportRenderer(this, pageDefaults);
-                renderedReport.font(this._font, this._fontSize);
-                renderedReport._setFooterSize(this._state.footerSize);
-                renderedReport._setAutoPrint(this._autoPrint);
-                renderedReport._setFullScreen(this._fullScreen);
-                renderedReport.setNegativeParentheses(this._negativeParentheses);
+                // Start the Calculation for the Test Report -> Then run the actual report.
+                this._calculateFixedSizes(testit, "",
+                    function() {
+                        // Eliminate the testit code so it can be garbage collected.
+                        testit = null; oPrint = null; oBand = null; oAddPage = null;
 
-                this._renderIt(renderedReport, this._state, null,
-                    function () {
-                            if (Report.trace) {
-                                console.log("Report Writing to ", self._reportName);
-                            }
-                            if (self._reportName.toLowerCase() === "buffer") {
-                                renderedReport._output(function(data) {
-                                   if (callback) {
-                                       callback(null, data);
-                                   } else {
-                                       Report.error("REPORTAPI: callback missing; asked for a PDF buffer to be generated.");
-                                   }
-                                });
-                            } else {
-                                renderedReport._write(self._reportName, function (err) {
-                                    if (callback) {
-                                        callback(err, self._reportName);
-                                    }
-                                });
-                            }
+
+                        if (self._footer !== null) {
+                            self._state.footerSize = self._footer._partHeight;
+                        }
+                        if (self._header !== null) {
+                            self._state.headerSize = self._header._partHeight;
+                        }
+
+                        if (Report.trace) {
+                            console.error("Generating real report", self._reportName);
+                        }
+
+                        // Lets Run the Real Report Header
+                        var renderedReport = new ReportRenderer(self, pageDefaults);
+                        renderedReport._reportRenderMode = self._reportRenderMode();
+                        renderedReport.font(self._font, self._fontSize);
+                        renderedReport.saveState();
+                        //noinspection JSAccessibilityCheck
+                        renderedReport._setAutoPrint(self._autoPrint);
+                        renderedReport._setFullScreen(self._fullScreen);
+                        renderedReport.setNegativeParentheses(self._negativeParentheses);
+
+                        self._renderIt(renderedReport, self._state, null,
+                            function () {
+                                if (Report.trace) {
+                                    console.error("Report Writing to ", self._outputType === Report.renderType.buffer ? "Buffer" : self._outputType === Report.renderType.pipe ? "Pipe" : "File " + self._reportName);
+                                }
+
+                                switch (self._outputType) {
+                                    case Report.renderType.pipe:
+                                        //noinspection JSAccessibilityCheck
+                                        renderedReport._pipe(self._pipe, callback);
+                                        break;
+                                    case Report.renderType.buffer:
+                                        //noinspection JSAccessibilityCheck
+                                        renderedReport._output(function (data) {
+                                            if (callback) {
+                                                callback(null, data);
+                                            } else {
+                                                Report.error("REPORTAPI: callback missing; asked for a PDF buffer to be generated.");
+                                            }
+                                        });
+                                        break;
+                                    default:
+                                        //noinspection JSAccessibilityCheck
+                                        renderedReport._write(self._reportName, function (err) {
+                                            if (callback) {
+                                                callback(err, self._reportName);
+                                            }
+                                        });
+                                        break;
+                                }
+                            });
                     });
                 return (this._reportName);
-
             } else {
                 return this._parent.render(callback);
             }
@@ -763,6 +984,11 @@
             return this._font;
         },
 
+        /**
+         * Set or Get the current font size
+         * @param {number} [value] - set fontSize if this value is set
+         * @returns {number} - the Font Size
+         */
         fontSize: function (value) {
             if (arguments.length) {
                 this._fontSize = value;
@@ -776,9 +1002,9 @@
                 case font.italic:
                 case font.bolditalic:
                     if (font.bolditalic) {
-                       this._font = font.bolditalic;
+                        this._font = font.bolditalic;
                     } else if (font.bold) {
-                       this._font = font.bold;
+                        this._font = font.bold;
                     }
                     break;
                 default:
@@ -811,7 +1037,7 @@
         fontNormal: function () {
             var font = this._fonts[this._font];
             if (font.normal) {
-              this._font = font.normal;
+                this._font = font.normal;
             }
         },
 
@@ -854,16 +1080,30 @@
         // Internal Private Variables &amp; Functions
         // --------------------------------------
 
-        _calculateFixedSizes: function (Rpt) {
-            if (this._header !== null) {
+        /**
+         * Calculates a header/footer part of the report
+         * @param part
+         * @param Rpt
+         * @param callback
+         * @private
+         */
+        _calculatePart: function(part, Rpt, callback) {
+            if (part) {
                 Rpt._addPage();
-                this._header.run(Rpt, {isCalc: true}, null);
+                part.run(Rpt, {isCalc: true}, null, callback);
+            } else {
+                // No "if" check verification on "callback" because _calculatePart MUST have a callback
+                callback();
             }
-            if (this._footer !== null) {
-                Rpt._addPage();
-                this._footer.run(Rpt, {isCalc: true}, null);
-            }
-            this._child._calculateFixedSizes(Rpt);
+        },
+
+        _calculateFixedSizes: function (Rpt, BogusData, callback) {
+            var self = this;
+            this._calculatePart(this._header, Rpt, function() {
+                self._calculatePart(self._footer, Rpt, function() {
+                    self._child._calculateFixedSizes(Rpt, BogusData, callback);
+                });
+            });
         },
 
         _pageHeader: function (value, settings) {
@@ -878,7 +1118,7 @@
 
         _pageFooter: function (value, settings) {
             if (this._footer === null) {
-                this._footer = new ReportHeaderFooter(false);
+                this._footer = new ReportHeaderFooter(false, true);
             }
             if (arguments.length) {
                 this._footer.set(value, settings);
@@ -898,7 +1138,7 @@
 
         _finalSummary: function (value, settings) {
             if (this._tfooter === null) {
-                this._tfooter = new ReportHeaderFooter(false);
+                this._tfooter = new ReportHeaderFooter(false, true);
             }
             if (arguments.length) {
                 this._tfooter.set(value, settings);
@@ -908,83 +1148,112 @@
 
         _renderFinalFooter: function(Rpt, State, callback) {
             // Run final Footer!
-            this._state.isFinal = true;
-
             var dataSet = this._detailGroup._findParentDataSet();
             var self = this;
             dataSet._totalFormatter(this._detailGroup._totals, function (err, data) {
-                    Rpt.totals = data;
+                Rpt.totals = data;
+                Rpt._bandWidth(self._curBandWidth);
+                Rpt._bandOffset(self._curBandOffset);
+                var footer = self._tfooter || self._footer;
 
-                    Rpt._bandWidth(self._curBandWidth);
-                    Rpt._bandOffset(self._curBandOffset);
-                    if (self._tfooter !== null) {
-                        self._tfooter.run(Rpt, self._state, null);
-                    }
-                    else if (self._footer !== null) {
-                        self._footer.run(Rpt, self._state, null);
-                    }
-                    self._state.isFinal = false;
-                    callback(Rpt, State);
+                // IF Final Summary Footer is too big for page; so we will page feed another page, using a normal footer for this page...
+                if (self._footer) {
+                    self._state.footerSize -= self._footer._partHeight;
+                }
+                self._state.currentGroup = null;
+                if (self._tfooter &amp;&amp; self._tfooter._partHeight + Rpt._PDF.y > Rpt._maxY()) {
+                   Rpt.newPage({save:true}, function() {
+                       self._state.isFinal = true;
+                       self._renderPart(Rpt, footer, function () {
+                           self._state.isFinal = false;
+                           callback(Rpt, State);
+                       });
+                   });
+                } else {
+                    self._state.isFinal = true;
+                    self._renderPart(Rpt, footer, function () {
+                        self._state.isFinal = false;
+                        callback(Rpt, State);
+                    });
+                }
             });
         },
 
+        _renderPart: function(Rpt, part, callback) {
+            if (part !== null) {
+                part.run(Rpt, this._state, null, callback);
+            } else if (callback) {
+                callback();
+            }
+        },
+
+        /**
+         * Starts the Rendering for the Report object
+         * @param Rpt
+         * @param State
+         * @param currentData
+         * @param callback
+         * @private
+         */
         _renderIt: function (Rpt, State, currentData, callback) {
             this._state.isTitle = true;
-            if (this._theader !== null) {
-                this._theader.run(Rpt, this._state, null);
-            }
-            else if (this._header !== null) {
-                this._header.run(Rpt, this._state, null);
-            }
-            this._state.isTitle = false;
-
+            var header = this._theader || this._header;
             var self = this;
-            if (this._parent !== null) {
-                State.resetGroups = true;
+            State.report = this;
+            this._renderPart(Rpt, header, function () {
+                self._state.isTitle = false;
+                if (self._parent !== null) {
+                    State.resetGroups = true;
 
-                // Copy Parent Data into this State so that we have access to it in this sub-report
-                for (var key in currentData) {
-                    if (currentData.hasOwnProperty(key)) {
-                        State.parentData[key] = currentData[key];
+                    // Copy Parent Data into this State so that we have access to it in this sub-report
+                    for (var key in currentData) {
+                        if (currentData.hasOwnProperty(key)) {
+                            State.parentData[key] = currentData[key];
+                        }
                     }
-                }
 
-                this._detailGroup._clearTotals();
-                this._child._renderIt(Rpt, State, currentData, function() {
-                    var parent = self;
-                    // Find the first group above this report
-                    while (parent._parent != null &amp;&amp; !parent._isGroup) {
-                        parent = parent._parent;
-                    }
-                    // iterate through the groups above this group and add this value to them so they get this sub-reports totals
-                    while (parent._isGroup) {
-                        for (var key in self._detailGroup._totals) {
-                            if (self._detailGroup._totals.hasOwnProperty(key)) {
-                                if (isNumber(parent._totals[key])) {
-                                    parent._totals[key] += self._detailGroup._totals[key];
-                                } else {
-                                    parent._totals[key] = self._detailGroup._totals[key];
+                    self._detailGroup._clearTotals();
+                    self._child._renderIt(Rpt, State, currentData, function () {
+                        var parent = self;
+                        // Find the first group above this report
+                        while (parent._parent != null &amp;&amp; !parent._isGroup) {
+                            parent = parent._parent;
+                        }
+
+                        // iterate through the groups above this group and add this value to them so they get this sub-reports totals
+                        while (parent._isGroup) {
+                            for (var key in self._detailGroup._totals) {
+                                if (self._detailGroup._totals.hasOwnProperty(key)) {
+                                    if (isNumber(parent._totals[key])) {
+                                        parent._totals[key] += self._detailGroup._totals[key];
+                                    } else {
+                                        parent._totals[key] = self._detailGroup._totals[key];
+                                    }
                                 }
                             }
+                            parent = parent._parent;
                         }
-                        parent = parent._parent;
-                    }
 
-                    self._renderFinalFooter(Rpt, State, callback);
-                });
-            } else {
-                this._child._renderIt(Rpt, State, currentData, function() {
-                    self._renderFinalFooter(Rpt, State, callback);
-                } );
-            }
-
-
-
+                        self._renderFinalFooter(Rpt, State, callback);
+                    });
+                } else {
+                    self._child._renderIt(Rpt, State, currentData, function () {
+                        self._renderFinalFooter(Rpt, State, callback);
+                    });
+                }
+            });
         },
 
         _setBandSize: function (value, offset) {
             this._curBandWidth = value;
             this._curBandOffset = offset;
+        },
+
+        _reportRenderMode: function(value) {
+             if (arguments.length) {
+                  this._reportMode = value;
+              }
+              return this._reportMode;
         }
 
     };
@@ -1015,57 +1284,166 @@
             return this._part;
         },
 
-        run: function (Rpt, State, Data) {
+        run: function (Rpt, State, Data, callback) {
             var offsetX, offsetY;
 
-            // Setup our current Header/Footer that is running
-            Rpt._curheaderfooter = this;
-
-            if (this._pageBreakBefore) {
-                Rpt.newPage();
-            }
-            offsetY = Rpt.getCurrentY();
-            if (this._partHeight === -1) {
-                offsetX = Rpt.getCurrentX();
-            }
-            if (offsetY + this._partHeight > Rpt.maxY()) {
-                Rpt.newPage(State);
+            if (State.isCalc) {
+                Rpt._firstMoveState = false;
+                Rpt._savedFirstMove = 0;
             }
 
             if (Report.trace) {
-                console.log("Running", this._isHeader ? "Header" : "Footer", Data);
+                console.error("Run ", this._isHeader ? "Header" : "Footer", State.isCalc ? "-- Is Calculation --" : "");
+
+                if (Report.callbackDebugging) {
+                    console.error(" - with ", typeof callback === "function" ? "Valid" : "** Invalid **", "callback");
+                }
             }
 
-            if (this._isFunction) {
-                try {
-                    this._part(Rpt, Data, State);
-                    if (Rpt._bandFields.length) { Rpt.band(); }
-                } catch (err) {
-                    if (this._isHeader) {
-                        Report.error("REPORTAPI: Error running header in report", err, err &amp;&amp; err.stack);
-                    } else {
-                        Report.error("REPORTAPI: Error running footer in report", err, err &amp;&amp; err.stack);
-                    }
+            // Setup our current Header/Footer that is running
+            Rpt._curheaderfooter = this;
+            var self = this;
+            var _handlePrePageBreak, _handleCallingDetailFunction, _handlePostPageBreak;
+            //var st = new Error();
 
+            // We need to see if we need to page break BEFORE printing the detail
+            _handlePrePageBreak = function() {
+                offsetY = Rpt.getCurrentY();
+                if (self._partHeight === -1) {
+                    offsetX = Rpt.getCurrentX();
                 }
-            } else if (this._part !== null) {
-                if (this._isHeader) {
-                    this.runStockHeader(Rpt, this._part);
+
+                // We are temporarily eliminating the height restriction.
+                if (self._isHeightExempt) {
+                    Rpt._height = 90000;
+                }
+
+                if (offsetY + self._partHeight > Rpt._maxY()) {
+                    Rpt.newPage({save: true, breakingBeforePrint: true}, _handleCallingDetailFunction);
+
                 } else {
-                    this.runStockFooter(Rpt, this._part);
+                    _handleCallingDetailFunction();
                 }
-            }
-            if (this._partHeight === -1) {
-                this._partHeight = Rpt.getCurrentY() - offsetY;
-                this._partWidth = Rpt.getCurrentX() - offsetX;
+            };
 
+            // Print the detail data
+            _handleCallingDetailFunction = function() {
+                if (Report.trace) {
+                    console.error("Running", self._isHeader ? "Header" : "Footer", self._isFunction ? (self._part.length === 4 ? "(Async)" : "(Sync)") : "(Fixed)");
+                }
+
+                if (self._isFunction) {
+                    if (self._part.length === 4) {
+                        try {
+                            self._part(Rpt, Data, State, function (err) {
+                                if (Report.trace &amp;&amp; Report.callbackDebugging) {
+                                    console.error(" - CallBack from ", self._isHeader ? "Async Header" : "Async Footer");
+                                }
+                                if (err) {
+                                    if (self._isHeader) {
+                                        Report.error("REPORTAPI: Error running header in report", err, err &amp;&amp; err.stack);
+                                    } else {
+                                        Report.error("REPORTAPI: Error running footer in report", err, err &amp;&amp; err.stack);
+                                    }
+                                }
+                                _handlePostPageBreak();
+                            });
+                        } catch (err) {
+                            if (self._isHeader) {
+                                Report.error("REPORTAPI: Error running header in report", err, err &amp;&amp; err.stack);
+                            } else {
+                                Report.error("REPORTAPI: Error running footer in report", err, err &amp;&amp; err.stack);
+                            }
+                            _handlePostPageBreak();
+                        }
+                    } else {
+                        try {
+                            self._part(Rpt, Data, State);
+                        } catch (err) {
+                            if (self._isHeader) {
+                                Report.error("REPORTAPI: Error running header in report", err, err &amp;&amp; err.stack);
+                            } else {
+                                Report.error("REPORTAPI: Error running footer in report", err, err &amp;&amp; err.stack);
+                            }
+                        }
+                        if (Report.trace &amp;&amp; Report.callbackDebugging) {
+                            console.error(" - Back from ", self._isHeader ? "Header" : "Footer");
+                        }
+
+                        _handlePostPageBreak();
+                    }
+                } else if (self._part !== null) {
+                    if (self._isHeader) {
+                        self.runStockHeader(Rpt, self._part, _handlePostPageBreak);
+                    } else {
+                        self.runStockFooter(Rpt, self._part, _handlePostPageBreak);
+                    }
+                } else {
+                    _handlePostPageBreak();
+                }
+            };
+
+            // We need to see if we need to page break AFTER print the detail
+            _handlePostPageBreak = function() {
+
+                // If this is a Calculation, then we are getting the header/footer details sizes.
+                if (State.isCalc &amp;&amp; self._partHeight === -1) {
+                    if (self._isHeader) {
+                        // We want to subtract out the fixed margin for the header
+                        self._partHeight = parseInt(Math.ceil(Rpt.getCurrentY() - Rpt.minY()),10);
+                    } else {
+                        if (Rpt._savedFirstMove) {
+                            self._partHeight = Rpt.maxY() - parseInt(Math.ceil(Rpt._savedFirstMove),10);
+                        } else {
+                            self._partHeight = parseInt(Math.ceil(Rpt.getCurrentY() - offsetY), 10);
+                        }
+                        if (Rpt.getCurrentY() > Rpt.maxY()) {
+                            var exceeds = parseInt(Math.ceil(Rpt.getCurrentY()),10) - Rpt.maxY();
+                            Report.error("REPORTAPI: Your Report's Page Footer exceeds the page bottom margin (",Rpt.maxY(),") by ", exceeds, "-- Please subtract",exceeds,"pixels from (probably) where you set Y to",Rpt._savedFirstMove ? Rpt._savedFirstMove : "change its location.");
+                        }
+                    }
+                    if (Report.trace) {
+                        console.error("Part ", self._isHeader ? "Header" : "Footer", " Height is:", self._partHeight, Rpt._savedFirstMove, Rpt.getCurrentY(), Rpt._maxY());
+                    }
+                    self._partWidth = Rpt.getCurrentX() - offsetX;
+                }
+
+                // We are re-instating the height restriction.
+                if (self._isHeightExempt) {
+                    Rpt._height = Rpt._reportHeight;
+                }
+
+                if (self._pageBreakAfter) {
+                    Rpt.newPage({save:true}, callback);
+                } else if (callback) {
+                    callback();
+                }
+            };
+
+
+            if (this._pageBreakBefore) {
+                Rpt.newPage({save: true, breakingBeforePrint: !this._isHeader}, _handlePrePageBreak);
+            } else {
+                _handlePrePageBreak();
             }
-            if (this._pageBreakAfter) {
-                Rpt.newPage();
-            }
+
         },
 
-        runStockHeader: function (Rpt, headers) {
+        runStockHeader: function (Rpt, headers, callback) {
+
+            if (Report.trace) {
+                console.error("Running Stock", this._isHeader ? "Header" : "Footer");
+                if (Report.callbackDebugging) {
+                    console.error(" - Callback is ", typeof callback === "function" ? "Valid" : "** Invalid **");
+                }
+            }
+
+            if (headers == null || headers.length === 0) {
+                if (callback) {
+                    callback();
+                }
+                return;
+            }
 
             var NowDate = new Date();
 
@@ -1083,68 +1461,93 @@
             }
             var Header = "Printed At: " + hours + ":" + mins + ampm;
             var y = Rpt.getCurrentY();
-            Rpt.print(Header);
-            if (isArray(headers)) {
-                Rpt.print(headers[0], {align: "center", y: y});
-            }
-            else {
-                Rpt.print(headers, {align: "center", y: y});
-            }
+            var centerHeader;
 
-            Rpt.print("Page : " + Rpt.currentPage(), {align: "right", y: y});
-            Header = "on " + NowDate.toLocaleDateString();
-            y = Rpt.getCurrentY();
-            Rpt.print(Header);
-            if (isArray(headers) &amp;&amp; headers.length > 1) {
-                Rpt.print(headers[1], {align: "center", y: y});
-            }
-            Rpt.newLine();
+            Rpt.print(Header, function() {
+                if (isArray(headers)) {
+                    centerHeader = headers[0];
+                } else {
+                    centerHeader = headers;
+                }
+                Rpt.print(centerHeader, {align: "center", y: y}, function() {
+                    Rpt.print("Page : " + Rpt.currentPage(), {align: "right", y: y}, function () {
+                        Header = "on " + NowDate.toLocaleDateString();
+                        y = Rpt.getCurrentY();
+                        Rpt.print(Header, function () {
+                            centerHeader = '';
+                            if (isArray(headers) &amp;&amp; headers.length > 1) {
+                                centerHeader = headers[1];
+                            }
+                            Rpt.print(centerHeader, {align: "center", y: y}, function () {
+                                Rpt.newLine(callback);
+                            });
+                        });
+                    });
+                });
+            });
         },
 
-        runStockFooter: function (Rpt, footer) {
+        runStockFooter: function (Rpt, footer, callback) {
+
+            if (Report.trace) {
+                console.error("Running Stock", this._isHeader ? "Header" : "Footer");
+                if (Report.callbackDebugging) {
+                    console.error(" - Callback is ", typeof callback === "function" ? "Valid" : "** Invalid **");
+                }
+            }
+
             if (footer === null || footer.length === 0) {
+                if (callback) {
+                    callback();
+                }
                 return;
             }
 
             var i, bndSizes = Rpt._bandWidth();
-            Rpt.newLine();
-            Rpt.bandLine(2);
+            var self = this;
+            Rpt.newLine(function() {
+                Rpt.bandLine(2);
 
-
-            // Handle a String Passed into it.
-            if (!isArray(footer)) {
-                this._handleFooterPart(Rpt, [footer], bndSizes);
-                return;
-            }
-
-            if (isArray(footer) &amp;&amp; footer.length >= 1) {
-
-                // Handle a Single Array
-                if (!isArray(footer[0])) {
-                    this._handleFooterPart(Rpt, footer, bndSizes);
+                // Handle a String Passed into it.
+                if (!isArray(footer)) {
+                    self._handleFooterPart(Rpt, [footer], bndSizes, callback);
                     return;
                 }
 
-                var bndArray = [];
-                // Handle a Array of Arrays
-                for (i = 0; i &lt; footer.length; i++) {
-                    var id = footer[i][1] - 1;
-                    while (id > bndArray.length) {
-                        bndArray.push(["", bndSizes[bndArray.length]]);
+                if (isArray(footer) &amp;&amp; footer.length >= 1) {
+
+                    // Handle a Single Array
+                    if (!isArray(footer[0])) {
+                        self._handleFooterPart(Rpt, footer, bndSizes, callback);
+                        return;
                     }
-                    bndArray[id] = [Rpt.totals[footer[i][0]], bndSizes[id]];
-                    // Fix Alignment, if set
-                    if (footer[i][2] >= 0 &amp;&amp; footer[i][2] &lt;= 3) {
-                        bndArray[id][2] = footer[i][2];
+
+                    var bndArray = [];
+                    // Handle a Array of Arrays
+                    for (i = 0; i &lt; footer.length; i++) {
+                        var id = footer[i][1] - 1;
+                        while (id > bndArray.length) {
+                            bndArray.push(["", bndSizes[bndArray.length]]);
+                        }
+                        bndArray[id] = [Rpt.totals[footer[i][0]], bndSizes[id]];
+                        // Fix Alignment, if set
+                        if (footer[i][2] >= 0 &amp;&amp; footer[i][2] &lt;= 3) {
+                            bndArray[id][2] = footer[i][2];
+                        }
                     }
+                    if (bndArray.length > 0) {
+                        Rpt.band(bndArray, callback);
+                    } else if (callback) {
+                        callback();
+                    }
+                } else if (callback) {
+                    callback();
                 }
-                if (bndArray.length > 0) {
-                    Rpt.band(bndArray);
-                }
-            }
+
+            });
         },
 
-        _handleFooterPart: function (Rpt, part, bndSizes) {
+        _handleFooterPart: function (Rpt, part, bndSizes, callback) {
             var offset = 0, i;
             if (part.length === 3) {
                 if (bndSizes[(part[2] - 1)]) {
@@ -1154,19 +1557,23 @@
                 }
             }
 
+            var _finishFooterPart = function() {
+                //Rpt.setCurrentY(y);
+                //Rpt.setCurrentX(x);
+                callback();
+            };
+
             var y = Rpt.getCurrentY(), x = Rpt.getCurrentX();
             if (offset > 0) {
-                Rpt.print(part[0], {y: y});
-                offset += (bndSizes[part[2] - 1] - Rpt.widthOfString(Rpt.totals[part[1]].toString()) - 2);
-                Rpt.print(Rpt.totals[part[1]].toString(), {x: x + offset, y: y});
+                Rpt.print(part[0], {y: y}, function() {
+                    offset += (bndSizes[part[2] - 1] - Rpt.widthOfString(Rpt.totals[part[1]].toString()) - 2);
+                    Rpt.print(Rpt.totals[part[1]].toString(), {x: x + offset, y: y}, _finishFooterPart);
+                });
             } else if (part.length > 1) {
-                Rpt.print(part[0] + ' ' + Rpt.totals[part[1]], {y: y});
+                Rpt.print(part[0] + ' ' + Rpt.totals[part[1]], {y: y}, _finishFooterPart);
             } else {
-                Rpt.print(part[0].toString(), {y: y});
+                Rpt.print(part[0].toString(), {y: y}, _finishFooterPart);
             }
-            Rpt.setCurrentY(y);
-            Rpt.setCurrentX(x);
-
         }
     };
 
@@ -1175,6 +1582,7 @@
     // ScopedDataObject Prototypes
     // -----------------------------------------------------------
     ScopedDataObject.prototype = {
+        _isScopedDataObject: true,
 
         // Used for Error Reporting (optional)
         error: function () {
@@ -1251,6 +1659,7 @@
             if (!this.isPaged || this._result) {
                 this.cleanUpData(this._result, callback);
             } else {
+                //noinspection JSUnresolvedFunction,JSUnresolvedVariable
                 this._scope.funcs.rowsgetpage(this._scope, function (err, data) {
                     if (!err) {
                         self.cleanUpData(data, callback);
@@ -1280,11 +1689,15 @@
                     }
                 }
 
+                var called = false;
                 this._scope.funcs.q(this._scope,
                     function (err, data) {
+                        // Streamline can on some errors decide to call us twice; so we eat the second call
+                        if (called) { return; }
+                        called = true;
                         // Error Occurred
                         if (err) {
-                            self.error("REPORTAPI: Error in query: ", err);
+                            self.error("REPORTAPI: Error in query: ", err, err &amp;&amp; err.stack);
                             self._result = null;
                             callback(err);
                             return;
@@ -1314,14 +1727,14 @@
                 } else {
                     var self = this;
                     this.query(function() {
-                        var len = self._result.length;
+                        var len = self._result &amp;&amp; self._result.length || 0;
                         return callback(null, len);
                     });
                 }
             } else if (this._dataType === 1) {
                 this._scope.funcs.rowsgetlength(this._scope, callback, this._data);
             } else {
-                this.error("REPORTAPI: Unknown datatype in scopedDataObject(Count), either extend the scopedDataObject or create your own simple wrapper!");
+                this.error("REPORTAPI: Unknown data type in scopedDataObject(Count), either extend the scopedDataObject or create your own simple wrapper!");
             }
         },
 
@@ -1341,16 +1754,17 @@
     };
 
 
+    var _PDFKit = require('./PDFKitImportPDF');
+
     // -----------------------------------------------------------
     // Setup our ReportRenderer Prototype functions
     // -----------------------------------------------------------
     //noinspection JSUnusedGlobalSymbols
 
-    ReportRenderer.prototype =
-    {
+    ReportRenderer.prototype = {
         _isPDFWrapper: true,
 
-        _PDFKit: require('pdfkit'),
+        _PDFKit: _PDFKit,
 
         _LineWrapperObject: require('pdfkit/js/line_wrapper'),
 
@@ -1363,7 +1777,7 @@
          */
         image: function (name, options) {
             options = options || {};
-            this._pageHasRendering = true;
+            this._pageHasRendering++;
             this._PDF.image(name, options);
         },
 
@@ -1373,13 +1787,21 @@
          * @param {number} [size] of font
          */
         font: function (name, size) {
-            this._PDF.font(name, size);
-            this._heightOfString = this._PDF.currentLineHeight(true);
+            try {
+                if (name &amp;&amp; name.normal) {
+                    this._PDF.font(name.normal, size);
+                } else {
+                    this._PDF.font(name, size);
+                }
+                this._heightOfString = this._PDF.currentLineHeight(true);
+            } catch (err) {
+                Report.error("REPORTAPI: Invalid font", name);
+            }
         },
 
         /**
          * Set the font size
-         * @param {number} size of font
+         * @param {number} [size] of font
          * @returns {number} - font size
          */
         fontSize: function (size) {
@@ -1393,10 +1815,12 @@
          * Bold the Font
          */
         fontBold: function () {
-            var font = this._fonts[this._PDF._font.filename];
-            if (!font) { return; }
 
-            switch (this._PDF._font.filename) {
+            var font = this._fonts[this._PDF._font.filename || this._PDF._font.font.attributes.FamilyName];
+            if (!font) { return; }
+            var fontName = this._PDF._font.filename || this._PDF._font.name;
+
+            switch (fontName) {
                 case font.italic:
                 case font.bolditalic:
                     if (font.bolditalic) {
@@ -1420,9 +1844,9 @@
          * @param strokeColor
          */
         fillAndStroke: function(fillColor, strokeColor) {
-           this._fillColor = fillColor;
-           this._strokeColor = strokeColor;
-           this._PDF.fillAndStroke(fillColor, strokeColor);
+            this._fillColor = fillColor;
+            this._strokeColor = strokeColor;
+            this._PDF.fillAndStroke(fillColor, strokeColor);
         },
 
         /**
@@ -1444,13 +1868,13 @@
          * @returns {string}
          */
         fillColor: function(color) {
-           if (arguments.length) {
-               if (color !== this._fillColor) {
+            if (arguments.length) {
+                if (color !== this._fillColor) {
                     this._fillColor = color;
                     this._PDF.fillColor(color);
-               }
-           }
-           return this._fillColor;
+                }
+            }
+            return this._fillColor;
         },
 
         /**
@@ -1488,10 +1912,11 @@
          * Italicize the Font
          */
         fontItalic: function () {
-            var font = this._fonts[this._PDF._font.filename];
+            var font = this._fonts[this._PDF._font.filename || this._PDF._font.font.attributes.FamilyName];
             if (!font) { return; }
+            var fontName = this._PDF._font.filename || this._PDF._font.name;
 
-            switch (this._PDF._font.filename) {
+            switch (fontName) {
                 case font.bold:
                 case font.bolditalic:
                     if (font.bolditalic) {
@@ -1513,7 +1938,7 @@
          * Make the Font Normal again (Remove Bold/Italic)
          */
         fontNormal: function () {
-            var font = this._fonts[this._PDF._font.filename];
+            var font = this._fonts[this._PDF._font.filename || this._PDF._font.font.attributes.FamilyName];
             if (font &amp;&amp; font.normal) {
                 this.font(font.normal);
             }
@@ -1573,6 +1998,10 @@
          */
         resetState: function() {
             var state = this._graphicState.pop();
+            this._applyState(state);
+        },
+
+        _applyState: function(state, skipX) {
             this._PDF._font = state.font;
             this.fontSize(state.fontSize);
             if (this._lineWidth !== state.lineWidth) {
@@ -1580,51 +2009,161 @@
             }
             this.fillColor(state.fillColor);
             this.strokeColor(state.strokeColor);
-            this._PDF.x = state.x;
+            if (skipX !== true) {
+                this._PDF.x = state.x;
+            }
+        },
 
+        /**
+         * Have their been any changes
+         * @param {boolean} [allChanges] - true means count header changes as changes; so a newPage page with headers will report as having changes
+         *                   - false means only count any detail or footer changes as changes.
+         * @returns {boolean}
+         */
+        hasChanges: function(allChanges) {
+            if (allChanges === true) {
+                return !!this._pageHasRendering;
+            } else {
+                return this._pageHeaderRendering !== this._pageHasRendering;
+            }
+        },
+
+        _handleFooter: function(options, cb) {
+
+            if (this._primaryReport._footer) {
+                this._primaryReport._footer.run(this, this._primaryReport.state(), this._lastData, cb);
+            } else if (cb) {
+                cb();
+            }
+        },
+
+        _handleHeader: function(options, cb) {
+            var currentGroup = this._primaryReport.state().currentGroup;
+            var headersToPrint = [], self = this;
+            var checkForPrintableHeaders = function(myGroup) {
+
+                // We don't want to print the currentGroups header; we want the group code to handle this in case the next
+                // header needed is actually a changed header -- But we print everything else that needs to be printed
+                // However, if we were page-breaked in the the "detail" then we actually need reprint the prior header as we are still in the detail code
+                if (myGroup._header &amp;&amp; (myGroup._runHeaderWhen === Report.show.always || (options.breakingBeforePrint &amp;&amp; myGroup._runHeaderWhen === Report.show.newPageOnly)) &amp;&amp; (myGroup !== currentGroup || !myGroup._isGroup || options.breakingBeforePrint)) {
+                        headersToPrint.push(myGroup);
+                }
+                if (myGroup._parent) {
+                    checkForPrintableHeaders(myGroup._parent);
+                }
+            };
+
+            var printFoundHeaders = function() {
+                if (headersToPrint.length === 0) {
+                    if (cb) {
+                        cb();
+                    }
+                    return;
+                }
+                var gp = headersToPrint.pop();
+                gp._header.run(self, self._primaryReport.state(), gp._currentData, printFoundHeaders);
+            };
+
+            if (currentGroup) {
+                checkForPrintableHeaders(currentGroup);
+                printFoundHeaders();
+            }
+        },
+
+        _resetPageHeaderCounter: function() {
+            this._pageHeaderRendering = this._pageHasRendering;
         },
 
         /**
          * Add a new Page; will check to see if anything has been rendered and if not; will not do anything
+         * @param {object|boolean} [save] - Saves the current State and applies it to the next page if "true"
+         *                                - If object, then it has save, skipDatesetFooters, and breakingBeforePrint options
+         * @param {function} [callback] - optional, if no callback is provided; this function will be synchronous
+         * @returns void
          */
-        newPage: function (save) {
+        newPage: function (save, callback) {
+            var hasCallback = true, options = {breakingBeforePrint: false};
+            if (typeof save === 'function') {
+                //noinspection JSValidateTypes
+                callback = save;
+                save = false;
+            }
+            if (typeof callback !== 'function') {
+                this._checkRenderMode(callback, "newPage");
+                callback = dummyCallback;
+                hasCallback = false;
+            }
+            if (save != null &amp;&amp; typeof save === 'object') {
+                if (save.breakingBeforePrint) {
+                    options.breakingBeforePrint = save.breakingBeforePrint;
+                }
+               save = !!save.save;
+            }
+
             if (!this._pageHasRendering) {
+                callback();
                 return;
             }
             if (this._pageBreaking) {
+                callback();
                 return;
             }
+
             if (save === true) {
                 this.saveState();
+                this._applyState(this._graphicState[0], true);
             }
             this._pageBreaking = true;
-            if (this._primaryReport &amp;&amp; this._primaryReport._footer) {
-                this._primaryReport._footer.run(this, this._primaryReport.state(), null);
-            }
-            this._addPage();
-            if (this._primaryReport &amp;&amp; this._primaryReport._header) {
-                this._primaryReport._header.run(this, this._primaryReport.state(), null);
-            }
-            this._pageBreaking = false;
-            if (save === true) {
-                this.resetState();
+
+            if (hasCallback) {
+                var self = this;
+                this._handleFooter(options, function () {
+                    self._addPage();
+                    self._handleHeader(options, function () {
+                        self._PDF.getEmptyPageStats();
+                        self._resetPageHeaderCounter();
+
+                        self._pageBreaking = false;
+                        if (save === true) {
+                            self.resetState();
+                        }
+                        callback();
+                    });
+                });
+
+            } else {
+                this._handleFooter(options);
+                this._addPage();
+                this._handleHeader(options);
+                this._PDF.getEmptyPageStats();
+                this._resetPageHeaderCounter();
+
+                this._pageBreaking = false;
+                if (save === true) {
+                    this.resetState();
+                }
             }
         },
 
         /**
          * Prints a standard header
          * @param {string} text to print in center of header
+         * @param {function} callback
          */
-        standardHeader: function (text) {
-            this._curheaderfooter.runStockHeader(this, text);
+        standardHeader: function (text, callback) {
+            this._checkRenderMode(callback, "standardHeader");
+            // TODO check to see if we need to change to using the State currents group for the runStockHeader/Footer
+            this._curheaderfooter.runStockHeader(this, text, callback);
         },
 
         /**
          * Prints a standard footer
          * @param {string} text
+         * @param {function} callback
          */
-        standardFooter: function (text) {
-            this._curheaderfooter.runStockFooter(this, text);
+        standardFooter: function (text, callback) {
+            this._checkRenderMode(callback, "standardFooter");
+            this._curheaderfooter.runStockFooter(this, text, callback);
         },
 
         /**
@@ -1632,7 +2171,11 @@
          * @returns {Number}
          */
         currentPage: function () {
-            return this._PDF.pages.length;
+            if (this._PDF.pages) {
+                return this._PDF.pages.length;
+            } else {
+                return this._PDF._root.data.Pages.data.Count;
+            }
         },
 
         /**
@@ -1686,15 +2229,36 @@
         /**
          * Inserts new Lines
          * @param {number} [lines] - number of lines to insert defaults to 1
+         * @param {function} [callback] - Optional Async support
          */
-        newLine: function (lines) {
-            lines = lines || 1;
-            for (var i = 0; i &lt; lines; ++i) {
-                this._PDF.moveDown();
-                if (this._PDF.y >= this.maxY()) {
-                    this.newPage();
-                }
+        newLine: function (lines, callback) {
+            var count= 0;
+
+            if (typeof lines === "function") {
+                //noinspection JSValidateTypes
+                callback = lines;
+                lines = 1;
             }
+
+            this._checkRenderMode(callback, "newLine");
+
+            lines = lines || 1;
+            var self = this;
+
+            var newLineDone = function() {
+                self._PDF.moveDown();
+                count++;
+
+                if (count === lines) {
+                    self._checkAndAddNewPage(0, {breakingBeforePrint: !self._pageBreaking}, callback);
+                } else {
+                    // TODO: We might want to spin off on a setImmediate/Process.nextTick if we run this loop more than a number of times
+                    self._checkAndAddNewPage(0, {breakingBeforePrint: !self._pageBreaking}, newLineDone);
+                }
+            };
+
+            newLineDone();
+
         },
 
         /**
@@ -1714,42 +2278,117 @@
             return this._heightOfString;
         },
 
+        _print: function(text, textOptions, callback) {
+            var procText = this._processText(text);
+
+            if (textOptions.wordSpacing) {
+                procText = procText.replace(/\s{2,}/g, ' ');
+            }
+
+            var self = this;
+
+            var right = this._PDF.page.margins.right;
+            var width = this._PDF.page.width;
+
+            this._LWDoc.reset();
+
+            // First Line maybe remainder of a line
+            this._PrintWrapper.lineWidth = width - this._PDF.x - right;
+            textOptions.width = width;
+
+            this._PrintWrapper.wrap(procText, textOptions);
+            var _printedLines = this._printedLines;
+            this._printedLines = [];
+
+            var startLooping;
+            if (this._reportRenderMode === reportRenderingMode.ASYNC) {
+                startLooping = startLoopingAsync;
+            } else {
+                startLooping = startLoopingSync;
+            }
+
+            var length = _printedLines.length;
+            if (callback) {
+                startLooping(length,
+                    function (cnt, done) {
+                        if (self._PDF.y + self._heightOfString > self._maxY()) {
+                            self.newPage({save: true, breakingBeforePrint: true}, function () {
+                                self._PDF._line(_printedLines[cnt].L, _printedLines[cnt].O, true);
+                                done();
+                            });
+                        } else {
+                            self._PDF._line(_printedLines[cnt].L, _printedLines[cnt].O, true);
+                            done();
+                        }
+                    },
+                    function () {
+                        _printedLines = null;
+                        callback();
+                    });
+            } else {
+                for (var i=0;i&lt;length;i++) {
+                   if (this._PDF.y + this._heightOfString > this._maxY()) {
+                       this.newPage({save: true, breakingBeforePrint: true});
+                   }
+                    this._PDF._line(_printedLines[i].L, _printedLines[i].O, true);
+                }
+                _printedLines = null;
+            }
+
+        },
+
         /**
          * Prints text on the PDF
          * @param {(String|Array)} data a string or an array of string values to be
          * @param {Object} options - a list of options (x,y,addX,addY,align,width,textWidth,font,fontSize,fontBold
+         * @param {function} callback - Optional, function will be synchronous if called without a CB;
          */
-        print: function (data, options) {
-            var i, max, textOptions = {};
-            this._pageHasRendering = true;
+        print: function (data, options, callback) {
+            if (typeof options === 'function') {
+                //noinspection JSValidateTypes
+                callback = options;
+                options = null;
+            }
+            // If we have nothing to print then lets just exit
+            if (data == null || data.length === 0) {
+                if (callback) {
+                    callback();
+                }
+                return;
+            }
+
+            var textOptions = {};
+            this._pageHasRendering++;
             this._PDF.x = this._PDF.page.margins.left;
             this.saveState();
 
+            this._checkRenderMode(callback, "print");
+
             if (options &amp;&amp; typeof options === "object") {
-                if (options.x) {
-                    this._PDF.x = options.x;
+                if (!isNaN(options.x + 0)) {
+                    this._PDF.x = options.x + 0;
                 }
-                if (options.addX) {
-                    this._PDF.x += options.addX;
+                if (!isNaN(options.addX + 0)) {
+                    this._PDF.x += options.addX + 0;
                 }
-                if (options.addx) {
-                    this._PDF.x += options.addx;
+                if (!isNaN(options.addx + 0)) {
+                    this._PDF.x += options.addx + 0;
                 }
-                if (options.y) {
-                    this._PDF.y = options.y;
+                if (!isNaN(options.y + 0)) {
+                    this._PDF.y = options.y + 0;
                 }
-                if (options.addY) {
-                    this._PDF.y += options.addY;
+                if (!isNaN(options.addY + 0)) {
+                    this._PDF.y += options.addY + 0;
                 }
-                if (options.addy) {
-                    this._PDF.y += options.addy;
+                if (!isNaN(options.addy + 0)) {
+                    this._PDF.y += options.addy + 0;
                 }
                 if (options.align) {
                     if (options.align + 0 > 0) {
                         switch (options.align) {
-                            case Report.left: options.align = "left"; break;
-                            case Report.center: options.align = "center"; break;
-                            case Report.right: options.align = "right"; break;
+                            case Report.alignment.LEFT: options.align = "left"; break;
+                            case Report.alignment.CENTER: options.align = "center"; break;
+                            case Report.alignment.RIGHT: options.align = "right"; break;
                         }
                     }
                     textOptions.align = options.align;
@@ -1765,10 +2404,24 @@
                     this.strokeColor(options.textColor || options.textcolor);
                 }
 
+                if (options.underline) {
+                    textOptions.underline = true;
+                }
+
+                if (options.strike) {
+                    textOptions.strike = true;
+                }
+
                 if (options.fontsize) {
                     this.fontSize(options.fontsize);
                 } else if (options.fontSize) {
                     this.fontSize(options.fontSize);
+                }
+
+                if (options.fill) {
+                    // TODO: Create Code, need to track start in current line, number of lines and end line width to create
+                    // the Fill size that is need.
+                    Report.error("REPORTAPI: FILL on a print() doesn't do anything");
                 }
 
                 if (options.font) {
@@ -1780,33 +2433,89 @@
                 if (options.fontItalic || options.fontitalic) {
                     this.fontItalic();
                 }
-
             }
 
 
-            var cachedMaxY = this.maxY() - this._heightOfString;
+            var cachedMaxY = this._maxY() - this._heightOfString;
+            var self = this;
+
+            var finishPrinting = function() {
+                self.resetState();
+                if (self._PDF.y >= self._maxY()) {
+                    self.newPage({save:true}, callback);
+                } else if (callback) {
+                    callback();
+                }
+            };
+
             if (isArray(data)) {
-                for (i = 0, max = data.length; i &lt; max; i++) {
-                    if (data[i] !== null &amp;&amp; data[i] !== undefined) {
-                        if (this._PDF.y > cachedMaxY) {
-                            this.newPage(true);
+                // If a callback isn't provided -- then we need to do a normal loop; because startLooping uses SetImmediate which will
+                // break the PROCESSING ORDER and cause things to get printed out of order.
+
+                var startLooping;
+                if (this._reportRenderMode === reportRenderingMode.ASYNC) {
+                    startLooping = startLoopingAsync;
+                } else {
+                    startLooping = startLoopingSync;
+                }
+
+                if (callback) {
+                    startLooping(data.length, function (iteration, done) {
+                        if (data[iteration] !== null &amp;&amp; data[iteration] !== undefined) {
+                            if (self._PDF.y > cachedMaxY) {
+                                self.newPage({save: true, breakingBeforePrint: true}, function () {
+                                    self._print(data[iteration], textOptions, done);
+                                    //self._PDF.text(self._processText(data[iteration]), textOptions);
+                                    //done();
+                                });
+                            } else {
+                                self._print(data[iteration], textOptions, done);
+                                //self._PDF.text(self._processText(data[iteration]), textOptions);
+                                //done();
+                            }
+                        } else {
+                            done();
                         }
-                        this._PDF.text(this._processText(data[i]), textOptions);
+                    }, finishPrinting);
+                } else {
+                    // Synchronous Loop, if a callback wasn't provided
+                    for (var i=0;i&lt;data.length;i++) {
+                        if (data[i] !== null &amp;&amp; data[i] !== undefined) {
+                            if (self._PDF.y > cachedMaxY) {
+                                // WE HAVE TO ASSUME that the header does not need a callback since they didn't pass one into the print routine
+                                // This is not a GOOD assumption; but it is the only valid one we can do, since we have no way to async wait now
+                                self.newPage({save: true, breakingBeforePrint: true});
+                            }
+                            self._print(data[i], textOptions);
+//                            self._PDF.text(self._processText(data[i]), textOptions);
+                        }
                     }
+                    finishPrinting();
                 }
             } else if (data !== null &amp;&amp; data !== undefined) {
-                if (this._PDF.y > cachedMaxY) {
-                    this.newPage(true);
+                // Async Path
+                if (callback) {
+                    if (this._PDF.y > cachedMaxY) {
+                        this.newPage({save: true, breakingBeforePrint: true}, function() {
+                            self._print(data, textOptions, finishPrinting);
+                            //self._PDF.text(self._processText(data), textOptions);
+                            //finishPrinting();
+                        });
+                    } else {
+                        this._print(data, textOptions, finishPrinting);
+                        //this._PDF.text(this._processText(data), textOptions);
+                        //finishPrinting();
+                    }
+                } else {
+                    if (this._PDF.y > cachedMaxY) {
+                        this.newPage({save: true, breakingBeforePrint: true});
+                    }
+                    this._print(data, textOptions);
+                    finishPrinting();
                 }
-                this._PDF.text(this._processText(data), textOptions);
+            } else {
+                finishPrinting();
             }
-
-            this.resetState();
-
-            if (this._PDF.y >= this.maxY()) {
-                this.newPage();
-            }
-
         },
 
         /**
@@ -1827,7 +2536,7 @@
             if (width > 0) {
                 var oldLineWidth = this.lineWidth();
                 this.lineWidth(thickness);
-                this.line(x - 0.5, y - 2, width + x - 0.5, y - 2);
+                this.line(x - 0.5, y - 2, width + x - 0.5, y - 2, {});
                 this.lineWidth(oldLineWidth);
             }
             if (verticalGap) {
@@ -1844,8 +2553,9 @@
          * @param {Object} options
          */
         line: function (startX, startY, endX, endY, options) {
+            if (arguments.length &lt; 4) { return; }
             var x = this._PDF.x, y = this._PDF.y;
-            this._pageHasRendering = true;
+            this._pageHasRendering++;
             this._PDF.moveTo(startX, startY);
             this._PDF.lineTo(endX, endY);
             this._handleOptions(options);
@@ -1862,7 +2572,8 @@
          * @param {Object} options
          */
         box: function (startX, startY, endX, endY, options) {
-            this._pageHasRendering = true;
+            if (arguments.length &lt; 4) { return; }
+            this._pageHasRendering++;
             this._PDF.rect(startX, startY, endX, endY);
             this._handleOptions(options);
         },
@@ -1875,22 +2586,10 @@
          * @param {object} options
          */
         circle: function(startX, startY, radius, options) {
-            this._pageHasRendering = true;
+            if (arguments.length &lt; 3) { return; }
+            this._pageHasRendering++;
             this._PDF.circle(startX,startY,radius);
             this._handleOptions(options);
-        },
-
-        /**
-         * Adds a Band Field to the Band
-         * @param data element
-         * @param [width] of field
-         * @param [alignment] of field
-         */
-        bandField: function(data, width, alignment) {
-            var dta = {data: data};
-            if (arguments.length >= 2) { dta.width = width; }
-            if (arguments.length >= 3) { dta.align = alignment; }
-            this._bandFields.push(dta);
         },
 
         /**
@@ -1899,11 +2598,17 @@
          * @param {object} options - Options like "group" for grouping values,
          *                  and "duplicatedTextValue" for what you want printed - defaults to a single quote ' " '
          *                  and can contain any normal "band" options
+         * @param {Function} callback
          */
-        suppressionBand: function (data, options) {
-            if (data == null) {
-                data = this._bandFields;
-                this._bandFields = [];
+        suppressionBand: function (data, options, callback) {
+            if (typeof options === "function") {
+                //noinspection JSValidateTypes
+                callback = options;
+                options = null;
+            } else if (typeof data === "function") {
+                //noinspection JSValidateTypes
+                callback = data;
+                data = null;
             }
 
             options = options || {};
@@ -1918,35 +2623,54 @@
                 var cdata = this._priorValues[group];
 
                 for (var i = cdata.length - 1; i >= 0; i--) {
-                    if (data[i].force === true || data[i].force === 1) { continue; }
+                    if (data[i].force === true || data[i].force === 1) {
+                        continue;
+                    }
                     if (data[i].data === cdata[i].data &amp;&amp; data[i].data !== '' &amp;&amp; data[i].data !== null &amp;&amp; data[i].data !== undefined) {
                         data[i].data = options.duplicatedTextValue || ' " ';
                     }
                     //else break;
                 }
             }
-
-            this.band(data, options);
-
-            this._priorValues[group] = originalData;
+            var self = this;
+            this.band(data, options, function () {
+                self._priorValues[group] = originalData;
+                if (callback) {
+                    callback();
+                }
+            });
         },
 
         /**
          * Band creates a Band where border and padding are including INSIDE the cell.  Gutter is outside.
-         * @param {Array} dataIn is {data: value, width: width, align: alignment}
+         * @param {Array|Object} dataIn is {data: value, width: width, align: alignment}
          * @param {Object} options
+         * @param {function} callback - optional Callback for Async support
          */
-        band: function (dataIn, options) {
+        band: function (dataIn, options, callback) {
             var i = 0, max = dataIn.length, maxWidth = 0, lineWidth = null;
             var defaultSize = 50, data = [], startX = this._PDF.page.margins.left;
-            this._pageHasRendering = true;
+            this._pageHasRendering++;
+            var self = this;
+
+            if (typeof options === "function") {
+                //noinspection JSValidateTypes
+                callback = options;
+                options = null;
+            } else if (typeof dataIn === "function") {
+                //noinspection JSValidateTypes
+                callback = dataIn;
+                dataIn = null;
+            }
+
+            this._checkRenderMode(callback, "band");
 
             if (dataIn == null) {
-                dataIn = this._bandFields;
-                this._bandFields = [];
-            } else if (this._bandFields.length) {
-                // Run prior band fields if we are creating a new band
-                this.band(null);
+                Report.error("REPORTAPI: Band passed a NULL as the data");
+                if (callback) {
+                    callback();
+                }
+                return;
             }
 
             options = options || {};
@@ -2024,176 +2748,188 @@
             // Do Data Fixup / cleanup / Figure wrapping
             var height = this._cleanData(data, options, defaultSize, borderPadding) + padding;
 
-
             // Check to see if we need to do a page feed before we print this band
-            if (this._PDF.y + height >= this.maxY()) {
-                this.newPage(true);
-            }
+            this._checkAndAddNewPage(height, {breakingBeforePrint: true}, function() {
 
-            if (lineWidth !== null) {
-                this.lineWidth(lineWidth);
-            }
-            this._curBand = [];
-            this._curBandOffset = startX;
-            var x = startX;
-            var y = this._PDF.y - (collapse ? 1 : 0);
+                if (lineWidth !== null) {
+                    self.lineWidth(lineWidth);
+                }
+                self._curBand = [];
+                self._curBandOffset = startX;
+                var x = startX;
+                var y = self._PDF.y - (collapse ? 1 : 0);
 
-            var offset = 0, textOffset = 0;
-            if (maxWidth > 0) {
-                this.saveState(); // Save State it for the Border / fills
-                if(options.fillOpacity || options.fillopacity){
-                    this.fillOpacity(options.fillOpacity || options.fillopacity);
-                }
-                if(options.dash){
-                    this._PDF.dash(options.dash);
-                }
-                if (options.bordercolor) {options.borderColor = options.bordercolor;}
-                if (options.borderColor){
-                    this.strokeColor(options.borderColor);
-                }
-                if (options.fill &amp;&amp; options.border > 0) {
-                    this._PDF.rect(x, y, maxWidth-1, height);
-                    this.fillAndStroke(options.fill, (options.borderColor || options.fill));
-                }
-                else if (options.fill) {
-                    this._PDF.rect(x, y, maxWidth-1, height);
-                    this.fill(options.fill);
-                }
-
-                // Reset back to Defaults
-                this.resetState();
-                if (options.dash) {
-                    this._PDF.undash();
-                }
-            }
-
-            var originalFontSize = this.fontSize() , currentFill, currentStroke;
-            if(options.textColor || options.textcolor){
-                var textColor = options.textColor || options.textcolor;
-                currentStroke = this._strokeColor;
-                currentFill = this._fillColor;
-                this.strokeColor(textColor);
-                this.fillColor(textColor);
-            }
-
-            for (i = 0; i &lt; max; i++) {
-                var curWidth = (data[i].width || defaultSize);
-                var savedState = false;
-                if (data[i].fill) {
-                    this.saveState();
-                    this._PDF.rect(x + offset, y, x + offset + curWidth, y + height);
-                    this.fill(data[i].fill);
-                    this.resetState();
-                }
-                var curData = data[i].data;
-                var curFontSize = data[i].fontSize || data[i].fontsize || originalFontSize;
-                this.fontSize(curFontSize);
-
-                var curTextColor = data[i].textColor || data[i].textcolor;
-                if (curTextColor || data[i].fontBold || data[i].fontbold || data[i].fontItalic || data[i].fontitalic) {
-                    this.saveState();
-                    savedState = true;
-                }
-                if (curTextColor) {
-                    this.strokeColor(curTextColor);
-                    this.fillColor(curTextColor);
-                }
-                if (data[i].fontBold || data[i].fontbold) {
-                    this.fontBold();
-                }
-                if (data[i].fontItalic || data[i].fontitalic) {
-                    this.fontItalic();
-                }
-                var wos = this.widthOfString(curData);
-                if (data[i].align) {
-                    if (data[i].align === 1 || data[i].align.toString().toLowerCase() === "left") {
-                        // Left
-                        textOffset = borderPadding - 1;
-                    } else if (data[i].align === 2 || data[i].align.toString().toLowerCase() === "center") {
-                        // Center
-                        textOffset = (curWidth / 2) - (wos / 2);
-                    } else if (data[i].align === 3 || data[i].align.toString().toLowerCase() === "right") {
-                        // RIGHT Aligned
-                        textOffset = (curWidth - wos) - borderPadding;
-                    } else {
-                        // Default to left
-                        textOffset = borderPadding - 1;
+                var offset = 0, textOffset = 0;
+                if (maxWidth > 0) {
+                    self.saveState(); // Save State it for the Border / fills
+                    if (options.fillOpacity || options.fillopacity) {
+                        self.fillOpacity(options.fillOpacity || options.fillopacity);
                     }
-                } else {
-                    if (isNumber(curData)) {
-                        // RIGHT Aligned
-                        textOffset = (curWidth - wos) - borderPadding;
-                    } else {
-                        // Default to left
-                        textOffset = borderPadding - 1;
+                    if (options.dash) {
+                        self._PDF.dash(options.dash);
+                    }
+                    if (options.bordercolor) {
+                        options.borderColor = options.bordercolor;
+                    }
+                    if (options.borderColor) {
+                        self.strokeColor(options.borderColor);
+                    }
+                    if (options.fill &amp;&amp; options.border > 0) {
+                        self._PDF.rect(x, y, maxWidth - 1, height);
+                        self.fillAndStroke(options.fill, (options.borderColor || options.fill));
+                    }
+                    else if (options.fill) {
+                        self._PDF.rect(x, y, maxWidth - 1, height);
+                        self.fill(options.fill);
+                    }
+
+                    // Reset back to Defaults
+                    self.resetState();
+                    if (options.dash) {
+                        self._PDF.undash();
                     }
                 }
-                if (textOffset &lt; 0) {
-                    textOffset = borderPadding - 1;
+
+                var originalFontSize = self.fontSize(), currentFill, currentStroke;
+                if (options.textColor || options.textcolor) {
+                    var textColor = options.textColor || options.textcolor;
+                    currentStroke = self._strokeColor;
+                    currentFill = self._fillColor;
+                    self.strokeColor(textColor);
+                    self.fillColor(textColor);
                 }
 
-                this._PDF.text(curData, x + offset + textOffset, y + borderPadding, {width: curWidth}).stroke();
-                if (savedState) {
-                    this.resetState();
+                for (i = 0; i &lt; max; i++) {
+                    var curWidth = (data[i].width || defaultSize) - (borderPadding * 2);
+                    var savedState = false;
+                    if (data[i].fill) {
+                        self.saveState();
+                        self._PDF.rect(x + offset, y, x + offset + curWidth, y + height);
+                        self.fill(data[i].fill);
+                        self.resetState();
+                    }
+                    var curData = data[i].data;
+                    var curFontSize = data[i].fontSize || data[i].fontsize || originalFontSize;
+                    self.fontSize(curFontSize);
+
+                    var curTextColor = data[i].textColor || data[i].textcolor;
+                    if (curTextColor || data[i].fontBold || data[i].fontbold || data[i].fontItalic || data[i].fontitalic) {
+                        self.saveState();
+                        savedState = true;
+                    }
+                    if (curTextColor) {
+                        self.strokeColor(curTextColor);
+                        self.fillColor(curTextColor);
+                    }
+                    if (data[i].fontBold || data[i].fontbold) {
+                        self.fontBold();
+                    }
+                    if (data[i].fontItalic || data[i].fontitalic) {
+                        self.fontItalic();
+                    }
+                    var wos = self.widthOfString(curData);
+                    if (data[i].align) {
+                        if (data[i].align === Report.alignment.LEFT || data[i].align.toString().toLowerCase() === "left") {
+                            // Left
+                            textOffset = borderPadding - 1;
+                        } else if (data[i].align === Report.alignment.CENTER || data[i].align.toString().toLowerCase() === "center") {
+                            // Center
+                            textOffset = (curWidth / 2) - (wos / 2);
+                        } else if (data[i].align === Report.alignment.RIGHT || data[i].align.toString().toLowerCase() === "right") {
+                            // RIGHT Aligned
+                            textOffset = (curWidth - wos);// - borderPadding;
+                        } else {
+                            // Default to left
+                            textOffset = borderPadding - 1;
+                        }
+                    } else {
+                        if (isNumber(curData)) {
+                            // RIGHT Aligned
+                            textOffset = (curWidth - wos);
+                        } else {
+                            // Default to left
+                            textOffset = borderPadding - 1;
+                        }
+                    }
+                    if (textOffset &lt; 0) {
+                        textOffset = borderPadding - 1;
+                    }
+                    var textOptions = {width: curWidth};
+                    if (data[i].underline) {
+                        textOptions.underline = true;
+                    }
+                    if (data[i].strike) {
+                        textOptions.strike = true;
+                    }
+
+                    self._PDF.text(curData, x + offset + textOffset, y + borderPadding, textOptions).stroke();
+                    if (savedState) {
+                        self.resetState();
+                    }
+
+                    offset += curWidth + gutter + (borderPadding * 2);
+                    self._curBand.push((data[i].width || defaultSize));
                 }
 
-                offset += curWidth + gutter;
-                this._curBand.push(curWidth);
-            }
-
-            if (options.textColor || options.textcolor) {
-                if (currentStroke !== this._strokeColor) {
-                    this.strokeColor(currentStroke);
-                }
-                if (currentFill !== this._fillColor) {
-                    this.fillColor(currentFill);
-                }
-            }
-
-            offset = 0;
-            if(options.borderColor || options.bordercolor){
-                this.strokeColor(options.borderColor || options.bordercolor);
-            }
-
-            for (i = 0; i &lt; max; i++) {
-                var dataElement = data[i];
-
-                var currentWidth;
-                if ((currentWidth = ((dataElement.border &amp;&amp; dataElement.border.left) || lineWidth)) &amp;&amp; (!collapse || (collapse &amp;&amp; i === 0))) {
-                    this.lineWidth(currentWidth);
-                    this.line(x + offset, y, x + offset, y + height);
-                }
-                if ((currentWidth = ((dataElement.border &amp;&amp; dataElement.border.top) || lineWidth)) > 0) {
-                    this.lineWidth(currentWidth);
-                    this.line((x + offset) - 0.5, y, x + (offset + (dataElement.width || defaultSize)) - 0.5, y);
-                }
-                if ((currentWidth = ((dataElement.border &amp;&amp; dataElement.border.bottom) || lineWidth)) > 0) {
-                    this.lineWidth(currentWidth);
-                    this.line(x + offset - 0.5, y + height, x + (offset + (dataElement.width || defaultSize)) - 0.5, y + height);
-                }
-                offset += (dataElement.width || defaultSize);
-                if ((currentWidth = ((dataElement.border &amp;&amp; dataElement.border.right) || lineWidth)) > 0) {
-                    this.lineWidth(currentWidth);
-                    this.line(x + offset - currentWidth, y, x + offset - currentWidth, y + height);
+                if (options.textColor || options.textcolor) {
+                    if (currentStroke !== self._strokeColor) {
+                        self.strokeColor(currentStroke);
+                    }
+                    if (currentFill !== self._fillColor) {
+                        self.fillColor(currentFill);
+                    }
                 }
 
-                offset += gutter;
-            }
+                offset = 0;
+                if (options.borderColor || options.bordercolor) {
+                    self.strokeColor(options.borderColor || options.bordercolor);
+                }
 
-            this._PDF.x = x;
-            this._PDF.y = y + height + 1; // add 1 for Whitespace
+                for (i = 0; i &lt; max; i++) {
+                    var dataElement = data[i];
 
-            this.resetState();
+                    var currentWidth;
+                    if ((currentWidth = ((dataElement.border &amp;&amp; dataElement.border.left) || lineWidth)) &amp;&amp; (!collapse || (collapse &amp;&amp; i === 0))) {
+                        if (!dataElement.border || (dataElement.border &amp;&amp; (dataElement.border.left !== 0 &amp;&amp; dataElement.border.left !== false))) {
+                            self.lineWidth(currentWidth);
+                            self.line(x + offset, y, x + offset, y + height);
+                        }
+                    }
+                    if ((currentWidth = ((dataElement.border &amp;&amp; dataElement.border.top) || lineWidth)) > 0) {
+                        if (!dataElement.border || (dataElement.border &amp;&amp; (dataElement.border.top !== 0 &amp;&amp; dataElement.border.top !== false))) {
+                            self.lineWidth(currentWidth);
+                            self.line((x + offset) - 0.5, y, x + (offset + (dataElement.width || defaultSize)) - 0.5, y);
+                        }
+                    }
+                    if ((currentWidth = ((dataElement.border &amp;&amp; dataElement.border.bottom) || lineWidth)) > 0) {
+                        if (!dataElement.border || (dataElement.border &amp;&amp; (dataElement.border.bottom !== 0 &amp;&amp; dataElement.border.bottom !== false))) {
+                            self.lineWidth(currentWidth);
+                            self.line(x + offset - 0.5, y + height, x + (offset + (dataElement.width || defaultSize)) - 0.5, y + height);
+                        }
+                    }
+                    offset += (dataElement.width || defaultSize);
+                    if ((currentWidth = ((dataElement.border &amp;&amp; dataElement.border.right) || lineWidth)) > 0) {
+                        if (!dataElement.border || (dataElement.border &amp;&amp; (dataElement.border.right !== 0 &amp;&amp; dataElement.border.right !== false))) {
+                            self.lineWidth(currentWidth);
+                            self.line(x + offset - currentWidth, y, x + offset - currentWidth, y + height);
+                        }
+                    }
 
-            if (this._PDF.y >= this.maxY()) {
-                this.newPage();
-            }
+                    offset += gutter;
+                }
 
+                self._PDF.x = x;
+                self._PDF.y = y + height + 1; // add 1 for Whitespace
+
+                self.resetState();
+
+                self._checkAndAddNewPage(0, {}, callback);
+            });
         },
 
         /**
          * Sets the line width
-         * @param {number} width of line
+         * @param {number} [width] - optional of line
          * @returns {number} current line width
          */
         lineWidth: function (width) {
@@ -2221,7 +2957,24 @@
          * @returns {number}
          */
         maxY: function () {
-            return this._PDF.page.maxY()-(this._footerSize);
+            return this._reportHeight-(this._primaryReport.state().footerSize);
+        },
+
+        /**
+         * This Max Y size function is used internally to do calculations, it can "lie" during some actions to eliminate page-breaking...
+         * @desc this function can LIE to eliminate height restrictions, this allows footers to print in the "footer" area without triggering a page break
+         * @protected
+         */
+        _maxY: function() {
+            return this._height-(this._primaryReport.state().footerSize);
+        },
+
+        /**
+         * Min Y Size
+         * @returns {number} - Top Margin Size
+         */
+        minY: function() {
+            return this._PDF.page.margins.top;
         },
 
         /**
@@ -2232,47 +2985,143 @@
             return this._PDF.page.width - this._PDF.page.margins.right;
         },
 
+        printedAt: function(options) {
+            options = options || {};
+            var curY;
+
+            var text = options.text || "Printed At: {0}:{1}{2}\non {3}";
+            if (options.header || options.footer) {
+                curY = this.getCurrentY();
+                if (!options.align) {
+                    options.align = "left";
+                }
+                if (options.header) {
+                    this.setCurrentY(this._PDF.page.margins.top);
+                }
+                if (options.footer) {
+                    if (text.indexOf('\n') !== false) {
+                        this.setCurrentY(this._reportHeight - (this._heightOfString * 2));
+                    } else {
+                        this.setCurrentY(this._reportHeight - (this._heightOfString));
+                    }
+                }
+            }
+            var NowDate = new Date();
+            var minutes = NowDate.getMinutes();
+            if (minutes &lt; 9) {
+                minutes = "0" + minutes;
+            }
+            var hours = NowDate.getHours();
+            var ampm = "am";
+            if (hours >= 12) {
+                if (hours > 12) {
+                    hours -= 12;
+                }
+                ampm = "pm";
+            }
+            //noinspection JSCheckFunctionSignatures
+            var Header = text.replace('{0}', hours).replace('{1}', minutes).replace('{2}', ampm).replace('{3}',NowDate.toLocaleDateString());
+            this._PDF.text(Header, options);
+            if (options.header || options.footer) {
+                this.setCurrentY(curY);
+            }
+        },
+
         /**
          * pageNumber - prints the current page number
          * @param options {object} - options object with settings; "text" value can be changed from the default "Page: {0}" to what you want.
          */
         pageNumber: function (options) {
+            options = options || {};
+            var curY;
+            if (options.header || options.footer) {
+                curY = this.getCurrentY();
+                if (!options.align) {
+                    options.align = "right";
+                }
+                if (options.header) {
+                    this.setCurrentY(this._PDF.page.margins.top);
+                }
+                if (options.footer) {
+                    this.setCurrentY( this._reportHeight-this._heightOfString);
+                }
+
+            }
             if (!options.align) {
                 options.align = "center";
             }
+
             var text = options.text || "Page: {0}";
             text = text.replace("{0}", this.currentPage());
             this._PDF.text(text, options);
+            if (options.header || options.footer) {
+                this.setCurrentY(curY);
+            }
+
+
+        },
+
+        /**
+         * Imports a PDF into the current Document
+         * return False if it fails, true if it succeeded
+         */
+        importPDF: function(name) {
+            var data;
+            if (Buffer.isBuffer(name)) {
+                data = name;
+            } else {
+                var fs = require('fs');
+                data = fs.readFileSync(name);
+            }
+            // We have to end the current page so that the following imported pages will
+            // be on new pages
+            if (this._pageHasRendering) {
+                this._addPage();
+            }
+
+            return this._PDF.importPDF(data);
         },
 
         /**
          * Add a new page
-         * @private
+         * @protected
          */
         _addPage: function () {
             if (!this._pageHasRendering) {
                 return;
             }
 
-            this._pageHasRendering = false;
+            this._pageHasRendering = 0;
             var options = {};
-            if (this._paper !== "letter") {
-                options.size = this._paper;
-            }
+            options.size = this._paper;
             if (this._landscape) {
                 options.layout = "landscape";
             }
-            if (this._margins !== 72) {
+            if (typeof this._margins === 'number') {
                 options.margin = this._margins;
+            } else {
+                options.margins = this._margins;
             }
 
             this._PDF.addPage(options);
+            // We are now subverting the pdfkits height system.  We handle it; this is because people can put in arbitrary y coords and we don't want any stupidity crashes.
+            this._height = this._reportHeight = this._PDF.page.maxY();
+            this._PDF.page.height = 99999;
+        },
+
+        _checkAndAddNewPage: function(height, options, callback) {
+            if (this._PDF.y + height >= this._maxY()) {
+                options.save = true;
+                this.newPage(options, callback);
+            } else if(callback) {
+                callback();
+            }
         },
 
         /**
          * Process the value running it through formatting
          * @param value
-         * @returns {string} - formated value
+         * @returns {string} - formatted value
          * @private
          */
         _processText: function (value) {
@@ -2292,29 +3141,23 @@
             return value.toString();
         },
 
-        /**
-         * Sets the fixed footer size of the pages
-         * @param value
-         * @private
-         */
-        _setFooterSize: function (value) {
-            this._footerSize += value;
-        },
-
         _handleOptions: function(options) {
             options = options || {};
             this.saveState();
-            if (options.hasOwnProperty('fillOpacity')) { this.fillOpacity(options.fillOpacity); }
+            if (options.hasOwnProperty('fillOpacity')) {
+                //noinspection JSCheckFunctionSignatures
+                this.fillOpacity(options.fillOpacity);
+            }
             if (options.hasOwnProperty('fillopacity')) { this.fillOpacity(options.fillopacity); }
             if (options.borderColor || options.bordercolor) { this.strokeColor(options.borderColor || options.bordercolor); }
             if (options.textColor || options.textcolor) { this.strokeColor(options.textColor || options.textcolor); }
+            if (options.hasOwnProperty('thickness')) { this.lineWidth(options.thickness); }
 
             // This will Stroke and fill whatever shape we are doing
             if (options.fill) { this.fillAndStroke(options.fill, (options.textColor || options.textcolor || options.borderColor || options.bordercolor || options.fill)); }
             else { this._PDF.stroke(); }
 
             this.resetState();
-
         },
 
         _truncateText: function (data, width) {
@@ -2341,10 +3184,16 @@
 
         _wrapText: function (data, width, ldata) {
             this._LWDoc.reset();
+            this._LineWrapper.lineWidth = width;
+
             ldata.width = width;
 
-            // TODO: Remove the Split when the underlying Bug https://github.com/devongovett/pdfkit/pull/152 is fixed.
-            this._LineWrapper.wrap(data.data.split('\n'), ldata);
+            if (!this._PDF.on) {
+                this._LineWrapper.wrap(data.data.split('\n'), ldata);
+            } else {
+                this._LineWrapper.wrap(data.data, ldata);
+            }
+
             return this._LWDoc.count;
         },
 
@@ -2352,7 +3201,7 @@
             var len = data.length;
 
             var formatText;
-            var lineData = {width: 0, height: this.maxY()};
+            var lineData = {width: 0, height: this._maxY()};
             if (options &amp;&amp; options.wrap) {
                 formatText = this._wrapText;
             } else {
@@ -2360,6 +3209,7 @@
             }
 
             var maxLines = 1, curLines, maxFontSize= 1, bp = borderPadding * 2;
+            
             var originalFontSize = this.fontSize();
             for (var i = 0; i &lt; len; i++) {
                 data[i].data = this._processText(data[i].data);
@@ -2437,6 +3287,23 @@
             return this._curBandOffset;
         },
 
+        /**
+         * Pipe the output
+         * @param pipe
+         * @param callback
+         * @ignore
+         * @private
+         */
+        _pipe: function(pipe, callback) {
+            if (!this._PDF.pipe) {
+                return Report.error("REPORTAPI: Pipe is unsupported on this version of PDFKit, upgrade PDFKIT.");
+            }
+            if (typeof callback === 'function') {
+                pipe.once('finish', callback);
+            }
+            this._PDF.pipe(pipe);
+            this._PDF.end();
+        },
 
         /**
          * Output the PDF
@@ -2446,7 +3313,14 @@
          * @private
          */
         _write: function (name, callback) {
-            this._PDF.write(name, callback);
+            if (!this._PDF.pipe) {
+                return this._PDF.write(name, callback);
+            }
+            var fs = require('fs');
+            var writeStream = fs.createWriteStream(name);
+            writeStream.once('finish', callback);
+            this._PDF.pipe(writeStream);
+            this._PDF.end();
         },
 
         /**
@@ -2456,7 +3330,42 @@
          * @ignore
          */
         _output: function(callback) {
-            this._PDF.output(callback);
+            var buffer = null;
+            if (!this._PDF.pipe) {
+                return this._PDF.output(callback);
+            }
+
+            this._PDF.on('data', function(chunk) {
+                if (buffer === null) {
+                    buffer = new Buffer(chunk);
+                } else {
+                    buffer = Buffer.concat([buffer, chunk]);
+                }
+            });
+            this._PDF.once('end', function() {
+                callback(buffer);
+            });
+            this._PDF.end();
+        },
+
+        _checkRenderMode: function(callback, functionName) {
+            if (this._reportRenderMode === reportRenderingMode.ASYNC) {
+                if (typeof callback !== 'function') {
+                    var e = new Error();
+                    Report.error("REPORTAPI: You have called a ASYNCHRONOUS function", functionName.toUpperCase(), "without the callback, the report WILL have issues or might even throw an error while saving.  The callstack is:", e.stack);
+                }
+            } /* else if (this._reportRenderMode === reportRenderingMode.SYNC) {
+                if (typeof callback === 'function') {
+                    // This is fine;
+                }
+            } */
+        },
+
+        /**
+         * DEPRECIATED -  Just create your own array, and push your fields to it and then call band with that array.
+         */
+        bandField: function() {
+            Report.error("REPORTAPI: bandField functionality has been removed.");
         },
 
         // CONSTANTS
@@ -2475,8 +3384,7 @@
     };
 
 
-    ReportDataSet.prototype =
-    {
+    ReportDataSet.prototype = {
         _isDataSet: true,
 
         /**
@@ -2494,25 +3402,27 @@
                 this._dataType = 0; // Normal passed preset data set
             } else if (typeof value === 'function' || typeof value === 'object') {
                 if (value.count &amp;&amp; (value.loadRange || value.loadrange)) {
-                    this._dataType = 1;  // Pagable Dataset
+                    this._dataType = 1;  // Page-able Dataset
                 } else if (typeof value === 'function') {
                     this._dataType = 2;  // Functional Dataset
                 } else {
                     // Just a POD (Plain old Data)
                     this._dataType = 3;
                 }
-            } else if (typeof value === 'string' || typeof value === 'number' || typeof value === 'Date') {
+            } else if (typeof value === 'string' || typeof value === 'number') {
                 this._dataType = 3; // POD
             } else {
                 this._dataType = 3; // Assume POD
                 Report.error("REPORTAPI: Unknown data type; treating as plain old data.");
             }
 
+            //noinspection JSUnresolvedVariable
             if (value.totalFormatter &amp;&amp; typeof value.totalFormatter === 'function') {
                 this._totalFormatter = function (data, callback) {
                     self._data.totalFormatter(data, callback);
                 };
             }
+            //noinspection JSUnresolvedVariable
             if (value.error &amp;&amp; typeof value.error === 'function') {
                 Report.error = function () {
                     self._data.error.apply(self._data, arguments);
@@ -2541,10 +3451,10 @@
         },
 
         keys: function (keys) {
-           if (arguments.length) {
-             this._keys = keys;
-           }
-           return this._keys;
+            if (arguments.length) {
+                this._keys = keys;
+            }
+            return this._keys;
         },
 
         _buildKeySet: function(currentData) {
@@ -2567,7 +3477,6 @@
             }
             return keys;
         },
-
 
         /**
          * Renders the Current DataSet
@@ -2603,12 +3512,9 @@
                     if (pageCount === pagedGroups) {
                         // Run the Final Footers
                         self._child._renderFooter(Rpt, State, callback);
-                        return;
-
                     } else {
                         // Load next data Page
                         loadPageData(pageCount);
-                        return;
                     }
                 } else {
                     groupCount++;
@@ -2651,10 +3557,12 @@
                 // Reset back to first row when we get a new data set loaded
                 curRecord = -1;
 
+                //noinspection JSUnresolvedVariable
                 if (self._data.loadrange) {
+                    //noinspection JSUnresolvedFunction
                     self._data.loadrange(start, end, renderData);
                 } else {
-                    self._data.loadRange(start, end, renderData); // Trying the propercase version...
+                    self._data.loadRange(start, end, renderData); // Trying the proper case version...
                 }
             };
 
@@ -2671,61 +3579,61 @@
             // This is a class/Function that implement "count" and "loadRange"
             // So we start by asking for the query (if needed), then the count, it will call the paging code
             else if (this._dataType === 1) {
-              var startCount = function() {
-                self._data.count(
-                    function (err, length) {
-                        if (err) {
-                            Report.error("REPORTAPI: Got error getting count: ", err);
-                            length = 0;
-                        }
-
-                        if (isNaN(length)) {
-                            Report.error("REPORTAPI: Got a non-number row length/count", length);
-                            length = 0;
-                        }
-
-                        dataLength = length;
-                        if (length === 0) {
-                            groupSize = 1;
-                            groupCount = pageCount = pagedGroups = 0;
-                            groupContinue();
-                        } else {
-                            pagedGroups = parseInt(length / 100, 10);
-                            if (pagedGroups * 100 &lt; length) {
-                                pagedGroups++;
+                var startCount = function() {
+                    self._data.count(
+                        function (err, length) {
+                            if (err) {
+                                Report.error("REPORTAPI: Got error getting count: ", err);
+                                length = 0;
                             }
-                            loadPageData(0);
-                        }
-                    });
-              };
 
-              if (this._data.query) {
-                 this._data.query(this._buildKeySet(currentData), startCount);
-              } else {
-                  startCount();
-              }
+                            if (isNaN(length)) {
+                                Report.error("REPORTAPI: Got a non-number row length/count", length);
+                                length = 0;
+                            }
 
-            // This is a simple query class, it should return all data either in a callback or as it return value
+                            dataLength = length;
+                            if (length === 0) {
+                                groupSize = 1;
+                                groupCount = pageCount = pagedGroups = 0;
+                                groupContinue();
+                            } else {
+                                pagedGroups = parseInt(length / 100, 10);
+                                if (pagedGroups * 100 &lt; length) {
+                                    pagedGroups++;
+                                }
+                                loadPageData(0);
+                            }
+                        });
+                };
+
+                if (this._data.query) {
+                    this._data.query(this._buildKeySet(currentData), startCount);
+                } else {
+                    startCount();
+                }
+
+                // This is a simple query class, it should return all data either in a callback or as it return value
             } else if (this._dataType === 2) {
-               var handleCb = false;
-               var data = this._data(this._buildKeySet(currentData), function(err, ndata) {
-                   if (err) {
-                       Report.error("REPORTAPI: Error getting data", err);
-                       ndata = [];
-                   }
-                   if (!handleCb) {
-                       handleCb = true;
-                       dataLength = ndata.length;
-                       renderData(null, ndata);
-                   }
-               });
-               if (data &amp;&amp; !handleCb) {
-                   handleCb = true;
-                   dataLength = data.length;
-                   renderData(null, data);
-               }
+                var handleCb = false;
+                var data = this._data(this._buildKeySet(currentData), function(err, ndata) {
+                    if (err) {
+                        Report.error("REPORTAPI: Error getting data", err);
+                        ndata = [];
+                    }
+                    if (!handleCb) {
+                        handleCb = true;
+                        dataLength = ndata.length;
+                        renderData(null, ndata);
+                    }
+                });
+                if (data &amp;&amp; !handleCb) {
+                    handleCb = true;
+                    dataLength = data.length;
+                    renderData(null, data);
+                }
 
-            // This is a POD
+                // This is a POD
             } else if (this._dataType === 3) {
                 if (this._data === null) {
                     Report.error("REPORTAPI: data is empty, try adding a .data([{field: 'value',...}]) to the report.");
@@ -2740,7 +3648,7 @@
             this._child = newChild;
         },
 
-        _calculateFixedSizes: function (Rpt) {
+        _calculateFixedSizes: function (Rpt, oldBogusData, callback) {
             if (this._child !== null) {
                 var bogusData = {}, key;
                 if (this._data !== null) {
@@ -2751,15 +3659,17 @@
                     }
                 }
 
-                this._child._calculateFixedSizes(Rpt, bogusData);
+                //noinspection JSAccessibilityCheck
+                this._child._calculateFixedSizes(Rpt, bogusData, callback);
+            } else if (callback) {
+                callback();
             }
         }
 
     };
 
 
-    ReportSection.prototype =
-    {
+    ReportSection.prototype = {
         _isSection: true,
 
         addDataSet: function (dataSet) {
@@ -2812,13 +3722,13 @@
         },
 
         subReports: function() {
-          var children=[];
-          for (var i=0;i&lt;this._children.length;i++) {
-              if (this._children[i]._isReport) {
-                  children.push(this._children[i]);
-              }
-          }
-          return children;
+            var children=[];
+            for (var i=0;i&lt;this._children.length;i++) {
+                if (this._children[i]._isReport) {
+                    children.push(this._children[i]);
+                }
+            }
+            return children;
         },
 
         // This starts the rendering process properly by chaining to the parent Report
@@ -2850,7 +3760,7 @@
         // This actually does the Rendering
         _renderIt: function (Rpt, State, currentData, callback) {
             var priorStart = [State.startX, State.startY];
-            State.priorStart.shift(priorStart);
+            State.priorStart.unshift(priorStart);
             State.startX = Rpt.getCurrentX();
             State.startY = Rpt.getCurrentY();
             var self = this;
@@ -2870,34 +3780,52 @@
                 }
             };
             renderGroup();
-
         },
 
         _renderFooter: function (Rpt, State, callback) {
-            var i, cnt = this._children.length, done = 0;
-            var callbacktracker = function () {
+            var i, cnt = this._children.length, done = -1;
+            var self = this;
+
+            var renderFooterHandler = function () {
                 done++;
                 if (done === cnt) {
                     callback();
+                } else {
+                    self._children[done]._renderFooter(Rpt, State, renderFooterHandler);
                 }
             };
-            for (i = 0; i &lt; cnt; i++) {
-                this._children[i]._renderFooter(Rpt, State, callbacktracker);
+
+            if (callback) {
+                renderFooterHandler();
+            } else {
+                for (i=0;i&lt;cnt;i++) {
+                    this._children[i]._renderFooter(Rpt, State);
+                }
             }
         },
 
+
         // Used to figure out the page usage size of header/footers
-        _calculateFixedSizes: function (Rpt) {
-            var i;
-            for (i = 0; i &lt; this._children.length; i++) {
-                this._children[i]._calculateFixedSizes(Rpt);
-            }
+        _calculateFixedSizes: function (Rpt, bogusData, callback) {
+            var _calculateCount = -1, _length = this._children.length;
+            var self = this;
+
+            var calcChildCallback = function() {
+                _calculateCount++;
+                if (_calculateCount &lt; _length) {
+                    self._children[_calculateCount]._calculateFixedSizes(Rpt, bogusData, calcChildCallback);
+                } else {
+                    callback();
+
+                }
+            };
+
+            calcChildCallback();
         }
     };
 
 
-    ReportGroup.prototype =
-    {
+    ReportGroup.prototype = {
         _isGroup: true,
 
         /**
@@ -2923,7 +3851,7 @@
                 // you will probably be "adding" some user data and so then the
                 // expectation is that it will be saved if you change it.
                 var newUserData = {};
-                parentReport.userdata(newUserData);
+                parentReport.userData(newUserData);
 
                 return (newUserData);
             }
@@ -2980,6 +3908,7 @@
          * @param options
          */
         addReport: function(rpt, options) {
+            //noinspection JSUnresolvedVariable
             if (options &amp;&amp; options.isSibling) {
                 var parentReport = this._parent;
                 while (!parentReport._isReport) {
@@ -3021,27 +3950,53 @@
          * @param {ReportRenderer} Renderer - report rendering class
          * @param {Object} Data - your Data line
          * @param [Object] ReportState - the current state of the process
+         * @param {Function} optional callback for Asynchronous support
          */
 
         /**
          * Adds a Detail section
-         * @param {detailCallback} detailFunction to run for each detail record
+         * @param {detailCallback|object|string} detailData to run for each detail record
          * @param {Object} settings for this detail function {afterSubgroup: "will print after a sub-group rather than before"}
          */
-        detail: function (detailFunction, settings) {
+        detail: function (detailData, settings) {
             if (!arguments.length) {
                 return (this._detail);
             }
-            this._afterSubgroup = getSettings(settings, "afterSubgroup", false);
-            this._detail = detailFunction;
+            if (!this._checkAsyncFunctionPrototype(detailData, "detail")) {
+                return this;
+            }
+            this._runDetailAfterSubgroup = getSettings(settings, "afterSubgroup", false);
+            this._detail = detailData;
+
+            if (typeof detailData === "string") {
+                this._renderDetail = this._renderStringDetail;
+            } else if (typeof detailData === "function") {
+                if (this._detail.length === 4) {
+                    this._renderDetail = this._renderAsyncDetail;
+                } else {
+                    this._renderDetail = this._renderSyncDetail;
+                }
+            } else if (isArray(detailData)) {
+                this._renderDetail = this._renderBandDetail;
+                if (!isArray(detailData[0])) {
+                    this._detail = [detailData];
+                }
+            } else {
+                // NOP Function, we don't render anything.
+                this._renderDetail = function (rpt, data, state, callback) {
+                    callback();
+                };
+            }
+
             return (this);
         },
 
         /**
          * Sets a field for generating totals -- this is used to group the results
          * @param {string} field name to group on
+         * @param {object} options
          */
-        groupBy: function (field) {
+        groupBy: function (field, options) {
             var parent, newGroup;
             // GroupBy Appends a group to another Group, except in the case this is the
             //   final group; then the final group must come last; so then this group is then inserted in the chain
@@ -3062,6 +4017,10 @@
 
             // Set the New Groups field to group on.
             newGroup._groupOn(field);
+
+            if (options) {
+                newGroup._runHeaderWhen = getSettings(options, "runHeader", newGroup._runHeaderWhen);
+            }
 
             return (newGroup);
         },
@@ -3117,6 +4076,7 @@
          * @param {ReportRenderer} Renderer - report rendering class
          * @param {Object} Data - your Data line
          * @param [Object] State - the current state of the process
+         * @param {Function} callback - Optional Callback for Asynchronous support
          */
 
         /**
@@ -3129,7 +4089,10 @@
             if (!arguments.length) {
                 return ds._pageHeader();
             }
-            ds._pageHeader(value, settings);
+            if (this._checkAsyncFunctionPrototype(value, "page header")) {
+                ds._pageHeader(value, settings);
+            }
+
             return (this);
         },
 
@@ -3143,7 +4106,9 @@
             if (!arguments.length) {
                 return ds._pageFooter();
             }
-            ds._pageFooter(value, settings);
+            if (this._checkAsyncFunctionPrototype(value, "page footer")) {
+                ds._pageFooter(value, settings);
+            }
             return (this);
         },
 
@@ -3157,7 +4122,9 @@
             if (!arguments.length) {
                 return ds._titleHeader();
             }
-            ds._titleHeader(value, settings);
+            if (this._checkAsyncFunctionPrototype(value, "title header")) {
+                ds._titleHeader(value, settings);
+            }
             return (this);
         },
 
@@ -3171,7 +4138,9 @@
             if (!arguments.length) {
                 return ds._finalSummary();
             }
-            ds._finalSummary(value, settings);
+            if (this._checkAsyncFunctionPrototype(value, "final summary")) {
+                ds._finalSummary(value, settings);
+            }
             return (this);
         },
 
@@ -3185,7 +4154,9 @@
                 this._header = new ReportHeaderFooter(true);
             }
             if (arguments.length) {
-                this._header.set(value, settings);
+                if (this._checkAsyncFunctionPrototype(value, "header")) {
+                    this._header.set(value, settings);
+                }
                 return this;
             }
             return (this._header.get());
@@ -3201,10 +4172,28 @@
                 this._footer = new ReportHeaderFooter(false);
             }
             if (arguments.length) {
-                this._footer.set(value, settings);
+                if (this._checkAsyncFunctionPrototype(value, "footer")) {
+                    this._footer.set(value, settings);
+                }
                 return this;
             }
             return (this._footer.get());
+        },
+
+        /**
+         * Set the output type
+         * @param type - File, Buffer, or Pipe
+         * @param to - filename, 'buffer' or writable stream object
+         * @returns {*}
+         */
+        outputType: function(type, to) {
+            var rpt = this._findRootReport();
+            if (!arguments.length) {
+                return rpt.outputType();
+            } else {
+                rpt.outputType(type, to);
+            }
+            return this;
         },
 
         /**
@@ -3219,10 +4208,11 @@
         /**
          * Prints the report structure to the console
          * @desc This prints the entire tree of the report to the console (Debug)
-        */
-        printStructure: function () {
+         * @param {boolean} asPrinted optional - true = display as actually outputted, otherwise display in section/group order
+         */
+        printStructure: function (asPrinted) {
             var top = this._findRootReport();
-            printStructure(top, 0);
+            printStructure(top, 0, !!asPrinted);
         },
 
         /**
@@ -3270,9 +4260,9 @@
          * @param {(string|Object)} definition - Font Definition either path to file or object type:path ie {normal: path, bold: path, italic: path, boldItalic: path}
          */
         registerFont: function(name, definition) {
-           var parentReport = this._findRootReport();
-           parentReport.registerFont(name, definition);
-           return this;
+            var parentReport = this._findRootReport();
+            parentReport.registerFont(name, definition);
+            return this;
         },
 
         /**
@@ -3329,7 +4319,8 @@
 
         /**
          * Sets or gets the current font size
-         * @param {number} value - font size to set it to
+         * @param {number} [value] - font size to set it to
+         * @returns {number|object}
          */
         fontSize: function (value) {
             var parentReport = this._findRootReport();
@@ -3338,6 +4329,14 @@
             }
             parentReport.fontSize(value);
             return this;
+        },
+
+        /**
+         * Import a PDF into the current Document
+         */
+        importPDF: function (value) {
+            var pr = this._findParentReport();
+            return pr.importPDF(value);
         },
 
         /**
@@ -3372,6 +4371,7 @@
 
             // Sub-Reports can set new keys in this group's total, so if we are clearing totals; we need to clear them also.
             for (var key in this._totals) {
+                //noinspection JSUnresolvedFunction
                 if (this._totals.hasOwnProperty(key)) {
                     this._totals[key] = 0;
                 }
@@ -3395,22 +4395,22 @@
                 // If you add any to this Switch, make sure you update the switch in the _clearTotals
                 switch (this._math[i][0]) {
                     case 1: // Sum
-                        this._totals[field] += currentData[srcField];
+                        this._totals[field] += parseFloat(currentData[srcField]);
                         break;
                     case 2: // Average
-                        this._totals[field + "_sum"] += currentData[srcField];
+                        this._totals[field + "_sum"] += parseFloat(currentData[srcField]);
                         this._totals[field + "_cnt"] += 1;
                         this._totals[field] = this._totals[field + "_sum"] / this._totals[field + "_cnt"];
                         break;
                     case 3: // Min
                         if (this._totals[field + "_min"] === 0 || currentData[srcField] &lt; this._totals[field]) {
                             this._totals[field + "_min"] = 1;
-                            this._totals[field] = currentData[srcField];
+                            this._totals[field] = parseFloat(currentData[srcField]);
                         }
                         break;
                     case 4: // max
                         if (this._totals[field] &lt; currentData[srcField]) {
-                            this._totals[field] = currentData[srcField];
+                            this._totals[field] = parseFloat(currentData[srcField]);
                         }
                         break;
                     case 5: // Count
@@ -3422,8 +4422,40 @@
             }
         },
 
+        _reportRenderMode: function(value) {
+            var parentReport = this._findRootReport();
+            if (arguments.length) {
+                return parentReport._reportRenderMode(value);
+            } else {
+                return parentReport._reportRenderMode();
+            }
+        },
+
+        _checkAsyncFunctionPrototype: function(f, typeFunction) {
+            if (typeof f !== 'function') {
+                return true;
+            }
+            var curMode = this._reportRenderMode();
+            if (f.length === 4) {
+                if (curMode === reportRenderingMode.UNDEFINED) {
+                    this._reportRenderMode(reportRenderingMode.ASYNC);
+                } else if (curMode !== reportRenderingMode.ASYNC) {
+                    Report.error("REPORTAPI: You have attempted to add a ASYNCHRONOUS ",typeFunction.toUpperCase(),"function to a report that already has a SYNCHRONOUS function added to it.  The report MUST be either fully ASYNCHRONOUS or fully SYNCHRONOUS, otherwise issues will occur, so we are ignoring this",typeFunction.toUpperCase(),"function and leaving the report SYNCHRONOUS!");
+                    return false;
+                }
+            } else {
+                if (curMode === reportRenderingMode.UNDEFINED) {
+                    this._reportRenderMode(reportRenderingMode.SYNC);
+                } else if (curMode !== reportRenderingMode.SYNC) {
+                    Report.error("REPORTAPI: You have attempted to add a SYNCHRONOUS",typeFunction.toUpperCase(),"function to a report that already has a ASYNCHRONOUS function added to it.  The report MUST be either fully ASYNCHRONOUS or fully SYNCHRONOUS, otherwise issues will occur, so we are ignoring this", typeFunction.toUpperCase(),"function and leaving the report ASYNCHRONOUS!");
+                    return false;
+                }
+            }
+            return true;
+        },
+
         /**
-         * Renders the footer on this report object
+         * Renders the footer on this report group
          * @param {ReportRenderer} Rpt - the report rendering object
          * @param {Object} State - current state of report
          * @param {function} callback when done with the footers
@@ -3438,9 +4470,10 @@
                         Rpt._bandOffset(self._curBandOffset);
                     }
                     self._expandRowTree(self._lastData);
-                    self._footer.run(Rpt, State, self._lastData);
+                    self._footer.run(Rpt, State, self._lastData, callback);
+                } else if (callback) {
+                    callback();
                 }
-                callback();
             };
 
             var setupTotals = function () {
@@ -3448,6 +4481,7 @@
                 var parent = self._findParentDataSet();
                 var found = false;
                 for (var a in Rpt.totals) {
+                    //noinspection JSUnresolvedFunction
                     if (Rpt.totals.hasOwnProperty(a)) {
                         found = true;
                         break;
@@ -3458,23 +4492,129 @@
                     finishFooter();
                 } else {
                     var x = function (err, data) {
+                        self._expandRowTree(data);
                         if (err) {
-                            Report.error("---- ERROR:", err);
+                            Report.error("REPORTAPI: ---- ERROR:", err);
                         }
                         Rpt.totals = data;
                         finishFooter();
                     };
                     parent._totalFormatter(Rpt.totals, x);
-                    self._expandRowTree(Rpt.totals);
                 }
             };
-
 
             if (this._child !== null &amp;&amp; this._child._renderFooter) {
                 this._child._renderFooter(Rpt, State, setupTotals);
             } else {
                 setupTotals();
             }
+        },
+
+        /**
+         * Renders the Detail in Sync mode
+         * @param Rpt
+         * @param State
+         * @param currentData
+         * @param callback
+         * @private
+         */
+        _renderSyncDetail: function(Rpt, State, currentData, callback) {
+            try {
+                this._detail(Rpt, currentData, State);
+            }
+            catch(err) {
+                Report.error("REPORTAPI: Error when calling group Detail", err, err &amp;&amp; err.stack);
+            }
+            // Callback is Required; so no "if" check
+            callback();
+        },
+
+        /**
+         * Renders the detail in Async Mode
+         * @param Rpt
+         * @param State
+         * @param currentData
+         * @param callback
+         * @private
+         */
+        _renderAsyncDetail: function(Rpt, State, currentData, callback) {
+            this._detail(Rpt, currentData, State, function(err) {
+                if(err) {
+                    Report.error("REPORTAPI: Error when calling group Detail", err, err &amp;&amp; err.stack);
+                }
+                // Callback is Required; so no "if" check
+                callback();
+            });
+
+        },
+
+        _renderStringDetailParse: function(currentData) {
+            var rendered = [];
+            var idxStr, start = 0;
+            while ((idxStr = this._detail.indexOf('{{', start)) >= 0) {
+                var idxEnd = this._detail.indexOf('}}', idxStr);
+                if (idxEnd > idxStr) {
+                    if (idxStr !== start) {
+                        rendered.push(this._detail.substring(start, idxStr));
+                    }
+                    var fld = this._detail.substring(idxStr + 2, idxEnd);
+                    if (currentData[fld]) {
+                        rendered.push({fld: fld});
+                    } else {
+                        rendered.push("{{"+fld+"}}");
+                    }
+                    start = idxEnd+2;
+                }
+            }
+            if (start &lt; this._detail.length) {
+                rendered.push(this._detail.substring(start));
+            }
+            this._detailRendered = rendered;
+        },
+
+        _renderStringDetail: function(Rpt, State, currentData, callback) {
+            var results = [];
+            if (this._detailRendered == null) {
+                this._renderStringDetailParse(currentData);
+            }
+
+            for (var i=0;i&lt;this._detailRendered.length;i++) {
+                if (this._detailRendered[i].fld) {
+                    results.push(currentData[this._detailRendered[i].fld]);
+                } else {
+                    results.push(this._detailRendered[i]);
+                }
+            }
+
+            Rpt.print(results.join(""), callback);
+        },
+
+        _renderBandDetail: function(Rpt, State, currentData, callback) {
+            var bandData = [];
+            for (var i=0;i&lt;this._detail.length;i++) {
+                var data = {data: currentData[this._detail[i][0]] || ''};
+                if (this._detail[i][1]) {
+                    data.width = parseInt(this._detail[i][1],10);
+                }
+                if (this._detail[i][2]) {
+                    data.align = parseInt(this._detail[i][2],10);
+                }
+                bandData.push(data);
+            }
+            Rpt.band(bandData, {border:1, width: 0, wrap: 1}, callback );
+        },
+
+        /**
+         * This is a NOP detail rendered, by setting detail this function will be set to the proper version
+         * @param Rpt
+         * @param State
+         * @param currentData
+         * @param callback
+         * @private
+         */
+        _renderDetail: function(Rpt, State, currentData, callback) {
+            // this is a basically a NOP function, which will be replaced by detail being set
+            callback();
         },
 
         /**
@@ -3486,28 +4626,33 @@
          * @private
          */
         _renderIt: function (Rpt, State, currentData, callback) {
-            var groupChanged = false, self = this;
+            var groupChanged = false, self = this, headerSize = 0;
+            State.currentGroup = this;
+
+            if (this._header) {
+                headerSize = this._header._partHeight;
+                State.additionalHeaderSize += headerSize;
+            }
             if (this._level === -1) {
                 this._level = (++Rpt._totalLevels);
             }
 
-
-            // This handles the remainder of the rending of this detail section
-            var finishRenderGroup = function () {
-                if (self._afterSubgroup &amp;&amp; self._detail !== null) {
-                    try {
-                        Rpt._level = self._level;
-                        if (Report.trace) {
-                            console.log("Running Detail", self.level, currentData);
-                        }
-                        self._expandRowTree(currentData);
-                        self._detail(Rpt, currentData, State);
-                        if (Rpt._bandFields.length) { Rpt.band(); }
-                    } catch (err) {
-                        Report.error("REPORTAPI: Error when calling group Detail", err, err &amp;&amp; err.stack);
+            // This actually calls the Detail Printing
+            var handleDetail = function (detailCallback) {
+                Rpt._level = self._level;
+                if (Report.trace) {
+                    console.error("Running Detail", self._level);
+                    if (Report.callbackDebugging) {
+                        console.error(" - Callback is: ", typeof callback === "function" ? "Valid" : "** Invalid **");
                     }
                 }
 
+                self._expandRowTree(currentData);
+                self._renderDetail(Rpt, State, currentData, detailCallback);
+            };
+
+            // This finishes the Calculations
+            var finishRenderGroupStep2 = function () {
                 self._calcTotals(currentData);
 
                 // We need to capture the Primary Band sizes for later use in the footers.
@@ -3519,26 +4664,30 @@
                         self._findParentReport()._setBandSize(self._curBandWidth, self._curBandOffset);
                     }
                 }
+                State.additionalHeaderSize -= headerSize;
+
                 callback();
             };
 
+            // This handles the remainder of the rending of this detail section
+            var finishRenderGroup = function () {
+                // We need to reset this because a child will set the state.currentGroup to itself
+                State.currentGroup = self;
+                if (self._runHeaderWhen !== Report.show.always) {
+                    State.additionalHeaderSize += headerSize;
+                }
 
-            // this handles doing the pre-detail (if set)
-            var continueRendering = function () {
-                // Run our Detail before a subgroup
-                if (!self._afterSubgroup &amp;&amp; self._detail !== null) {
-                    try {
-                        Rpt._level = self._level;
-                        if (Report.trace) {
-                            console.log("Running Detail", self.level, currentData);
-                        }
+                if (self._runDetailAfterSubgroup &amp;&amp; self._detail !== null) {
+                    handleDetail(finishRenderGroupStep2);
+                } else {
+                    finishRenderGroupStep2();
+                }
+            };
 
-                        self._expandRowTree(currentData);
-                        self._detail(Rpt, currentData, State);
-                        if (Rpt._bandFields.length) { Rpt.band(); }
-                    } catch (err) {
-                        Report.error("REPORTAPI: Error when calling group Detail", err, err &amp;&amp; err.stack);
-                    }
+            // This actually prints the Child
+            var continueRenderingStep2 = function () {
+                if (self._runHeaderWhen !== Report.show.always) {
+                    State.additionalHeaderSize -= headerSize;
                 }
                 if (self._child !== null) {
                     self._child._renderIt(Rpt, State, currentData, finishRenderGroup);
@@ -3547,24 +4696,57 @@
                 }
             };
 
-            // Handles the Group Change code
-            var groupChangeCallback = function () {
-                if (self._footer !== null) {
-                    self._lastData = clone(currentData);
+            // this handles doing the pre-detail (if set)
+            var continueRendering = function () {
+                if (!self._currentData) {
+                    self._expandRowTree(currentData);
+                    self._currentData = clone(currentData);
                 }
+                // Run our Detail before a subgroup
+                if (!self._runDetailAfterSubgroup &amp;&amp; self._detail !== null) {
+                    handleDetail(continueRenderingStep2);
+                } else {
+                    continueRenderingStep2();
+                }
+            };
 
-                // We only clear the totals on added groups; not the master "detail" group.
-                if (self._groupOnField !== null) {
-                    self._clearTotals();
+
+            // Handles the Group Change code
+            var groupChangeCallback = function (reset) {
+                if (reset) {
+                    if (self._footer !== null) {
+                        self._lastData = clone(currentData);
+                    }
+
+                    // We only clear the totals on added groups; not the master "detail" group.
+                    if (self._groupOnField !== null) {
+                        self._clearTotals();
+                    }
                 }
 
                 if (self._header !== null) {
                     Rpt._level = self._level;
                     self._expandRowTree(currentData);
-                    self._header.run(Rpt, State, currentData);
+                    // TODO: Should we calculate the average detail size?    We are hard coding it to 20 right now, until we decide if we should do this...
+                    if (State.additionalHeaderSize + Rpt._PDF.y >= Rpt._maxY() - 20) {
+                        self._currentData = clone(currentData);
+
+                        Rpt.newPage({save:true, breakingBeforePrint: true}, function () {
+                            self._hasRanHeader = true;
+                            if (!reset) { Rpt._resetPageHeaderCounter(); }
+                            continueRendering();
+                        });
+                    } else {
+                        self._header.run(Rpt, State, currentData, function () {
+                            self._hasRanHeader = true;
+                            if (!reset) { Rpt._resetPageHeaderCounter(); }
+                            continueRendering();
+                        });
+                    }
+                } else {
+                    self._hasRanHeader = true;
+                    continueRendering();
                 }
-                self._hasRanHeader = true;
-                continueRendering();
             };
 
             // Check for group changed
@@ -3587,10 +4769,20 @@
             if (groupChanged) {
                 if (this._hasRanHeader) {
                     Rpt._level = this._level;
-                    this._renderFooter(Rpt, State, groupChangeCallback);
+                    //if (Rpt.currentPage() > 1) console.error(Rpt._pageHeaderRendering, Rpt._pageHasRendering);
+                    //if (this._runFooterWhen === Report.show.once || Rpt.hasChanges()) {
+                        this._renderFooter(Rpt, State, function () {
+                            groupChangeCallback(true);
+                        });
+                    //} else {
+                    //    groupChangeCallback(true);
+                    //}
                 } else {
-                    groupChangeCallback();
+                    groupChangeCallback(true);
                 }
+            } else if (Rpt.hasChanges() &amp;&amp; !this._hasRanHeader) {
+                  //console.error("Running Special Header");
+                  groupChangeCallback(false);
             } else {
                 continueRendering();
             }
@@ -3598,25 +4790,42 @@
         },
 
         /**
+         * This runs a Header/Footer for calculation purposes and then calls the callback
+         * @param part
+         * @param Rpt
+         * @param bogusData
+         * @param callback
+         * @private
+         */
+        _calculatePart: function(part, Rpt, bogusData, callback) {
+            if (part) {
+                Rpt._addPage();
+                part.run(Rpt, {isCalc: true}, bogusData, callback);
+            } else if (callback) {
+                callback();
+            }
+        },
+
+        /**
          * Figures out the size of the headers/footers for this report object
          * @param {ReportRenderer} Rpt - current report we are running on
          * @param {Object} bogusData - bogus data
+         * @param {function} callback - the callback to call when it is done
          * @private
          */
-        _calculateFixedSizes: function (Rpt, bogusData) {
+        _calculateFixedSizes: function (Rpt, bogusData, callback) {
             this._clearTotals();
-            if (this._header !== null) {
-                Rpt._addPage();
-                this._header.run(Rpt, {isCalc: true}, bogusData);
-            }
-            Rpt.totals = this._totals;
-            if (this._footer !== null) {
-                Rpt._addPage();
-                this._footer.run(Rpt, {isCalc: true}, bogusData);
-            }
-            if (this._child !== null) {
-                this._child._calculateFixedSizes(Rpt, bogusData);
-            }
+            var self = this;
+            this._calculatePart(this._header, Rpt, bogusData, function() {
+                Rpt.totals = self._totals;
+                self._calculatePart(self._footer, Rpt, bogusData, function() {
+                    if (self._child !== null) {
+                        self._child._calculateFixedSizes(Rpt, bogusData, callback);
+                    } else {
+                        callback();
+                    }
+                });
+            });
         },
 
         /**
@@ -3671,6 +4880,7 @@
             while (parent._parent) {
                 parent = parent._parent;
             }
+            //noinspection JSValidateTypes
             return parent;
         },
 
@@ -3753,7 +4963,7 @@
     };
 
     // Standard Font constants
-    Report.standardFonts = {
+    Report.fonts = {
         times: {normal: 'Times-Roman', bold: 'Times-Bold', italic: 'Times-Italic', bolditalic: 'Times-BoldItalic'},
         helvetica: {normal: 'Helvetica', bold: 'Helvetica-Bold', italic: 'Helvetica-Oblique', bolditalic: 'Helvetica-BoldOblique'},
         courier: {normal: 'Courier', bold: 'Courier-Bold', italic: 'Courier-Oblique', bolditalic: 'Courier-BoldOblique'},
@@ -3762,10 +4972,9 @@
     };
 
     // Generate the Indexed Fonts
-    Report._indexedFonts = Report.buildFontIndex(Report.standardFonts);
+    Report._indexedFonts = Report.buildFontIndex(Report.fonts);
 
     // Formatting constants
-
     Report.format = {
         /** @constant {number} */
         off: 0,
@@ -3776,11 +4985,29 @@
         withoriginal: 3
     };
 
+    // once - original behavior, newPageOnly = run any time a new page triggers and this is the current group,
+    // always = same as newPage but this header/footer is included when in sub-groups.
+    Report.show = {once: 0, newPageOnly: 1, newpageonly: 1, always: 2 };
+
+    Report.alignment = {LEFT: 1, left: 1, RIGHT: 3, right:3,  CENTER: 2, center: 2};
+
+    Report.renderType = {
+        file: 0,
+        pipe: 1,
+        buffer: 2
+    };
+
     /**
      * Enable Report Tracing
      * @type {boolean}
      */
     Report.trace = false;
+
+    /**
+     * Enable Report Callback Debugging  (Trac
+     * @type {boolean}
+     */
+    Report.callbackDebugging = false;
 
 
     if (!Report.error) {
@@ -3840,7 +5067,7 @@
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Wed Mar 05 2014 10:10:44 GMT-0600 (Central Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Jun 26 2015 02:09:21 GMT-0500 (Eastern Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

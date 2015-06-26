@@ -1,0 +1,17 @@
+0.0.1 - [2013/08/15] - Initial Release
+0.0.2 - [2013/10/24] - Fixed several minor bugs and added Grid Cell Wrapping
+0.0.3 - [2014/02/07] - Lots of enhancements and bug fixes like fonts support in options, negative parans, output to buffer, tracing, jsdoc
+0.0.4 - [2014/02/17] - TextColor ability per cell in bands
+0.0.5 - [2014/03/05] - Bold/Italic per cell in bands
+0.0.6 - [2014/06/24] - Added easier font support and upgraded to support latest pdfkit
+x.x.x - [2014/12/03] - Fixed issues in band borders
+x.x.x - [2015/03/18] - Added ability to Import PDF's
+0.0.7 - [2015/04/21] - Fixed some minor issues with Importing PDF's
+0.1.0 - [2015/06/20] - Added ASYNC support in addition to the normal SYNC support
+0.1.1 - [2015/06/21] - Fixed some ASYNC issues
+0.1.2 - [2015/06/22] - Added simple Detail system similar to what is already in place for Header/Footers.
+1.0.0 - Fixed several edge cases of Header/Footer and printing sizing issues.  Reports should now ALWAYS print headers/footers properly.
+
+Breaking changes or API inconsistencies:
+    In v0.1.2 bandField functionality was removed.  This "feature" didn't make sense since simple detail abilities are now supported which are much more powerful, and those still needing bandField like ability can easily emulate it in their own code...
+    In v1.0.0 parent & current Headers now have the ability to be printed only ONCE (old behavior), On all new Pages (new default for the current header), and Always.
