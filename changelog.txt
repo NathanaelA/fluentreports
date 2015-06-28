@@ -10,8 +10,16 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 0.1.0 - [2015/06/20] - Added ASYNC support in addition to the normal SYNC support
 0.1.1 - [2015/06/21] - Fixed some ASYNC issues
 0.1.2 - [2015/06/22] - Added simple Detail system similar to what is already in place for Header/Footers.
-1.0.0 - Fixed several edge cases of Header/Footer and printing sizing issues.  Reports should now ALWAYS print headers/footers properly.
+1.0.0 - Fixed Header/Footer and printing sizing issues.  Reports should now ALWAYS print headers/footers properly.  Much better documentation!
 
 Breaking changes or API inconsistencies:
-    In v0.1.2 bandField functionality was removed.  This "feature" didn't make sense since simple detail abilities are now supported which are much more powerful, and those still needing bandField like ability can easily emulate it in their own code...
-    In v1.0.0 parent & current Headers now have the ability to be printed only ONCE (old behavior), On all new Pages (new default for the current header), and Always.
+    In v0.1.2 bandField functionality was removed.  This "feature" didn't make sense since simple detail abilities
+        are now supported which are much more powerful, and those still needing bandField like ability can easily
+        emulate it in their own code by creating a array and pushing the fields to it before calling band with it...
+    In v1.0.0 parent & current Headers now have the ability to be printed only ONCE (old behavior), On all new Pages
+        (new default for the current header), and Always.
+    In v1.0.0 when print(['hi','','testing']) the old code would ignore the '' in the middle of the array so you
+        would just get two lines.  The new code will print '' in arrays and give you three lines.   If you want the
+        old behavior pass {ignoreEmptyStrings:true} to print routine.
+
+

@@ -1,8 +1,10 @@
 var Report = require('../lib/fluentReports' ).Report;
 var fs = require('fs');
+var displayReport = require('./reportDisplayer');
+
 
 function printreport(options) {
-  'use strict';
+    'use strict';
     options = options || {};
 
     var Current_Date = new Date().toDateString();
@@ -11,7 +13,9 @@ function printreport(options) {
         // Company Info - Top Left
         rpt.setCurrentY(14);
 
-        if (options.image && fs.existsSync(options.image)) rpt.image(options.image, {width: 200});
+        if (options.image && fs.existsSync(options.image)) {
+            rpt.image(options.image, {width: 200});
+        }
         rpt.setCurrentY(rpt.getCurrentY() - 10);
 
         if (options.address) rpt.print(options.address, {x: 44});
@@ -19,7 +23,7 @@ function printreport(options) {
         if (options.city && options.state && options.postal) {
             rpt.print(options.city + ', ' + options.state + ' ' + options.postal, {x: 44});
         }
-        var baseY = rpt.getCurrentY();
+        //var baseY = rpt.getCurrentY();
 
         rpt.setCurrentY(40);
         rpt.fontSize(80);
@@ -76,26 +80,21 @@ function printreport(options) {
       //.registerFont("Aparajita", {normal: './aparaj.ttf', bold: './aparajb.ttf', 'italic': './aparaji.ttf'})
       .data(options.data);
 
-
     // Debug output is always nice (Optional, to help you see the structure)
     rpt.printStructure();
-
 
     // This does the MAGIC...  :-)
     console.time("Rendered");
     rpt.render(function(err, name) {
-      console.timeEnd("Rendered");
-      if (err) {
-          console.error("Report had an error",err);
-      } else {
-        console.log("Report is named:",name);
-      }
+        console.timeEnd("Rendered");
+        displayReport(err, name);
     });
 
 }
 
 var imgLoc = "";
 
+// Depending on where the report is run from, the image location might be in the wrong folder; so we fix it here
 if (fs.existsSync("./example_image.jpg")) {
     imgLoc = "./example_image.jpg";
 } else {

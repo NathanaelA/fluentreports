@@ -53,7 +53,8 @@
 //noinspection ThisExpressionReferencesGlobalObjectJS
 /**
  * @module fluentReports
- * @author Nathanael Anderson, Mark Getz, Alan Henager
+ * @author Nathanael Anderson
+ * @contributor Mark Getz, Alan Henager
  * @copyright 2012-2015, Kellpro Inc.
  * @license MIT
  */
@@ -312,10 +313,15 @@
 
     var reportRenderingMode = {UNDEFINED: 0, SYNC: 1, ASYNC: 2};
 
+    // If any are added to this, you need to add the function, and update _calcTotals and _clearTotals,
+    var mathTypes = {SUM: 1, AVERAGE: 2, MIN: 3, MAX: 4, COUNT: 5};
 
-// -------------------------------------------------------
-// Report Objects
-// -------------------------------------------------------
+    var dataTypes = {NORMAL: 0, PAGEABLE: 1, FUNCTIONAL: 2, PLAINOLDDATA: 3};
+
+
+    // -------------------------------------------------------
+    // Report Objects
+    // -------------------------------------------------------
 
     /**
      * ReportSection
@@ -447,7 +453,7 @@
             lwDoc.count++;
         });
 
-        // creae the Print wrapper; this allows us to wrap long print() calls onto multiple sheed.
+        // Create the Print wrapper; this allows us to wrap long print() calls onto multiple sheed.
         this._PrintWrapper = new this._LineWrapperObject(lwDoc,{width:this._PDF.page.width - this._PDF.page.margins.right - this._PDF.page.margins.left, columns:1, columnGap: 18});
         this._PrintWrapper.on('line', function (line, options) {
             self._printedLines.push({L:line, O: options});
@@ -524,7 +530,7 @@
         this._parent = parent;
         this._data = null;
         this._keys = null;
-        this._dataType = 0;
+        this._dataType = dataTypes.NORMAL;
         this._child = new ReportGroup(this);
         if (this._parent &amp;&amp; this._parent._parent === null) {
             this._child.header = this._child.pageHeader;
@@ -545,7 +551,7 @@
     function ScopedDataObject(data, scope, formattingState) {
         this._scope = scope;
         this._data = data;
-        this._dataType = 0;
+        this._dataType = dataTypes.NORMAL;
         this._formatters = null;
         this._result = null;
 
@@ -555,10 +561,10 @@
             this._formattingState = 0;
         }
         if (data._isQuery || data._isquery || typeof data === "string") {
-            this._dataType = 2;
+            this._dataType = dataTypes.FUNCTIONAL;
         }
         else if (data.isRows) {
-            this._dataType = 1;
+            this._dataType = dataTypes.PAGEABLE;
             this.isPaged = true;
         }
         else {
@@ -767,7 +773,7 @@
                 this._state = { isTitle: false, isFinal: false, headerSize: 0, footerSize: 0, additionalHeaderSize: 0, isCalc: false,
                     resetGroups: true, startX: 0, startY: 0, currentX: 0, currentY: 0, priorStart: [], parentData: {}, report: this, currentGroup: null, reportRenderMode: this._reportRenderMode()};
 
-                this._info.Producer = "fluentReports";
+                this._info.Producer = "fluentReports 1.00";
 
                 if (Report.trace) {
                     console.error("Starting Tracing on Report to a ",this._outputType === Report.renderType.buffer ? "Buffer" : this._outputType === Report.renderType.pipe ? "Pipe" : "File "+this._reportName);
@@ -1259,7 +1265,6 @@
     };
 
 
-
     // -----------------------------------------------------------
     // Header/Footer Prototypes
     // -----------------------------------------------------------
@@ -1496,7 +1501,7 @@
                 }
             }
 
-            if (footer === null || footer.length === 0) {
+            if (footer == null || footer.length === 0) {
                 if (callback) {
                     callback();
                 }
@@ -1560,7 +1565,9 @@
             var _finishFooterPart = function() {
                 //Rpt.setCurrentY(y);
                 //Rpt.setCurrentX(x);
-                callback();
+                if (callback) {
+                    callback();
+                }
             };
 
             var y = Rpt.getCurrentY(), x = Rpt.getCurrentX();
@@ -1623,7 +1630,7 @@
                 return;
             }
 
-            if (this._dataType === 1) {
+            if (this._dataType === dataTypes.PAGEABLE) {
                 mcolumns = this._data.fields;
                 for (var key in mcolumns) {
                     if (mcolumns.hasOwnProperty(key)) {
@@ -1677,7 +1684,7 @@
                 data = null;
             }
             var self = this;
-            if (this._dataType === 2) {
+            if (this._dataType === dataTypes.FUNCTIONAL) {
                 if (data !== null) {
                     for (var i=0;i&lt;data.length;i++) {
                         if (typeof this._data.where.values[0] === "string") {
@@ -1721,7 +1728,7 @@
 
         // Used to get a record count (Required)
         count: function (callback) {
-            if (this._dataType === 2) {
+            if (this._dataType === dataTypes.FUNCTIONAL) {
                 if (this._result &amp;&amp; this._result.length) {
                     callback(null, this._result.length);
                 } else {
@@ -1731,7 +1738,7 @@
                         return callback(null, len);
                     });
                 }
-            } else if (this._dataType === 1) {
+            } else if (this._dataType === dataTypes.PAGEABLE) {
                 this._scope.funcs.rowsgetlength(this._scope, callback, this._data);
             } else {
                 this.error("REPORTAPI: Unknown data type in scopedDataObject(Count), either extend the scopedDataObject or create your own simple wrapper!");
@@ -1761,7 +1768,9 @@
     // -----------------------------------------------------------
     //noinspection JSUnusedGlobalSymbols
 
-    ReportRenderer.prototype = {
+    ReportRenderer.prototype =
+    /** @lends ReportRenderer **/
+    {
         _isPDFWrapper: true,
 
         _PDFKit: _PDFKit,
@@ -2001,17 +2010,11 @@
             this._applyState(state);
         },
 
-        _applyState: function(state, skipX) {
-            this._PDF._font = state.font;
-            this.fontSize(state.fontSize);
-            if (this._lineWidth !== state.lineWidth) {
-                this.lineWidth(state.lineWidth);
-            }
-            this.fillColor(state.fillColor);
-            this.strokeColor(state.strokeColor);
-            if (skipX !== true) {
-                this._PDF.x = state.x;
-            }
+        /**
+         * Deletes the last saved state.
+         */
+        deleteState: function() {
+          this._graphicState.pop();
         },
 
         /**
@@ -2026,52 +2029,6 @@
             } else {
                 return this._pageHeaderRendering !== this._pageHasRendering;
             }
-        },
-
-        _handleFooter: function(options, cb) {
-
-            if (this._primaryReport._footer) {
-                this._primaryReport._footer.run(this, this._primaryReport.state(), this._lastData, cb);
-            } else if (cb) {
-                cb();
-            }
-        },
-
-        _handleHeader: function(options, cb) {
-            var currentGroup = this._primaryReport.state().currentGroup;
-            var headersToPrint = [], self = this;
-            var checkForPrintableHeaders = function(myGroup) {
-
-                // We don't want to print the currentGroups header; we want the group code to handle this in case the next
-                // header needed is actually a changed header -- But we print everything else that needs to be printed
-                // However, if we were page-breaked in the the "detail" then we actually need reprint the prior header as we are still in the detail code
-                if (myGroup._header &amp;&amp; (myGroup._runHeaderWhen === Report.show.always || (options.breakingBeforePrint &amp;&amp; myGroup._runHeaderWhen === Report.show.newPageOnly)) &amp;&amp; (myGroup !== currentGroup || !myGroup._isGroup || options.breakingBeforePrint)) {
-                        headersToPrint.push(myGroup);
-                }
-                if (myGroup._parent) {
-                    checkForPrintableHeaders(myGroup._parent);
-                }
-            };
-
-            var printFoundHeaders = function() {
-                if (headersToPrint.length === 0) {
-                    if (cb) {
-                        cb();
-                    }
-                    return;
-                }
-                var gp = headersToPrint.pop();
-                gp._header.run(self, self._primaryReport.state(), gp._currentData, printFoundHeaders);
-            };
-
-            if (currentGroup) {
-                checkForPrintableHeaders(currentGroup);
-                printFoundHeaders();
-            }
-        },
-
-        _resetPageHeaderCounter: function() {
-            this._pageHeaderRendering = this._pageHasRendering;
         },
 
         /**
@@ -2152,7 +2109,6 @@
          */
         standardHeader: function (text, callback) {
             this._checkRenderMode(callback, "standardHeader");
-            // TODO check to see if we need to change to using the State currents group for the runStockHeader/Footer
             this._curheaderfooter.runStockHeader(this, text, callback);
         },
 
@@ -2227,6 +2183,34 @@
         },
 
         /**
+         * Gets or Sets the X coordinate
+         * @param {number} [x] - x coordinate
+         * @returns {number} - current x coordinate
+         */
+        currentX: function(x) {
+            //noinspection PointlessArithmeticExpressionJS
+            if (arguments.length &amp;&amp; !isNaN(x+0)) {
+                //noinspection PointlessArithmeticExpressionJS
+                this._PDF.x = x+0;
+            }
+            return this._PDF.x;
+        },
+
+        /**
+         * Gets or Sets the Y coordinate
+         * @param {number} [y] - y coordinate
+         * @returns {number} - current y coordinate
+         */
+        currentY: function(y) {
+            //noinspection PointlessArithmeticExpressionJS
+            if (arguments.length &amp;&amp; !isNaN(y+0)) {
+                //noinspection PointlessArithmeticExpressionJS
+                this._PDF.y = y+0;
+            }
+            return this._PDF.y;
+        },
+
+        /**
          * Inserts new Lines
          * @param {number} [lines] - number of lines to insert defaults to 1
          * @param {function} [callback] - Optional Async support
@@ -2276,65 +2260,6 @@
          */
         heightOfString: function() {
             return this._heightOfString;
-        },
-
-        _print: function(text, textOptions, callback) {
-            var procText = this._processText(text);
-
-            if (textOptions.wordSpacing) {
-                procText = procText.replace(/\s{2,}/g, ' ');
-            }
-
-            var self = this;
-
-            var right = this._PDF.page.margins.right;
-            var width = this._PDF.page.width;
-
-            this._LWDoc.reset();
-
-            // First Line maybe remainder of a line
-            this._PrintWrapper.lineWidth = width - this._PDF.x - right;
-            textOptions.width = width;
-
-            this._PrintWrapper.wrap(procText, textOptions);
-            var _printedLines = this._printedLines;
-            this._printedLines = [];
-
-            var startLooping;
-            if (this._reportRenderMode === reportRenderingMode.ASYNC) {
-                startLooping = startLoopingAsync;
-            } else {
-                startLooping = startLoopingSync;
-            }
-
-            var length = _printedLines.length;
-            if (callback) {
-                startLooping(length,
-                    function (cnt, done) {
-                        if (self._PDF.y + self._heightOfString > self._maxY()) {
-                            self.newPage({save: true, breakingBeforePrint: true}, function () {
-                                self._PDF._line(_printedLines[cnt].L, _printedLines[cnt].O, true);
-                                done();
-                            });
-                        } else {
-                            self._PDF._line(_printedLines[cnt].L, _printedLines[cnt].O, true);
-                            done();
-                        }
-                    },
-                    function () {
-                        _printedLines = null;
-                        callback();
-                    });
-            } else {
-                for (var i=0;i&lt;length;i++) {
-                   if (this._PDF.y + this._heightOfString > this._maxY()) {
-                       this.newPage({save: true, breakingBeforePrint: true});
-                   }
-                    this._PDF._line(_printedLines[i].L, _printedLines[i].O, true);
-                }
-                _printedLines = null;
-            }
-
         },
 
         /**
@@ -2419,9 +2344,11 @@
                 }
 
                 if (options.fill) {
-                    // TODO: Create Code, need to track start in current line, number of lines and end line width to create
-                    // the Fill size that is need.
-                    Report.error("REPORTAPI: FILL on a print() doesn't do anything");
+                    textOptions._backgroundFill = options.fill;
+                }
+
+                if (options.link) {
+                    textOptions.link = options.link;
                 }
 
                 if (options.font) {
@@ -2441,6 +2368,7 @@
 
             var finishPrinting = function() {
                 self.resetState();
+
                 if (self._PDF.y >= self._maxY()) {
                     self.newPage({save:true}, callback);
                 } else if (callback) {
@@ -2462,6 +2390,7 @@
                 if (callback) {
                     startLooping(data.length, function (iteration, done) {
                         if (data[iteration] !== null &amp;&amp; data[iteration] !== undefined) {
+                            if (options.ignoreEmptyStrings !== true &amp;&amp; data[iteration] === '') { data[iteration] = ' ';}
                             if (self._PDF.y > cachedMaxY) {
                                 self.newPage({save: true, breakingBeforePrint: true}, function () {
                                     self._print(data[iteration], textOptions, done);
@@ -2481,6 +2410,7 @@
                     // Synchronous Loop, if a callback wasn't provided
                     for (var i=0;i&lt;data.length;i++) {
                         if (data[i] !== null &amp;&amp; data[i] !== undefined) {
+                            if (options.ignoreEmptyStrings !== true &amp;&amp; data[i] === '') { data[i] = ' ';}
                             if (self._PDF.y > cachedMaxY) {
                                 // WE HAVE TO ASSUME that the header does not need a callback since they didn't pass one into the print routine
                                 // This is not a GOOD assumption; but it is the only valid one we can do, since we have no way to async wait now
@@ -2627,7 +2557,7 @@
                         continue;
                     }
                     if (data[i].data === cdata[i].data &amp;&amp; data[i].data !== '' &amp;&amp; data[i].data !== null &amp;&amp; data[i].data !== undefined) {
-                        data[i].data = options.duplicatedTextValue || ' " ';
+                        data[i].data = data[i].duplicatedTextValue || options.duplicatedTextValue || ' " ';
                     }
                     //else break;
                 }
@@ -2733,6 +2663,17 @@
                 if (options.y != null &amp;&amp; !isNaN(options.y + 0)) {
                     this._PDF.y = options.y + 0;
                 }
+                if (options.addX != null &amp;&amp; !isNaN(options.addX + 0)) {
+                    startX += (options.addX + 0);
+                } else if (options.addx != null &amp;&amp; !isNaN(options.addx + 0)) {
+                    startX += (options.addx + 0);
+                }
+                if (options.addY != null &amp;&amp; !isNaN(options.addY + 0)) {
+                    this._PDF.y += (options.addY + 0);
+                } else if (options.addy != null &amp;&amp; !isNaN(options.addy + 0)) {
+                    this._PDF.y += (options.addy + 0);
+                }
+
                 if (options.font) {
                     this.font(options.font);
                 }
@@ -2861,6 +2802,9 @@
                     if (data[i].strike) {
                         textOptions.strike = true;
                     }
+                    if (data[i].link) {
+                        textOptions.link = data[i].link;
+                    }
 
                     self._PDF.text(curData, x + offset + textOffset, y + borderPadding, textOptions).stroke();
                     if (savedState) {
@@ -2928,7 +2872,7 @@
         },
 
         /**
-         * Sets the line width
+         * Sets or gets the line width
          * @param {number} [width] - optional of line
          * @returns {number} current line width
          */
@@ -2961,15 +2905,6 @@
         },
 
         /**
-         * This Max Y size function is used internally to do calculations, it can "lie" during some actions to eliminate page-breaking...
-         * @desc this function can LIE to eliminate height restrictions, this allows footers to print in the "footer" area without triggering a page break
-         * @protected
-         */
-        _maxY: function() {
-            return this._height-(this._primaryReport.state().footerSize);
-        },
-
-        /**
          * Min Y Size
          * @returns {number} - Top Margin Size
          */
@@ -2985,6 +2920,14 @@
             return this._PDF.page.width - this._PDF.page.margins.right;
         },
 
+        /**
+         * Prints the "Printed At" information
+         * @param {object} [options] -
+         *      header = print in header
+         *      footer = print in footer
+         *      text = the text to print, defaults to "Printed At: {0}:{1}{2}\non {3}";
+         *      align = alignment
+         */
         printedAt: function(options) {
             options = options || {};
             var curY;
@@ -3029,7 +2972,11 @@
 
         /**
          * pageNumber - prints the current page number
-         * @param options {object} - options object with settings; "text" value can be changed from the default "Page: {0}" to what you want.
+         * @param options {object} - options object with settings;
+         *      "text" value can be changed from the default "Page: {0}" to what you want.
+         *      "header" true = print as header
+         *      "footer" true = print as footer
+         *      "align" = alignment of the text
          */
         pageNumber: function (options) {
             options = options || {};
@@ -3057,8 +3004,6 @@
             if (options.header || options.footer) {
                 this.setCurrentY(curY);
             }
-
-
         },
 
         /**
@@ -3080,6 +3025,180 @@
             }
 
             return this._PDF.importPDF(data);
+        },
+
+
+        // --------------------------------------------------------------------------------------------
+        // The function below are all internally used -- USE THEM AT YOUR OWN RISK, they may break
+        // things and they are subject to changes, addition or removal on a whim
+        // --------------------------------------------------------------------------------------------
+
+        /**
+         * This handles the printing of the page footer and its callback.
+         * @param options
+         * @param cb
+         * @private
+         */
+        _handleFooter: function(options, cb) {
+
+            if (this._primaryReport._footer) {
+                this._primaryReport._footer.run(this, this._primaryReport.state(), this._lastData, cb);
+            } else if (cb) {
+                cb();
+            }
+        },
+
+        /**
+         * This handles the printing of any/all the headers
+         * @param options
+         * @param cb
+         * @private
+         */
+        _handleHeader: function(options, cb) {
+            var currentGroup = this._primaryReport.state().currentGroup;
+            var headersToPrint = [], self = this;
+            var checkForPrintableHeaders = function(myGroup) {
+
+                // We don't want to print the currentGroups header; we want the group code to handle this in case the next
+                // header needed is actually a changed header -- But we print everything else that needs to be printed
+                // However, if we were page-breaked in the the "detail" then we actually need reprint the prior header as we are still in the detail code
+                if (myGroup._header &amp;&amp; (myGroup._runHeaderWhen === Report.show.always || (options.breakingBeforePrint &amp;&amp; myGroup._runHeaderWhen === Report.show.newPageOnly)) &amp;&amp; (myGroup !== currentGroup || !myGroup._isGroup || options.breakingBeforePrint)) {
+                    headersToPrint.push(myGroup);
+                }
+                if (myGroup._parent) {
+                    checkForPrintableHeaders(myGroup._parent);
+                }
+            };
+
+            var printFoundHeaders = function() {
+                if (headersToPrint.length === 0) {
+                    if (cb) {
+                        cb();
+                    }
+                    return;
+                }
+                var gp = headersToPrint.pop();
+                gp._header.run(self, self._primaryReport.state(), gp._currentData, printFoundHeaders);
+            };
+
+            if (currentGroup) {
+                checkForPrintableHeaders(currentGroup);
+                printFoundHeaders();
+            }
+        },
+
+        /**
+         * Resets the Internal PDF Page Object Counter
+         * @protected
+         */
+        _resetPageHeaderCounter: function() {
+            this._pageHeaderRendering = this._pageHasRendering;
+        },
+
+        /**
+         * This handles applying the state
+         * @param {object} state - the state to set the pdf engine too
+         * @param {boolean} [skipX] - optionally tell it to ignore resetting the "x" coordiniate state.
+         * @private
+         */
+        _applyState: function(state, skipX) {
+            this._PDF._font = state.font;
+            this.fontSize(state.fontSize);
+            if (this._lineWidth !== state.lineWidth) {
+                this.lineWidth(state.lineWidth);
+            }
+            this.fillColor(state.fillColor);
+            this.strokeColor(state.strokeColor);
+            if (skipX !== true) {
+                this._PDF.x = state.x;
+            }
+        },
+
+        /**
+         * This does the actual printing with the needed sizing
+         * @param text
+         * @param textOptions
+         * @param callback
+         * @private
+         */
+        _print: function(text, textOptions, callback) {
+            var procText = this._processText(text);
+
+            if (textOptions.wordSpacing) {
+                procText = procText.replace(/\s{2,}/g, ' ');
+            }
+
+            var self = this;
+
+            var right = this._PDF.page.margins.right;
+            var width = this._PDF.page.width;
+
+            this._LWDoc.reset();
+
+            // First Line maybe remainder of a line
+            this._PrintWrapper.lineWidth = width - this._PDF.x - right;
+            textOptions.width = width;
+
+            this._PrintWrapper.wrap(procText, textOptions);
+            var _printedLines = this._printedLines;
+            this._printedLines = [];
+
+            var startLooping;
+            if (this._reportRenderMode === reportRenderingMode.ASYNC) {
+                startLooping = startLoopingAsync;
+            } else {
+                startLooping = startLoopingSync;
+            }
+
+            var length = _printedLines.length;
+            if (callback) {
+                startLooping(length,
+                    function (cnt, done) {
+                        if (self._PDF.y + self._heightOfString > self._maxY()) {
+                            self.newPage({save: true, breakingBeforePrint: true}, function () {
+                                if (textOptions._backgroundFill) {
+                                    self._PDF.rect(self._PDF.x-1, self._PDF.y-2,  _printedLines[cnt].O.textWidth+2, self._heightOfString);
+                                    self._handleOptions({fill:textOptions._backgroundFill});
+                                }
+                                self._PDF._line(_printedLines[cnt].L, _printedLines[cnt].O, true);
+                                done();
+                            });
+                        } else {
+                            if (textOptions._backgroundFill) {
+                                self._PDF.rect(self._PDF.x-1, self._PDF.y-2,  _printedLines[cnt].O.textWidth+2, self._heightOfString);
+                                self._handleOptions({fill:textOptions._backgroundFill});
+                            }
+                            self._PDF._line(_printedLines[cnt].L, _printedLines[cnt].O, true);
+                            done();
+                        }
+                    },
+                    function () {
+                        _printedLines = null;
+                        callback();
+                    });
+            } else {
+                for (var i=0;i&lt;length;i++) {
+                    if (this._PDF.y + this._heightOfString > this._maxY()) {
+                        this.newPage({save: true, breakingBeforePrint: true});
+                    }
+                    if (textOptions._backgroundFill) {
+                        self._PDF.rect(self._PDF.x-1, self._PDF.y-2,  _printedLines[i].O.textWidth+2, self._heightOfString);
+                        self._handleOptions({fill:textOptions._backgroundFill});
+                    }
+                    this._PDF._line(_printedLines[i].L, _printedLines[i].O, true);
+                }
+                _printedLines = null;
+            }
+
+        },
+
+        /**
+         * This Max Y size function is used internally to do calculations, it by design can "lie" during some actions to eliminate page-breaking...
+         * @desc this function can LIE to eliminate height restrictions, this allows footers to print in the "footer" area without triggering a page break
+         * @protected
+         */
+        _maxY: function() {
+            return this._height-(this._primaryReport.state().footerSize);
         },
 
         /**
@@ -3399,20 +3518,20 @@
             }
 
             if (isArray(value)) {
-                this._dataType = 0; // Normal passed preset data set
+                this._dataType = dataTypes.NORMAL; // Normal passed preset data set
             } else if (typeof value === 'function' || typeof value === 'object') {
                 if (value.count &amp;&amp; (value.loadRange || value.loadrange)) {
-                    this._dataType = 1;  // Page-able Dataset
+                    this._dataType = dataTypes.PAGEABLE;  // Page-able Dataset
                 } else if (typeof value === 'function') {
-                    this._dataType = 2;  // Functional Dataset
+                    this._dataType = dataTypes.FUNCTIONAL;  // Functional Dataset
                 } else {
                     // Just a POD (Plain old Data)
-                    this._dataType = 3;
+                    this._dataType = dataTypes.PLAINOLDDATA;
                 }
             } else if (typeof value === 'string' || typeof value === 'number') {
-                this._dataType = 3; // POD
+                this._dataType = dataTypes.PLAINOLDDATA; // POD
             } else {
-                this._dataType = 3; // Assume POD
+                this._dataType = dataTypes.PLAINOLDDATA; // Assume POD
                 Report.error("REPORTAPI: Unknown data type; treating as plain old data.");
             }
 
@@ -3567,7 +3686,7 @@
             };
 
             // If we have a raw array; we just start the rendering
-            if (this._dataType === 0) {
+            if (this._dataType === dataTypes.NORMAL) {
                 if (this._data === null) {
                     Report.error("REPORTAPI: data is empty, try adding a .data([{field: 'value',...}]) to the report.");
                     this._data = [''];
@@ -3578,7 +3697,7 @@
 
             // This is a class/Function that implement "count" and "loadRange"
             // So we start by asking for the query (if needed), then the count, it will call the paging code
-            else if (this._dataType === 1) {
+            else if (this._dataType === dataTypes.PAGEABLE) {
                 var startCount = function() {
                     self._data.count(
                         function (err, length) {
@@ -3614,7 +3733,7 @@
                 }
 
                 // This is a simple query class, it should return all data either in a callback or as it return value
-            } else if (this._dataType === 2) {
+            } else if (this._dataType === dataTypes.FUNCTIONAL) {
                 var handleCb = false;
                 var data = this._data(this._buildKeySet(currentData), function(err, ndata) {
                     if (err) {
@@ -3634,7 +3753,7 @@
                 }
 
                 // This is a POD
-            } else if (this._dataType === 3) {
+            } else if (this._dataType === dataTypes.PLAINOLDDATA) {
                 if (this._data === null) {
                     Report.error("REPORTAPI: data is empty, try adding a .data([{field: 'value',...}]) to the report.");
                     this._data = '';
@@ -3825,7 +3944,9 @@
     };
 
 
-    ReportGroup.prototype = {
+    ReportGroup.prototype =
+    /** @lends ReportGroup **/
+    {
         _isGroup: true,
 
         /**
@@ -3876,8 +3997,8 @@
 
         /**
          * Set the Data for the group
-         * @param value
-         * @returns {*}
+         * @param value - this can be a Array of Arrays, Array of Objects, Object, String, Number or a functional class that returns the data
+         * @returns {object|ReportGroup}
          */
         data: function (value) {
             var parentDataSet = this._findParentDataSet();
@@ -3994,7 +4115,7 @@
         /**
          * Sets a field for generating totals -- this is used to group the results
          * @param {string} field name to group on
-         * @param {object} options
+         * @param {object} [options] - can have runHeader option which has the show.Once, show.OnNewPage, and show.Always values
          */
         groupBy: function (field, options) {
             var parent, newGroup;
@@ -4030,7 +4151,7 @@
          * @param {string} field name to sum
          */
         sum: function (field) {
-            this._math.push([1, field]);
+            this._math.push([mathTypes.SUM, field]);
             return (this);
         },
 
@@ -4039,7 +4160,7 @@
          * @param {string} field name to average on
          */
         average: function (field) {
-            this._math.push([2, field]);
+            this._math.push([mathTypes.AVERAGE, field]);
             return (this);
         },
 
@@ -4048,7 +4169,7 @@
          * @param {string} field name to find the minimum on
          */
         min: function (field) {
-            this._math.push([3, field]);
+            this._math.push([mathTypes.MIN, field]);
             return (this);
         },
 
@@ -4057,7 +4178,7 @@
          * @param {string} field name to find the maximum
          */
         max: function (field) {
-            this._math.push([4, field]);
+            this._math.push([mathTypes.MAX, field]);
             return (this);
         },
 
@@ -4066,7 +4187,7 @@
          * @param {string} field name to count
          */
         count: function (field) {
-            this._math.push([5, field]);
+            this._math.push([mathTypes.COUNT, field]);
             return (this);
         },
 
@@ -4353,18 +4474,18 @@
 
                 // If you add any to this Switch, make sure you update the switch in the _calcTotals
                 switch (this._math[i][0]) {
-                    case 1: // Sum
+                    case mathTypes.SUM:
                         break;
-                    case 2: // Avg
+                    case mathTypes.AVERAGE:
                         this._totals[field + "_sum"] = 0;
                         this._totals[field + "_cnt"] = 0;
                         break;
-                    case 3: // Min
+                    case mathTypes.MIN:
                         this._totals[field + "_min"] = 0;
                         break;
-                    case 4: // Max
+                    case mathTypes.MAX:
                         break;
-                    case 5: // Count
+                    case mathTypes.COUNT:
                         break;
                 }
             }
@@ -4394,26 +4515,26 @@
                 }
                 // If you add any to this Switch, make sure you update the switch in the _clearTotals
                 switch (this._math[i][0]) {
-                    case 1: // Sum
+                    case mathTypes.SUM:
                         this._totals[field] += parseFloat(currentData[srcField]);
                         break;
-                    case 2: // Average
+                    case mathTypes.AVERAGE:
                         this._totals[field + "_sum"] += parseFloat(currentData[srcField]);
                         this._totals[field + "_cnt"] += 1;
                         this._totals[field] = this._totals[field + "_sum"] / this._totals[field + "_cnt"];
                         break;
-                    case 3: // Min
+                    case mathTypes.MIN:
                         if (this._totals[field + "_min"] === 0 || currentData[srcField] &lt; this._totals[field]) {
                             this._totals[field + "_min"] = 1;
                             this._totals[field] = parseFloat(currentData[srcField]);
                         }
                         break;
-                    case 4: // max
+                    case mathTypes.MAX:
                         if (this._totals[field] &lt; currentData[srcField]) {
                             this._totals[field] = parseFloat(currentData[srcField]);
                         }
                         break;
-                    case 5: // Count
+                    case mathTypes.COUNT:
                         this._totals[field]++;
                         break;
                     default:
@@ -4698,10 +4819,9 @@
 
             // this handles doing the pre-detail (if set)
             var continueRendering = function () {
-                if (!self._currentData) {
-                    self._expandRowTree(currentData);
-                    self._currentData = clone(currentData);
-                }
+                self._expandRowTree(currentData);
+                self._currentData = clone(currentData);
+
                 // Run our Detail before a subgroup
                 if (!self._runDetailAfterSubgroup &amp;&amp; self._detail !== null) {
                     handleDetail(continueRenderingStep2);
@@ -4769,24 +4889,17 @@
             if (groupChanged) {
                 if (this._hasRanHeader) {
                     Rpt._level = this._level;
-                    //if (Rpt.currentPage() > 1) console.error(Rpt._pageHeaderRendering, Rpt._pageHasRendering);
-                    //if (this._runFooterWhen === Report.show.once || Rpt.hasChanges()) {
-                        this._renderFooter(Rpt, State, function () {
+                    this._renderFooter(Rpt, State, function () {
                             groupChangeCallback(true);
-                        });
-                    //} else {
-                    //    groupChangeCallback(true);
-                    //}
+                    });
                 } else {
                     groupChangeCallback(true);
                 }
             } else if (Rpt.hasChanges() &amp;&amp; !this._hasRanHeader) {
-                  //console.error("Running Special Header");
                   groupChangeCallback(false);
             } else {
                 continueRendering();
             }
-
         },
 
         /**
@@ -4944,7 +5057,6 @@
             }
             return target;
         }
-
     };
 
     Report.buildFontIndex = function(fonts){
@@ -5067,7 +5179,7 @@
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Fri Jun 26 2015 02:09:21 GMT-0500 (Eastern Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Sun Jun 28 2015 12:34:16 GMT-0500 (Eastern Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

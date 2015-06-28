@@ -1,4 +1,5 @@
 var Report = require('../lib/fluentReports' ).Report;
+var displayReport = require('./reportDisplayer');
 
 var primary_data  = [
     {id: 1, name: "John Doe"},
@@ -25,6 +26,9 @@ var secondary_data = {
        {week: 25, day: "Wednesday", hours: 8},
        {week: 26, day: "Thursday", hours: 2},
        {week: 26, day: "Friday", hours: 8}
+   ],
+   3: [
+       {week:20, day: "Monday", hours: 8}
    ],
    5: [
        {week: 20, day: "Monday", hours: 5},
@@ -64,16 +68,17 @@ function sql_select(query) {
 
 function printreport() {
   'use strict';
-
-  var daydetail = function ( report, data, state ) {
+  var counter = 0;
+  var daydetail = function ( report, data ) {
+      counter++;
     report.band( [
         {data: "", width: 80},
         {data: data.day, width: 100},
         {data: data.hours, width: 100, align: 3, textColor: data.hours < 0 ? '#FF0000' : "#000000"}
-    ], {border:1, width: 0, wrap: 1, fill: '#aaaaaa', textColor: '#0000ff'} );
+    ], {border:0, width: 0, wrap: 1, fill: counter % 2 === 0 ? '#f0f0f0' : '#e0e0e0', textColor: '#0000ff'} );
   };
 
-  var namefooter = function ( report, data, state ) {
+  var nameFooter = function ( report, data ) {
     report.band( [
       ["Totals for " + data.name, 180],
       [report.totals.hours, 100, 3]
@@ -81,11 +86,11 @@ function printreport() {
       report.newLine();
   };
 
-  var nameheader = function ( report, data ) {
-    report.print( data.name, {fontBold: true} );
+  var nameHeader = function ( report, data ) {
+    report.print( data.name, {fontBold: true, fill: '#6f6f6f', textColor: '#ffffff', link: "http://www.fluentReports.com/"} );
   };
 
-  var weekdetail = function ( report, data ) {
+  var weekDetail = function ( report, data ) {
     // We could do this -->  report.setCurrentY(report.getCurrentY()+2);   Or use the shortcut below of addY: 2
     report.print( ["Week Number: " + data.week], {x: 100, addY: 2} );
   };
@@ -109,7 +114,6 @@ function printreport() {
       .finalSummary( ["Total Hours:", "hours", 3] )// Optional
       .userdata( {hi: 1} )// Optional 
       .data( results )	// REQUIRED
-      //.detail( maindetail ) // Optional
       .totalFormatter( totalFormatter ) // Optional
       .fontSize(8); // Optional
 
@@ -121,12 +125,13 @@ function printreport() {
 
 
   rpt.groupBy( "name" )
-      .header( nameheader )
-      .footer( namefooter );
+      .header( nameHeader )
+      .footer( nameFooter );
 
 
    subRpt.groupBy( "week" )
-         .header( weekdetail );
+         .header( weekDetail )
+         .footer(function(Rpt) { Rpt.print("\n"); });
 
 
 
@@ -135,13 +140,9 @@ function printreport() {
 
   // This does the MAGIC...  :-)
   console.time("Rendered");
-  var a = rpt.render(function(err, name) {
+  rpt.render(function(err, name) {
       console.timeEnd("Rendered");
-      if (err) {
-          console.error("Report had an error",err);
-      } else {
-        console.log("Report is named:",name);
-      }
+      displayReport(err, name);
   });
 }
 
