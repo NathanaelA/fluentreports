@@ -25,6 +25,8 @@
   * info - object; you can set some of the pdf info
 
 
+
+
 #### Report.x
 ##### Constants:
 * show.
@@ -43,8 +45,6 @@
 * trace: true or (false) - output tracing statements to the console
 * callbackDebugging: true or (false) - output callback tracing statements; trace needs to be true to use this option; and of course these two affect ALL reports.
 
-
-
 Please note; this actually returns the a ReportGroup object; not the Report object -- this is by design since creating a new Report creates the entire structure as such:
 - Primary Report Object -> ReportSection -> ReportDataSet -> ReportGroup and so all methods are as such off of the ReportGroup object. 
  
@@ -53,7 +53,12 @@ var MyReportObject = new Report("MyCoolReport.pdf", {autoPrint: true});
 Would create the report called "MyCoolReport.pdf" and auto print it when it is opened in a pdf reader.
 
 
+
+
 ### The functions below are methods on the above created and returned ReportGroup object...
+
+
+
 
 #### .userData( Data )
 ##### Description
@@ -61,11 +66,17 @@ This allows you to set userData on the report that you might want at some later 
 ##### Parameters
 * Data - whatever extra user data you need access to in the report
 
+
+
+
 #### .totalFormatter( function(data, callback(err, data) {}) {} ) 
 ##### Description
 This allows you to set a formatting function to deal with any total values and formatting
 ##### Parameters
 * function - this is a function that will format your totals before it print them.  The function prototype needs to be: function(dataIn, callback(err, formattedDataOut))
+
+
+
 
 #### .data ( Data ) 
 ##### Description
