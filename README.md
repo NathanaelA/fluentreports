@@ -38,12 +38,12 @@ In these reports I tried to throw in a chunk of the features to try and give you
 ## Examples
 Currently has 6 example reports showing:
 
-* Simple Grid Report with Grouping
-* Simple Account Summary Report (w/ color & grid for account balances)
-* Simple Fax Cover Sheet (w/ image)
-* Grid Report showing off Sub-Reports with auto-queries, cell colorization and url links.
-* More complex invoice/proposal with grouping, headers, footers.
-* The Grocery Report Example done in stages to see from simple to complex reporting.
+* Simple Grid Report with Grouping ![Example 1](https://github.com/nathanaela/fluentReports/raw/master/examples/demo1.png)
+* Simple Account Summary Report (w/ color & grid for account balances) ![Example 2](https://github.com/nathanaela/fluentReports/raw/master/examples/demo2.png)
+* Simple Fax Cover Sheet (w/ image) ![Example 3](https://github.com/nathanaela/fluentReports/raw/master/examples/demo3.png)
+* Grid Report showing off Sub-Reports with auto-queries, cell colorization and url links. ![Example 4](https://github.com/nathanaela/fluentReports/raw/master/examples/demo4.png)
+* More complex invoice/proposal with grouping, headers, footers. ![Example 5](https://github.com/nathanaela/fluentReports/raw/master/examples/demo5.png)
+* The Grocery Report Example done in stages to see from simple to complex reporting. ![Example 6](https://github.com/nathanaela/fluentReports/raw/master/examples/GroceryList3.png)
 
 Please note these following reports are using the simplest report methods; to show how quickly you can create a simple report.  
 You have the ability to EASILY FULLY override any and all of the Headers, Footers, and Detail bands.  

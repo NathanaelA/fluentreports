@@ -24,8 +24,7 @@
   * negativeParentheses: true or (false); to make negative number show up like (20) rather than -20.
   * info - object; you can set some of the pdf info
 
-
-
+<br><br>
 
 #### Report.x
 ##### Constants:
@@ -52,13 +51,11 @@ Please note; this actually returns the a ReportGroup object; not the Report obje
 var MyReportObject = new Report("MyCoolReport.pdf", {autoPrint: true});
 Would create the report called "MyCoolReport.pdf" and auto print it when it is opened in a pdf reader.
 
-
-
+<br><br><br>
 
 ### The functions below are methods on the above created and returned ReportGroup object...
 
-
-
+<br><br><br>
 
 #### .userData( Data )
 ##### Description
@@ -66,8 +63,7 @@ This allows you to set userData on the report that you might want at some later 
 ##### Parameters
 * Data - whatever extra user data you need access to in the report
 
-
-
+<br><br><br>
 
 #### .totalFormatter( function(data, callback(err, data) {}) {} ) 
 ##### Description
@@ -75,8 +71,7 @@ This allows you to set a formatting function to deal with any total values and f
 ##### Parameters
 * function - this is a function that will format your totals before it print them.  The function prototype needs to be: function(dataIn, callback(err, formattedDataOut))
 
-
-
+<br><br><br>
 
 #### .data ( Data ) 
 ##### Description
@@ -93,6 +88,7 @@ THIS IS MANDANTORY - you need to set a data object otherwise their is no point t
 ##### Example:
 MyReportObject.data([{id: 1, name: 'Nathanael'}, {id: 2, name: 'Anderson'}]);
 
+<br><br><br>
 
 #### .keys ( keys )
 ##### Description
@@ -103,6 +99,7 @@ This is so you can set a key or keys that get passed to sub-report data query fu
 ##### Example:
 MyReportObject.keys("id");
 
+<br><br><br>
 
 #### .addReport( Report, options )
 ##### Description
@@ -112,6 +109,7 @@ This is used to add a sub-report; however you can use the easier method of "new 
 * options
   * isSibling - true or (false) -- this allows you to make this report a "sibling" report rather than the normal child report.
 
+<br><br><br>
 
 #### .info ( info )
 ##### Description
@@ -119,6 +117,7 @@ This allows you to set the pdf information and can be passed in as one of the Re
 ##### Parameters
 * info - this is the object that contains the pdf header information you might want to change or add to the report
 
+<br><br><br>
 
 #### .detail ( detailOutput )
 ##### Description
@@ -137,6 +136,7 @@ MyReportObject.detail([["name", 120], ["address", 200], ["state", 20]]);
 or
 MyReportObject.detail("{{name}} lives in the state of {{state}}");
 
+<br><br><br>
 
 #### .titleHeader ( headerOutput, options )
 ##### Description
@@ -150,6 +150,7 @@ This is printed for the FIRST PAGE ONLY (if set); this prints first!
 ##### Example
 MyReportObject.titleHeader("This is my Cool Report");
 
+<br><br><br>
 
 #### .pageHeader ( headerOutput, options )
 ##### Description
@@ -163,6 +164,7 @@ This is printed for EVERY page except if the titleHeader is set, if the titleHea
 ##### Example
 MyReportObject.pageHeader(["This is my", "cool report"]);
 
+<br><br><br>
 
 #### .header ( headerOutput, options )
 ##### Description
@@ -174,6 +176,7 @@ This is printed as the header object to any group objects.  So while grouping yo
   * pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
   * pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
 
+<br><br><br>
 
 #### .finalSummary ( footerOutput, options )
 ##### Description
@@ -185,6 +188,7 @@ This is printed as the footer object on the final page (if set).
   * pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
   * pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
 
+<br><br><br>
 
 #### .pageFooter ( footerOutput, options )
 ##### Description
@@ -198,6 +202,7 @@ This is printed as the footer object on all pages (except for the last page if t
 ##### Example
 MyReportObject.pageFooter(function(Rpt) { Rpt.print("Hey, this page is done!"); });
 
+<br><br><br>
 
 #### .footer ( footerOutput, options )
 ##### Description
@@ -209,6 +214,7 @@ This is printed as the footer object to any group objects.  So while grouping yo
   * pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
   * pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
 
+<br><br><br>
 
 #### .outputType( type )
 ##### Description
@@ -216,6 +222,7 @@ This allows you to change the output type of the report; this is rarely used as 
 ##### Parameters
 * type - this is one of the Report.renderType constants
 
+<br><br><br>
 
 #### .render(callback) 
 ##### Description
@@ -228,12 +235,15 @@ This is what actually starts the rendering of the document when you are done set
 ##### Example
 MyReportObject.render(function(Err, name) {  console.log("The report was saved to", name);  });
 
+<br><br><br>
+
 #### .printStructure ( asRendered )
 ##### Description
 This prints out the structure of your report for debugging purposes to the console; it can see if you messed up your groupings or some other issues with your layout of the report.
 ##### Parameters 
 * asRendered: true or (false) - If true this lays out the output in actual output order; if false (default) this lays it out in group order so you can easily see what is attached to what object.
 
+<br><br><br>
 
 #### .landscape ( landscape )
 ##### Description
@@ -241,6 +251,7 @@ Gets or sets landscape or portrait mode, This can be passed in as a Report(..., 
 ##### Parameters
 * landscape: true or (false) - false = portrait, true is landscape.
 
+<br><br><br>
 
 #### .paper ( paper )
 ##### Description
@@ -248,6 +259,7 @@ Gets or sets the paper size, This can be passed in as a Report(..., OPTIONS)
 ##### Parameters
 * paper - can be (letter), legal, A0-A10, B0-B10, C0-C10, Executive, Folio, Tabloid, RA0-RA4, SRA0-SRA4
 
+<br><br><br>
 
 #### .font ( font )
 ##### Description
@@ -255,6 +267,7 @@ This gets or sets the default font for the report, This can be passed in as a Re
 ##### Parameters
 * font: (helvetica), courier, times, symbol, dingbats or a external font file that you provide and add to the report via the "registerFont" command
 
+<br><br><br>
 
 #### .fontSize ( size )
 ##### Description
@@ -262,6 +275,7 @@ This sets the Default font size for the report, This can be passed in as a Repor
 ##### Parameters
 * size: any number from 1-128, with (12) being the default.
 
+<br><br><br>
 
 #### .registerFont ( name, definition )
 ##### Description
@@ -272,6 +286,7 @@ This allows you to register a external font to use in your report
 ##### Example:
 MyReportObject.registerFont("Aparajita", {normal: './aparaj.ttf', bold: './aparajb.ttf', 'italic': './aparaji.ttf'});
 
+<br><br><br>
 
 #### .margins ( margins )
 ##### Description
@@ -279,6 +294,7 @@ This allows you to set all the margins or some of them, This can be passed in as
 ##### Parameters
 * margins: (72), can be a single number for all four sides; or a object array like: {left:72, top:72, bottom:72, right: 72}
 
+<br><br><br>
 
 #### .autoPrint ( autoPrint ) 
 ##### Description
@@ -286,6 +302,7 @@ This will cause the print dialog to show up when you first open the pdf document
 ##### Parameters
 * autoPrint - true or (false)
 
+<br><br><br>
 
 #### .fullScreen ( fullScreen )
 ##### Description
@@ -293,6 +310,7 @@ This will cause the pdf document to go to full screen on opening it up, This can
 ##### Parameters
 * fullScreen - true or (false)
 
+<br><br><br>
 
 #### .negativeParentheses ( negativeParentheses )
 ##### Description
@@ -300,13 +318,16 @@ This will print negatives as (20) rather than -20, This can be passed in as a Re
 ##### Parameters
 * negativeParentheses - true or (false)
 
+<br><br><br>
 
 #### .importPDF ( pdfFile )
 ##### Description
 This will import the "pdfFile" into this report
 ##### Parameters
 * pdfFile - the path to the pdf file
- 
+
+ <br><br><br>
+
 #### .groupBy ( field, options )
 ##### Description
 This will allow you to create grouping on fields so that you can have group headers, footers, details for each group of records.  
@@ -315,6 +336,7 @@ IMPORTANT: this will RETURN a brand NEW ReportGroup object, which will then allo
 * field - this is the key field to group by.  Anytime this field changes; it will run the prior values footer, then this values header and start doing the details in this group.
 * options - this allows you to set if you want the header to be printed only show.once at the beginning of the group, (show.newPageOnly) which means at the beginning of the group and anytime a new page occurs while this is the current group, and show.always same as "newPageOnly" but always shows as long as it is a parent of the current group. 
 
+<br><br><br>
 
 #### .sum ( field )
 ##### Description
@@ -322,6 +344,7 @@ This allows you to have a running Sum of the field; this value is propagated thr
 ##### Parameters
 * field - this is the key for the field name you are tracking
 
+<br><br><br>
 
 #### .min ( field )
 ##### Description
@@ -329,6 +352,7 @@ This allows you to have a running minimum value of the field; this value is prop
 ##### Parameters
 * field - this is the key for the field name you are tracking
 
+<br><br><br>
   
 #### .max ( field )
 ##### Description
@@ -336,6 +360,7 @@ This allows you to have a running maximum value of the field; this value is prop
 ##### Parameters
 * field - this is the key for the field name you are tracking
 
+<br><br><br>
 
 #### .count ( field )
 ##### Description
@@ -343,6 +368,7 @@ This allows you to have a running count of the field; this value is propagated t
 ##### Parameters
 * field - this is the key for the field name you are tracking
 
+<br><br><br>
 
 #### .average ( field )
 ##### Description
@@ -350,7 +376,7 @@ This allows you to have a running average of the field; this value is propagated
 ##### Parameters
 * field - this is the key for the field name you are tracking
 
-
+<br><br><br><br>
 
 ## Rendering Commands
 These commands are available to the header, title header, page header, page summary, page footer, footer, and detail functions while the report is running.  The first object passed to your function is the ReportRenderer object; this object has the following methods you can run.
@@ -370,6 +396,7 @@ This displays a image on the current page
   * align - align the image, left, right, center
   * valign - vertically align the image, top, center or bottom.
 
+<br><br><br>
 
 #### .font ( name, [size] )
 ##### Description
@@ -378,6 +405,7 @@ This allow you to get or change the default font (and optionally change the font
 * name - is a valid font name
 * size - OPTIONAL, the new font size 
 
+<br><br><br>
 
 #### .fontSize ( [size] )
 ##### Description
@@ -385,20 +413,25 @@ This allows you to get or change the current font size
 ##### Parameters
 * size - the new size of the font.  Called without to get teh current font size.
 
+<br><br><br>
 
 #### .fontBold ( )
 ##### Description
 This sets the font to be Bold; if the font supports Bold & Italic at the same time and you already have Italic set, it will set it to bold-italic.
 
+<br><br><br>
 
 #### .fontItalic ( )
 ##### Description
 This sets the font to be Italic; if the font was already set to bold AND the font supports Bold and Italic it will add italic to the bold fond, otherwise it will just make it italic.
 
+<br><br><br>
+
 #### .fontNormal ( )
 ##### Description
 This resets the font back to normal; eliminating any Bold and Italic attributes
 
+<br><br><br>
 
 #### .fillAndStroke ( fillColor, [strokeColor] )
 ##### Description
@@ -407,6 +440,7 @@ This sets the fill & stroke colors
 * fillColor - the color for fills
 * strokeColor - the color for strokes, called without to only set the fill color
 
+<br><br><br>
 
 #### .fill ( [color] )
 ##### Description
@@ -414,7 +448,7 @@ Forces a fill with either the current color or the optionally provided color.
 ##### Parameters
 * color - the color for the fill, or called without to use the current color to do the fill
 
-
+<br><br><br>
 
 #### .fillColor ( [color] )
 ##### Description
@@ -422,6 +456,7 @@ Gets or sets the fill color
 ##### Parameters
 * color - the fill color to set, or called without to get the current value
 
+<br><br><br>
 
 #### .fillOpacity ( [opacity] )
 ##### Description
@@ -431,6 +466,7 @@ Gets or sets the current fill opacity
 ##### Example
 R.fillOpacity(0.5)
 
+<br><br><br>
 
 #### .strokeColor ( [color] )
 ##### Description
@@ -438,6 +474,7 @@ This set or gets the stroke color
 ##### Parameter
 * color - the color to set the strokes, or called without to get the current value 
 
+<br><br><br>
 
 #### .setNegativeParentheses ( [negativeParentheses] )
 ##### Description
@@ -445,6 +482,7 @@ This is used to switch between -30 and (30) for display of negative numbers.
 ##### Parameters
 * negativeParentheses - true enables using parentheses, (false) disables and uses the normal minus sign, or called without to get the current value
 
+<br><br><br>
 
 #### .setMargins ( margins )
 ##### Description
@@ -452,12 +490,15 @@ This will allow you to override the default margins and set the margins for the 
 ##### Parameters
 * margins - can be a number for all four sides or a object specifying each side {left: 25, right: 25, top: 50, bottom: 50} 
  
- 
+<br><br><br>
+
 #### .paper ( [paper] )
 ##### Description
 This allows you to get or change the paper for the   *NEXT  * page
 ##### Parameters
 * paper - can be (letter), legal, A0-A10, B0-B10, C0-C10, Executive, Folio, Tabloid, RA0-RA4, SRA0-SRA4, or called without to get the current value
+
+<br><br><br>
 
 #### .landscape ( [landscape] )
 ##### Description
@@ -465,21 +506,25 @@ This allows you to get or change the landscape mode for the   *NEXT  * page
 ##### Parameters
 * landscape - true is landscape, (false) is portrait mode, or called without to get the current value
 
+<br><br><br>
 
 #### .saveState ( )
 ##### Description
 Allows you to save the current state of the engine -- This saves font, colors, and the x coordinate.   This is a STACK, so you can save multiple states; and then restore them.  Make sure any state you save you use a resetState or deleteState on afterwords, as the engine uses this code a lot to keep things correct.
 
+<br><br><br>
 
 #### .resetState ( )
 ##### Description
 This resets the state of the engine to the last saved state in the saved stack.
 
+<br><br><br>
 
 #### .deleteState ( )
 ##### Description
 This deletes the last saved state of the engine.
 
+<br><br><br>
 
 #### .hasChanges ( [includeHeader] )
 ##### Description
@@ -487,11 +532,13 @@ This can tell you if the page has any changes on it.
 ##### Parameters
 * includeHeader - true or (false).   If true, this will include any header changes also; as you may want to know if the page only had any record changes on the page vs any change at all. 
 
+<br><br><br>
 
 #### .currentPage ( )
 ##### Description
 this returns the current page that is being worked on.
 
+<br><br><br>
 
 #### .newPage ( [saveOptions], [callback] )
 ##### Description
@@ -503,6 +550,7 @@ This adds a new page for you to start working on.   Please note; if you are usin
 R.newPage();
 R.newPage(function() { R.print("Hi, I'm on a new page"); });
 
+<br><br><br>
  
 #### .standardHeader ( text, [callback] )
 #### .standardFooter ( text, [callback] )
@@ -512,12 +560,14 @@ This runs the standard header or footer code so you can keep the default header/
 * text - the string or array of two strings you want printed
 * callback - used for ASYNC reports; this is called when the header/footer printing is done.   You can optionally use this in a SYNC report; but it is REQUIRED in a ASYNC report.
  
+<br><br><br>
 
 #### .getCurrentX ( )
 #### .getCurrentY ( )
 ##### Description
 This returns the current X or Y coordinate
 
+<br><br><br>
 
 #### .setCurrentX ( new )
 #### .setCurrentY ( new )
@@ -526,6 +576,7 @@ This sets the current X or Y coordinate
 ##### Parameters
 * new - the new x or y coordinate
 
+<br><br><br>
 
 #### currentX ( [new] )
 #### currentY ( [new] )
@@ -534,6 +585,7 @@ This sets or gets the current X or Y coordinates
 ##### Parameters
 * new - the new x or y coordinate, or called without for the current x or y coordinate
 
+<br><br><br>
 
 #### addX ( new )
 #### addY ( new )
@@ -542,6 +594,7 @@ This adds a number to either the X or Y coordinate
 ##### Parameters
 * new - the value to ADD or SUBTRACT (if negative) to the existing X or Y coordinate
 
+<br><br><br>
 
 #### newLine ( [count], [callback] )
 ##### Description
@@ -550,6 +603,7 @@ This adds a newLine or multiple new lines
 * count - the number of lines; or if unset it will default to 1 line
 * callback - used for ASYNC reports; this is called when the newLine addition(s) is/are done.   You can optionally use this in a SYNC report; but it is REQUIRED in a ASYNC report.
 
+<br><br><br>
 
 #### widthOfString ( string )
 ##### Description
@@ -557,11 +611,13 @@ This calculates how long this string will be with the current font and font size
 ##### Parameters
 * string - the string to size
 
+<br><br><br>
 
 #### heightOfString ( )
 ##### Description
 This tells you how big a current string will be using the current font and font size; it doesn't actually need a string to tell you this as all string printed using this font & font size will use this space.
 
+<br><br><br>
 
 #### bandLine ( [thickness], [verticalGap] )
 ##### Description
@@ -570,6 +626,7 @@ This allow you to print a line the size of the last band command
 * thickness - the thickness of the line; defaults to 1
 * verticalGap - the gap between the prior printed item and this line
 
+<br><br><br>
 
 #### line ( startX, startY, endX, endY, options )
 #### box ( startX, startY, endX, endY, options)
@@ -588,6 +645,7 @@ This prints a line or box from startX,startY to endX,endY
   * textColor - the text color
   * fill - to fill the shape
 
+<br><br><br>
 
 #### circle ( startX, startY, radius, options )
 ##### Description
@@ -604,6 +662,7 @@ This prints a circle from startX,startY using the radius
   * textColor - the text color
   * fill - to fill the shape
 
+<br><br><br>
 
 #### lineWidth ( width )
 ##### Description
@@ -611,11 +670,13 @@ This sets or gets the gap between lines
 ##### Parameters
 * width - the width to set it to, without this parameter it will return the current line width
 
+<br><br><br>
 
 #### getLastBandWidth ( )
 ##### Description
 Gets the last width of the band that was printed.
 
+<br><br><br>
 
 #### maxX ( )
 #### maxY ( )
@@ -624,6 +685,7 @@ Gets the last width of the band that was printed.
 ##### Description
 This returns the minimum or maximum X or Y coordinate allowed.
 
+<br><br><br>
 
 #### printedAt ( options ) 
 ##### Description
@@ -635,6 +697,7 @@ This will print the date time at the current location or header or footer locati
   * footer - true or false, print in the footer
   * text - the text to print this: defaults to: "Printed At: {0}:{1}{2}\non {3}"  where {0} is replaces with Hour, {1} minutes, {2} am/pm and {3} the current date.
 
+<br><br><br>
 
 #### pageNumber ( options )
 ##### Description
@@ -646,6 +709,7 @@ This will print the current page number at the current location, or the header /
   * footer - true or false, print in the footer
   * text - the text to print this: defaults to: "Page: {0}"  where {0} is the current page number
 
+<br><br><br>
 
 #### importPDF ( name )
 ##### Description
@@ -653,6 +717,7 @@ Imports a PDF in the current location, if this page has any printing on it - it 
 ##### Parameters
 * name - the file name to import
 
+<br><br><br>
 
 #### print ( text, options, callback )
 ##### Description
@@ -679,6 +744,7 @@ This is one of the primary methods to put any text of the page; you pass it your
   * ignoreEmptyStrings - ignore printing any empty strings in arrays
 * callback - used for ASYNC reports; this is called when the printing is done.   You can optionally use this in a SYNC report; but it is REQUIRED in a ASYNC report.
 
+<br><br><br>
 
 #### band ( dataIn, options, callback )
 ##### Description
@@ -705,7 +771,7 @@ This is the other primary method of displaying data on a report; this creates ba
   * link - the url to link this cell too. 
 * callback - used for ASYNC reports; this is called when the printing is done.   You can optionally use this in a SYNC report; but it is REQUIRED in a ASYNC report.
 
-
+<br><br><br>
 
 #### suppressionBand ( dataIn, options, callback )
 ##### Description
