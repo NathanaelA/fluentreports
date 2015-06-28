@@ -5,38 +5,40 @@
 
 ### Report
 #### new Report(Destination, Options)
+
 ##### Parameters
 * Destination - can be one of the following:
-** A File Name - Where to Save it (Any name other than "buffer")
-** Literal string "buffer" - meaning it is buffered into a buffer Object to your "render" callback (see render command)
-** pipe - any valid pipe that can be written too.
-** Parent report - making this a child report of the parent report.
+  - A File Name - Where to Save it (Any name other than "buffer")
+  - Literal string "buffer" - meaning it is buffered into a buffer Object to your "render" callback (see render command)
+  - pipe - any valid pipe that can be written too.
+  - Parent report - making this a child report of the parent report.
 
 * Options - Default is in (parentheses)
-** landscape: true or (false); to make the report landscaped.
-** paper: (letter), legal, A0-A10, B0-B10, C0-C10, Executive, Folio, Tabloid, RA0-RA4, SRA0-SRA4
-** font: (helvetica), courier, times, symbol, dingbats or a external font file that you provide and add to the report via the "registerFont" command
-** fontSize: (12), any number from 1-128.
-** margins: (72), can be a single number for all four sides; or a object array like: {left:72, top:72, bottom:72, right: 72}
-** autoPrint: true or (false); to make the report automatically bring up the print dialog
-** fullScreen: true or (false); to make the report automatically full screen when it loads
-** negativeParentheses: true or (false); to make negative number show up like (20) rather than -20.
-** info - object; you can set some of the pdf info
+  * landscape: true or (false); to make the report landscaped.
+  * paper: (letter), legal, A0-A10, B0-B10, C0-C10, Executive, Folio, Tabloid, RA0-RA4, SRA0-SRA4
+  * font: (helvetica), courier, times, symbol, dingbats or a external font file that you provide and add to the report via the "registerFont" command
+  * fontSize: (12), any number from 1-128.
+  * margins: (72), can be a single number for all four sides; or a object array like: {left:72, top:72, bottom:72, right: 72}
+  * autoPrint: true or (false); to make the report automatically bring up the print dialog
+  * fullScreen: true or (false); to make the report automatically full screen when it loads
+  * negativeParentheses: true or (false); to make negative number show up like (20) rather than -20.
+  * info - object; you can set some of the pdf info
+
 
 #### Report.x
 ##### Constants:
 * show.
-** once - Show the header/footer only once
-** newPageOnly - Show on all new pages if this reportGroup is the current reportGroup
-** always - show on all new pages even if this reportGroup is a parent of the current reportGroup
+  * once - Show the header/footer only once
+  * newPageOnly - Show on all new pages if this reportGroup is the current reportGroup
+  * always - show on all new pages even if this reportGroup is a parent of the current reportGroup
 
 * alignment.
-** LEFT, CENTER, RIGHT
+  * LEFT, CENTER, RIGHT
 
 * renderType.
-** file - render to a file
-** pipe - render to a pipe
-** buffer - render to a buffer
+  * file - render to a file
+  * pipe - render to a pipe
+  * buffer - render to a buffer
 
 * trace: true or (false) - output tracing statements to the console
 * callbackDebugging: true or (false) - output callback tracing statements; trace needs to be true to use this option; and of course these two affect ALL reports.
@@ -68,13 +70,15 @@ This allows you to set a formatting function to deal with any total values and f
 #### .data ( Data ) 
 ##### Description
 THIS IS MANDANTORY - you need to set a data object otherwise their is no point to the report.
+
 ##### Parameters
 * Data - this can be an array of arrays; and array of objects, an object, a string/number value or one of the two more advanced data class:
-** a simple query function; the report system calls this function with (currentData, callback) and the prototype callback(err, data) -- when this function is called you can either call the callback with the data OR return ALL the needed data directly from this function. 
-** pageable class; your class needs to implement a "count", "loadRange" methods as a minimum; and optionally can have a "query" method.   
-*** count is called with a callback(err, data) where data needs to be the count of record that are too be printed.
-*** loadRange is called (start, end, callback), start = first record needed, end = last record needed, callback is (err, resultData) 
-*** query is called with (currentData, callback) where callback only has (err) as it just needs to be called when the query is done being prepared.  
+  * a simple query function; the report system calls this function with (currentData, callback) and the prototype callback(err, data) -- when this function is called you can either call the callback with the data OR return ALL the needed data directly from this function. 
+  * pageable class; your class needs to implement a "count", "loadRange" methods as a minimum; and optionally can have a "query" method.   
+  ** count is called with a callback(err, data) where data needs to be the count of record that are too be printed.
+  ** loadRange is called (start, end, callback), start = first record needed, end = last record needed, callback is (err, resultData) 
+  ** query is called with (currentData, callback) where callback only has (err) as it just needs to be called when the query is done being prepared.
+    
 ##### Example:
 MyReportObject.data([{id: 1, name: 'Nathanael'}, {id: 2, name: 'Anderson'}]);
 
@@ -84,6 +88,7 @@ MyReportObject.data([{id: 1, name: 'Nathanael'}, {id: 2, name: 'Anderson'}]);
 This is so you can set a key or keys that get passed to sub-report data query functions/class objects.
 ##### Parameters
 * Keys - A single string key, or array of string keys, this is used to know which data to send to the "query" functions that you can pass into the .data function above -- this is used for sub-reports. 
+
 ##### Example:
 MyReportObject.keys("id");
 
@@ -94,7 +99,7 @@ This is used to add a sub-report; however you can use the easier method of "new 
 ##### Parameters
 * Report - the Report object you created
 * options
-** isSibling - true or (false) -- this allows you to make this report a "sibling" report rather than the normal child report.
+  * isSibling - true or (false) -- this allows you to make this report a "sibling" report rather than the normal child report.
 
 
 #### .info ( info )
@@ -112,10 +117,10 @@ This is used so that the report system know how to output each detail record.  T
 * array = [[Data Key, Data Width, Data Alignment],[...],...]   Key is the key of the data to use for output, width is how wide to make this, alignment is right, (left), or center.
 * string = "some text {{key_1}} more text {{key_2}}...." - where key_1 & key_2 are the index names of the data to use.
 * function = This is prototyped  (ReportRenderer, Data, State, Done_Callback) for Asynchronous and (ReportRenderer, Data, State) for synchronous reporting.  The whole report must be either Sync or Async.
-** The ReportRenderer has multiple methods for outputting to your report.   Please see the ReportRenderer section for its methods.
-** The Data is the current line/row of data; you will deal with a SINGLE row of data each time this function is called.
-** The State is the state of the engine; it is a object with multiple keys -- please see the "State" of the engine section for the values in this.
-** Done_Callback - Again, this is only on ASYNC reports; it is Done_Callback(err).
+  * The ReportRenderer has multiple methods for outputting to your report.   Please see the ReportRenderer section for its methods.
+  * The Data is the current line/row of data; you will deal with a SINGLE row of data each time this function is called.
+  * The State is the state of the engine; it is a object with multiple keys -- please see the "State" of the engine section for the values in this.
+  * Done_Callback - Again, this is only on ASYNC reports; it is Done_Callback(err).
 ##### Examples
 MyReportObject.detail([["name", 120], ["address", 200], ["state", 20]]);
 or
@@ -128,9 +133,9 @@ This is printed for the FIRST PAGE ONLY (if set); this prints first!
 ##### Parameters
 * headerOutput - this can be a string, array of two strings or a function.  Function is prototyped identical to .detail
 * options -
-** pageBreak - true or (false) - this will cause the header to page break before printing it.
-** pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
-** pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
+  * pageBreak - true or (false) - this will cause the header to page break before printing it.
+  * pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
+  * pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
 ##### Example
 MyReportObject.titleHeader("This is my Cool Report");
 
@@ -141,9 +146,9 @@ This is printed for EVERY page except if the titleHeader is set, if the titleHea
 ##### Parameters
 * headerOutput - this can be a string, array of two strings or a function.  Function is prototyped identical to .detail
 * options -
-** pageBreak - true or (false) - this will cause the header to page break before printing it.
-** pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
-** pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
+  * pageBreak - true or (false) - this will cause the header to page break before printing it.
+  * pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
+  * pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
 ##### Example
 MyReportObject.pageHeader(["This is my", "cool report"]);
 
@@ -154,9 +159,9 @@ This is printed as the header object to any group objects.  So while grouping yo
 ##### Parameters
 * headerOutput - this can be a string, array of two strings or a function.  Function is prototyped identical to .detail
 * options -
-** pageBreak - true or (false) - this will cause the header to page break before printing it.
-** pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
-** pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
+  * pageBreak - true or (false) - this will cause the header to page break before printing it.
+  * pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
+  * pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
 
 
 #### .finalSummary ( footerOutput, options )
@@ -165,9 +170,9 @@ This is printed as the footer object on the final page (if set).
 ##### Parameters
 * footerOutput - this can be a string, array of strings or a function.  Function is prototyped identical to .detail
 * options -
-** pageBreak - true or (false) - this will cause the header to page break before printing it.
-** pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
-** pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
+  * pageBreak - true or (false) - this will cause the header to page break before printing it.
+  * pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
+  * pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
 
 
 #### .pageFooter ( footerOutput, options )
@@ -176,9 +181,9 @@ This is printed as the footer object on all pages (except for the last page if t
 ##### Parameters
 * footerOutput - this can be a string, array of strings or a function.  Function is prototyped identical to .detail
 * options -
-** pageBreak - true or (false) - this will cause the header to page break before printing it.
-** pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
-** pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
+  * pageBreak - true or (false) - this will cause the header to page break before printing it.
+  * pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
+  * pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
 ##### Example
 MyReportObject.pageFooter(function(Rpt) { Rpt.print("Hey, this page is done!"); });
 
@@ -189,9 +194,9 @@ This is printed as the footer object to any group objects.  So while grouping yo
 ##### Parameters
 * footerOutput - this can be a string, array of strings or a function.  Function is prototyped identical to .detail
 * options -
-** pageBreak - true or (false) - this will cause the header to page break before printing it.
-** pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
-** pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
+  * pageBreak - true or (false) - this will cause the header to page break before printing it.
+  * pageBreakBefore - true or (false) - this will cause the header to page break before printing it.
+  * pageBreakAfter - true or (false) - this will cause the header to page break after printing it.
 
 
 #### .outputType( type )
@@ -206,9 +211,9 @@ This allows you to change the output type of the report; this is rarely used as 
 This is what actually starts the rendering of the document when you are done setting it up with all these class methods.
 ##### Parameters
 * callback - this is called when the report is done being rendered; the callback will be
-** If rendering to disk (err, reportName) 
-** if Rendering to buffer (err, Buffer)
-** if rendering to pipe (err, pipe)
+  * If rendering to disk (err, reportName) 
+  * if Rendering to buffer (err, Buffer)
+  * if rendering to pipe (err, pipe)
 ##### Example
 MyReportObject.render(function(Err, name) {  console.log("The report was saved to", name);  });
 
@@ -345,14 +350,14 @@ This displays a image on the current page
 ##### Parameters
 * name - this is the image location of disk to use
 * options - 
-** x - X coordinate to start
-** y - Y coordinate to start
-** width - the width of the image
-** height - the height of the image
-** scale - scale value
-** fit - fit the image inside the coords, width and height
-** align - align the image, left, right, center
-** valign - vertically align the image, top, center or bottom.
+  * x - X coordinate to start
+  * y - Y coordinate to start
+  * width - the width of the image
+  * height - the height of the image
+  * scale - scale value
+  * fit - fit the image inside the coords, width and height
+  * align - align the image, left, right, center
+  * valign - vertically align the image, top, center or bottom.
 
 
 #### .font ( name, [size] )
@@ -432,20 +437,20 @@ This is used to switch between -30 and (30) for display of negative numbers.
 
 #### .setMargins ( margins )
 ##### Description
-This will allow you to override the default margins and set the margins for the **NEXT** page
+This will allow you to override the default margins and set the margins for the   *NEXT  * page
 ##### Parameters
 * margins - can be a number for all four sides or a object specifying each side {left: 25, right: 25, top: 50, bottom: 50} 
  
  
 #### .paper ( [paper] )
 ##### Description
-This allows you to get or change the paper for the **NEXT** page
+This allows you to get or change the paper for the   *NEXT  * page
 ##### Parameters
 * paper - can be (letter), legal, A0-A10, B0-B10, C0-C10, Executive, Folio, Tabloid, RA0-RA4, SRA0-SRA4, or called without to get the current value
 
 #### .landscape ( [landscape] )
 ##### Description
-This allows you to get or change the landscape mode for the **NEXT** page
+This allows you to get or change the landscape mode for the   *NEXT  * page
 ##### Parameters
 * landscape - true is landscape, (false) is portrait mode, or called without to get the current value
 
@@ -565,12 +570,12 @@ This prints a line or box from startX,startY to endX,endY
 * endX - Ending X coordinate
 * endY - Ending Y coordinate
 * options:
-** fillOpacity - the Opacity
-** borderColor - the border color
-** fillColor - The fill color
-** thickness - the Line thickness
-** textColor - the text color
-** fill - to fill the shape
+  * fillOpacity - the Opacity
+  * borderColor - the border color
+  * fillColor - The fill color
+  * thickness - the Line thickness
+  * textColor - the text color
+  * fill - to fill the shape
 
 
 #### circle ( startX, startY, radius, options )
@@ -581,12 +586,12 @@ This prints a circle from startX,startY using the radius
 * startY - Starting Y coordinate
 * radius - the radius of the circle
 * options:
-** fillOpacity - the Opacity
-** borderColor - the border color
-** fillColor - The fill color
-** thickness - the Line thickness
-** textColor - the text color
-** fill - to fill the shape
+  * fillOpacity - the Opacity
+  * borderColor - the border color
+  * fillColor - The fill color
+  * thickness - the Line thickness
+  * textColor - the text color
+  * fill - to fill the shape
 
 
 #### lineWidth ( width )
@@ -614,10 +619,10 @@ This returns the minimum or maximum X or Y coordinate allowed.
 This will print the date time at the current location or header or footer locations
 ##### Parameters
 * options -
-** align - alignment, "left", "right", "center"
-** header - true or false, print in the header
-** footer - true or false, print in the footer
-** text - the text to print this: defaults to: "Printed At: {0}:{1}{2}\non {3}"  where {0} is replaces with Hour, {1} minutes, {2} am/pm and {3} the current date.
+  * align - alignment, "left", "right", "center"
+  * header - true or false, print in the header
+  * footer - true or false, print in the footer
+  * text - the text to print this: defaults to: "Printed At: {0}:{1}{2}\non {3}"  where {0} is replaces with Hour, {1} minutes, {2} am/pm and {3} the current date.
 
 
 #### pageNumber ( options )
@@ -625,10 +630,10 @@ This will print the date time at the current location or header or footer locati
 This will print the current page number at the current location, or the header / footer locations
 ##### Parameters
 * options
-** align - alignment, "left", "right", "center"
-** header - true or false, print in the header
-** footer - true or false, print in the footer
-** text - the text to print this: defaults to: "Page: {0}"  where {0} is the current page number
+  * align - alignment, "left", "right", "center"
+  * header - true or false, print in the header
+  * footer - true or false, print in the footer
+  * text - the text to print this: defaults to: "Page: {0}"  where {0} is the current page number
 
 
 #### importPDF ( name )
@@ -644,23 +649,23 @@ This is one of the primary methods to put any text of the page; you pass it your
 ##### Parameters
 * text - this can be a string or an array of strings
 * options -
-** x - x coordinate to print at
-** y - y coordinate to print at
-** addX - add this x to the x coord before printing
-** addY - add this y to the y coord before printing
-** align - alignment (left, center, or right)
-** textWidth - the gap between characters
-** width - the maximum size you want the string to be; it will wrap it after this.
-** textColor - the font color of the text
-** underline - make this text underlined
-** strike - make this text striked through
-** fontSize - the font Size to use
-** fill - the background fill color
-** link - make this text a link, this is the url that the click will activate
-** font - the font to use
-** fontBold - true or false to be bold
-** fontItalic - true or false to be italic
-** ignoreEmptyStrings - ignore printing any empty strings in arrays
+  * x - x coordinate to print at
+  * y - y coordinate to print at
+  * addX - add this x to the x coord before printing
+  * addY - add this y to the y coord before printing
+  * align - alignment (left, center, or right)
+  * textWidth - the gap between characters
+  * width - the maximum size you want the string to be; it will wrap it after this.
+  * textColor - the font color of the text
+  * underline - make this text underlined
+  * strike - make this text striked through
+  * fontSize - the font Size to use
+  * fill - the background fill color
+  * link - make this text a link, this is the url that the click will activate
+  * font - the font to use
+  * fontBold - true or false to be bold
+  * fontItalic - true or false to be italic
+  * ignoreEmptyStrings - ignore printing any empty strings in arrays
 * callback - used for ASYNC reports; this is called when the printing is done.   You can optionally use this in a SYNC report; but it is REQUIRED in a ASYNC report.
 
 
@@ -670,23 +675,23 @@ This is the other primary method of displaying data on a report; this creates ba
 ##### Parameters
 * dataIn - this is an array of each cell; each cell can override the below options with most of the below options so  [ { data: "Data to Print", width: "width of cell", align: "alignment", border: 1, ...}, {data:...}, ...] 
 * options:
-** gutter - gutter between cells
-** collapse - (true) or false; collapse the borders between cells
-** border - the width of all the border, it can also be a object with specifics for each side {left: 2, right: 0, top: 1, bottom: 1}
-** dash - true or (false); make the border line dashed
-** borderColor - the color of the border
-** fill - the fill color of the cell
-** fillOpacity - fill Opacity decimal value of 0 to 1.
-** padding - padding inside the cell
-** x - X coordinate
-** y - Y coordinate
-** addX - add to the X coordinate
-** addY - add to the Y coordinate
-** font - font to use
-** fontBold - true or (false)
-** fontItalic - true or (false)
-** textColor - the text color
-** link - the url to link this cell too. 
+  * gutter - gutter between cells
+  * collapse - (true) or false; collapse the borders between cells
+  * border - the width of all the border, it can also be a object with specifics for each side {left: 2, right: 0, top: 1, bottom: 1}
+  * dash - true or (false); make the border line dashed
+  * borderColor - the color of the border
+  * fill - the fill color of the cell
+  * fillOpacity - fill Opacity decimal value of 0 to 1.
+  * padding - padding inside the cell
+  * x - X coordinate
+  * y - Y coordinate
+  * addX - add to the X coordinate
+  * addY - add to the Y coordinate
+  * font - font to use
+  * fontBold - true or (false)
+  * fontItalic - true or (false)
+  * textColor - the text color
+  * link - the url to link this cell too. 
 * callback - used for ASYNC reports; this is called when the printing is done.   You can optionally use this in a SYNC report; but it is REQUIRED in a ASYNC report.
 
 
@@ -696,6 +701,6 @@ This is the other primary method of displaying data on a report; this creates ba
 This is exactly the same as the band() command; other than it will skip printing any repeated data; so if row 1 has the name "Nathanael" and row 2 has the name "Nathanael" it will skip printing row 2's "Nathanael".
 ##### Parameters
 * SAME as the above band() command other than it has one addition option
-** duplicatedTextValue - this is the value to print in the suppressed cell; defaults to one quote (")
+  * duplicatedTextValue - this is the value to print in the suppressed cell; defaults to one quote (")
  
  
