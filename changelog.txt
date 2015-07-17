@@ -11,6 +11,8 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 0.1.1 - [2015/06/21] - Fixed some ASYNC issues
 0.1.2 - [2015/06/22] - Added simple Detail system similar to what is already in place for Header/Footers.
 1.0.0 - Fixed Header/Footer and printing sizing issues.  Reports should now ALWAYS print headers/footers properly.  Much better documentation!
+1.0.1 - AutoPrint and FullScreen issue fixed.
+
 
 Breaking changes or API inconsistencies:
     In v0.1.2 bandField functionality was removed.  This "feature" didn't make sense since simple detail abilities
