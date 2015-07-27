@@ -12,6 +12,7 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 0.1.2 - [2015/06/22] - Added simple Detail system similar to what is already in place for Header/Footers.
 1.0.0 - Fixed Header/Footer and printing sizing issues.  Reports should now ALWAYS print headers/footers properly.  Much better documentation!
 1.0.1 - AutoPrint and FullScreen issue fixed.
+1.0.2 - Font .normal, .bold .italic issue on some fonts.   Fix for Print with an alignment and a width set.   Fix for fill on a alignment.
 
 
 Breaking changes or API inconsistencies:
