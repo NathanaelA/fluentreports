@@ -9,7 +9,9 @@ Fluent Reports - Data Driven PDF Reporting Engine for Node.js
 
 ```npm install fluentreports```
 
+## Documentation
 
+Please [read the commands.md file](commands.md) for a overview of all the commands. The files in the `docs/` folder are generated from the source code via jsdocs, so they **might** be more up to date.
 
 ## Features:
 
@@ -203,8 +205,3 @@ Now since I can have a really large grocery list; I can make this two or three c
 
 Basically it is the same functions as the prior version but we are changing the X and Y coordinates for column 2 & 3 to make them end up on the same line just in a different column.  So the finished report looks this.
 example\demo6.js contains this report in its three different iterations. 
-
-
-## Documentation
-
-Please read the commands.md file for a overview of all the commands.  The files in the docs/ folder are generated from the source code via jsdocs, so they **might** be more up to date.
