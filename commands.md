@@ -16,7 +16,7 @@
 * Options - Default is in (parentheses)
   * landscape: true or (false); to make the report landscaped.
   * paper: (letter), legal, A0-A10, B0-B10, C0-C10, Executive, Folio, Tabloid, RA0-RA4, SRA0-SRA4
-  * font: (helvetica), courier, times, symbol, dingbats or a external font file that you provide and add to the report via the "registerFont" command
+  * font: (Helvetica), Courier, Times-Roman, Symbol, ZapfDingbats or a external font file that you provide and add to the report via the "registerFont" command.
   * fontSize: (12), any number from 1-128.
   * margins: (72), can be a single number for all four sides; or a object array like: {left:72, top:72, bottom:72, right: 72}
   * autoPrint: true or (false); to make the report automatically bring up the print dialog
@@ -75,7 +75,7 @@ This allows you to set a formatting function to deal with any total values and f
 
 #### .data ( Data ) 
 ##### Description
-THIS IS MANDANTORY - you need to set a data object otherwise their is no point to the report.
+THIS IS MANDANTORY - you need to set a data object otherwise there is no point to the report.
 
 ##### Parameters
 * Data - this can be an array of arrays; and array of objects, an object, a string/number value or one of the two more advanced data class:
