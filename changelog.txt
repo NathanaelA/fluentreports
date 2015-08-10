@@ -13,6 +13,7 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.0.0 - Fixed Header/Footer and printing sizing issues.  Reports should now ALWAYS print headers/footers properly.  Much better documentation!
 1.0.1 - AutoPrint and FullScreen issue fixed.
 1.0.2 - Font .normal, .bold .italic issue on some fonts.   Fix for Print with an alignment and a width set.   Fix for fill on a alignment.
+1.0.3 - Doc updates, and totaling system now treats NaN and null's as 0.
 
 
 Breaking changes or API inconsistencies:
@@ -24,5 +25,6 @@ Breaking changes or API inconsistencies:
     In v1.0.0 when print(['hi','','testing']) the old code would ignore the '' in the middle of the array so you
         would just get two lines.  The new code will print '' in arrays and give you three lines.   If you want the
         old behavior pass {ignoreEmptyStrings:true} to print routine.
+    In v1.0.3 Totaling system now treat NaN and null values as 0.
 
 
