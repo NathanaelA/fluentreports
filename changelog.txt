@@ -14,6 +14,8 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.0.1 - AutoPrint and FullScreen issue fixed.
 1.0.2 - Font .normal, .bold .italic issue on some fonts.   Fix for Print with an alignment and a width set.   Fix for fill on a alignment.
 1.0.3 - Doc updates, and totaling system now treats NaN and null's as 0.
+1.0.4 - Added missing minX, fixed sub-reports, and fixed falsy values in the string output system.
+1.0.5 - Added missing report userData command
 
 
 Breaking changes or API inconsistencies:
