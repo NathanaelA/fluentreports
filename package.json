@@ -2,15 +2,15 @@
   "name"          : "fluentreports",
   "description"   : "A simple, Fluent API for creating PDF Reports",
   "url"           : "http://github.com/Nathanaela/fluentreports",
-  "keywords"      : ["pdf", "report", "reporting", "print"],
+  "keywords"      : ["pdf", "report", "reporting", "print", "reports"],
   "author"        : "Nathanael Anderson <nathan@master-technology.com> (http://fluentreports.com/)",
-  "contributors"  : ["Alan Henager <alan.henager@kellpro.com>","Mark Getz <mark.getz@kellpro.com>"],
+  "contributors"  : ["Alan Henager <alan.henager@kellpro.com>","Mark Getz <mark.getz@kellpro.com>", "Beau West <beau.west@kellpro.com>"],
   "licenses"      : "MIT",
   "lib"           : "lib",
   "bugs"          : {"url": "http://github.com/Nathanaela/fluentreports/issues"},
   "dependencies"  : {"pdfkit": "latest"},
   "repository"    : {"type": "git", "url": "http://github.com/Nathanaela/fluentreports.git"},
   "main"          : "lib/fluentReports",
-  "version"       : "1.0.3",
+  "version"       : "1.0.5",
   "engines"       : {"node": ">= 0.6.0" }
 }
