@@ -7,7 +7,8 @@ var child_process = require('child_process');
 // ----------------------------------------------------------------------------------------------
 // Need to populate this with Application paths for popular PDF readers
 // ----------------------------------------------------------------------------------------------
-var PDFApplications = ["C:\\Program Files (x86)\\Foxit Software\\Foxit Reader\\Foxit Reader.exe"];
+var PDFApplications = ["C:\\Program Files (x86)\\Foxit Software\\Foxit Reader\\Foxit Reader.exe",
+    "C:\\Program Files (x86)\\Foxit Software\\Foxit Reader\\FoxitReader.exe"];
 
 module.exports = function(err, reportName) {
     if (err) {
