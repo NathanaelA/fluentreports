@@ -17,6 +17,7 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.0.4 - Added missing minX, fixed sub-reports, and fixed falsy values in the string output system.
 1.0.5 - Added missing report userData command
 1.0.6 - Fix for Minutes = 9 wasn't 0 padded, font issue, additional band options
+1.0.7 - Added ability for pageNumber function to print not only current page number but total report pages.
 
 
 Breaking changes or API inconsistencies:

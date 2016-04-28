@@ -19,9 +19,9 @@ var data = [
 
 
 
-version_one();
+//version_one();
 //version_two();
-//version_three();
+version_three();
 
 
 /**
@@ -50,7 +50,7 @@ function version_two() {
 
     var footerFunction = function(Report) {
         Report.line(Report.currentX(), Report.maxY()-18, Report.maxX(), Report.maxY()-18);
-        Report.pageNumber({footer: true, align: "right"});
+        Report.pageNumber({text: "Page: {0} of {1}", footer: true, align: "right"});
         Report.print("Printed: "+(new Date().toLocaleDateString()), {y: Report.maxY()-14, align: "left"});
     };
 
@@ -61,8 +61,9 @@ function version_two() {
         .pageFooter(footerFunction)                  // Add a footer
         .detail("{{count}} {{unit}} of {{item}}");   // Put how we want to print out the data line.
 
-    rpt.render(displayReport);
     rpt.printStructure(true);
+    rpt.render(displayReport);
+
 }
 
 /**
@@ -79,7 +80,7 @@ function version_three() {
 
     var footerFunction = function(Report) {
         Report.line(Report.currentX(), Report.maxY()-18, Report.maxX(), Report.maxY()-18);
-        Report.pageNumber({footer: true, align: "right"});
+        Report.pageNumber({text: "Page {0} of {1}", footer: true, align: "right"});
         Report.print("Printed: "+(new Date().toLocaleDateString()), {y: Report.maxY()-14, align: "left"});
         columnCounter = 0;
     };

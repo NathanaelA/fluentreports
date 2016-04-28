@@ -32,7 +32,8 @@ Please [read the commands.md file](commands.md) for a overview of all the comman
 * Quickly generate complex reports with minimal lines of code.
 * Colorization, Font & other changes of text per cell in Bands
 * Synchronous and Asynchronous support.  If your report doesn't need to do anything Async, you can just code it without any callbacks.
-* Group Headers can be (re)printed on every new page, always, and only once.  
+* Group Headers can be (re)printed on every new page, always, and only once.
+* Page Numbers and total number of pages
 
 See the simple & stupid examples for a overview on how to generate a somewhat complex report.
 In these reports I tried to throw in a chunk of the features to try and give you and idea how powerful the engine is and how to use certain features.
@@ -124,12 +125,12 @@ Next, I think I actually do want to continue to have the date and page number pr
 ```js
     var footerFunction = function(Report) {
         Report.line(Report.currentX(), Report.maxY()-18, Report.maxX(), Report.maxY()-18);
-        Report.pageNumber({footer: true, align: "right"});
+        Report.pageNumber({text: "Page {0} of {1}", footer: true, align: "right"});
         Report.print("Printed: "+(new Date().toLocaleDateString()), {y: Report.maxY()-14, align: "left"});
     };
 ```  
 
-Now in this function we print a line across the bottom of the page; then we use the "pageNumber" helper function to print the current page number, then we print the current date.
+Now in this function we print a line across the bottom of the page; then we use the "pageNumber" helper function to print the current page number and total number of page, then we print the current date.
 A couple things to point out; Report.maxY and maxX are the largest location that can be printed to before entering the margins.  If you attempt to create your footer beyond the maxY coordinate; it WILL let you; but it WILL send a error to the Report.error system stating that you exceeded the margin by however many pixels so that you can fix your report.
 
 So our new report is:
@@ -151,7 +152,7 @@ So our new report is:
 
     var footerFunction = function(Report) {
         Report.line(Report.currentX(), Report.maxY()-18, Report.maxX(), Report.maxY()-18);
-        Report.pageNumber({footer: true, align: "right"});
+        Report.pageNumber({text: "Page {0} of {1}", footer: true, align: "right"});
         Report.print("Printed: "+(new Date().toLocaleDateString()), {y: Report.maxY()-14, align: "left"});
     };
 

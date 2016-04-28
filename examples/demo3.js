@@ -37,9 +37,9 @@ function printreport(options) {
         rpt.band([
             {data: 'Date:', width: 78},
             {data: Current_Date, width: 200},
-            {data: '# of Pages:', width: 78, font:"Aparaj"},
-            {data: data.number_of_pages || 2, width: 200}
-        ]);
+            {data: '# of Pages:', width: 78}, //, font:"Aparajita"},
+            {data: data.number_of_pages || 2, width: 200, align: 1}
+        ], {font: "Times-Roman", fontBold: true, fontItalic: true}); //"Aparajita"});
         rpt.newLine();
         rpt.fontNormal();
 
@@ -77,7 +77,7 @@ function printreport(options) {
       //.autoPrint(true)
       .header(header)
       .pageFooter(footer)
-      //.registerFont("Aparajita", {normal: './aparaj.ttf', bold: './aparajb.ttf', 'italic': './aparaji.ttf'})
+      .registerFont("Aparajita", {normal: './aparaj.ttf', bold: './aparajb.ttf', 'italic': './aparaji.ttf'})
       .data(options.data);
 
     // Debug output is always nice (Optional, to help you see the structure)

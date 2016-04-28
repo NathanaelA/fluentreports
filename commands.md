@@ -708,6 +708,8 @@ This will print the current page number at the current location, or the header /
   * header - true or false, print in the header
   * footer - true or false, print in the footer
   * text - the text to print this: defaults to: "Page: {0}"  where {0} is the current page number
+         - You can optionally use {1} for Total number of printed pages; this increases the memory usage as the report system.
+         Examples: "Page {0} of {1}" will print, Page 1 of 200 on page 1, and "Page 55 of 200" on page 55 if the report had 200 pages.
 
 <br><br><br>
 

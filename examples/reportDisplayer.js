@@ -17,6 +17,9 @@ module.exports = function(err, reportName) {
     }
     var found = false;
 
+    // Add the current working directory to the file so Foxit can find it
+    reportName = process.cwd() + "\\" + reportName;
+
     for (var i=0;i<PDFApplications.length;i++) {
         if (fs.existsSync(PDFApplications[i])) {
             child_process.execFile(PDFApplications[i], [reportName], function () {  });
