@@ -11,6 +11,6 @@
   "dependencies"  : {"pdfkit": "latest"},
   "repository"    : {"type": "git", "url": "http://github.com/Nathanaela/fluentreports.git"},
   "main"          : "lib/fluentReports",
-  "version"       : "1.0.7",
+  "version"       : "1.0.8",
   "engines"       : {"node": ">= 0.6.0" }
 }
