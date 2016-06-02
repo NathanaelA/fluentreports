@@ -744,6 +744,8 @@ This is one of the primary methods to put any text of the page; you pass it your
   * fontBold - true or false to be bold
   * fontItalic - true or false to be italic
   * ignoreEmptyStrings - ignore printing any empty strings in arrays
+  * opacity - the opacity of the text
+  * rotate - the rotation of the text  (Rotated text can exceed page dimensions)
 * callback - used for ASYNC reports; this is called when the printing is done.   You can optionally use this in a SYNC report; but it is REQUIRED in a ASYNC report.
 
 <br><br><br>

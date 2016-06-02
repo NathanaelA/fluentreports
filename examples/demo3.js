@@ -10,6 +10,11 @@ function printreport(options) {
     var Current_Date = new Date().toDateString();
 
     var header = function(rpt, data) {
+
+        // Confidential text, we need this first because everything else prints on top of it
+        rpt.print('Confidential', {x: 40, y: 610, rotate: 310, opacity: 0.5, textColor: '#EEEEEE', width: 1000, fontSize: 127});
+
+
         // Company Info - Top Left
         rpt.setCurrentY(14);
 
@@ -23,20 +28,21 @@ function printreport(options) {
         if (options.city && options.state && options.postal) {
             rpt.print(options.city + ', ' + options.state + ' ' + options.postal, {x: 44});
         }
-        //var baseY = rpt.getCurrentY();
 
-        rpt.setCurrentY(40);
-        rpt.fontSize(80);
+        // Print our nice Fax header
+        rpt.print('FAX', {x: 420, y: 40, fontSize: 80});
+        
 
-        rpt.print('FAX', {x: 400});
+
+
         rpt.fontSize(13);
-        rpt.newLine(2);
+        rpt.setCurrentY(170);
 
         //rpt.font('Aparajita');
         rpt.fontItalic();
         rpt.band([
             {data: 'Date:', width: 78},
-            {data: Current_Date, width: 200},
+            {data: Current_Date, width: 240},
             {data: '# of Pages:', width: 78}, //, font:"Aparajita"},
             {data: data.number_of_pages || 2, width: 200, align: 1}
         ], {font: "Times-Roman", fontBold: true, fontItalic: true}); //"Aparajita"});
@@ -45,7 +51,7 @@ function printreport(options) {
 
         rpt.band([
             {data: 'To:', width: 78},
-            {data: data.faxTo, width: 200},
+            {data: data.faxTo, width: 240},
             {data: 'Attention:', width: 78},
             {data: data.attention, width: 200}
         ]);
@@ -53,7 +59,7 @@ function printreport(options) {
 
         rpt.band([
             {data: 'From:', width: 78},
-            {data: data.from, width: 200},
+            {data: data.from, width: 240},
             {data: 'Phone:', width: 78},
             {data: data.phone, width: 200}
         ]);
@@ -117,6 +123,6 @@ printreport({
         from: "Me",
         attention: "You",
         number_of_pages: 5,
-        comments: "Here is the proposal you wanted, it should match what we discussed on the phone."
+        comments: "Here is the proposal you wanted, it should match what we discussed on the phone.  If this is acceptable; please let me know."
     }]
 });

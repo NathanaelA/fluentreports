@@ -34,6 +34,7 @@ Please [read the commands.md file](commands.md) for a overview of all the comman
 * Synchronous and Asynchronous support.  If your report doesn't need to do anything Async, you can just code it without any callbacks.
 * Group Headers can be (re)printed on every new page, always, and only once.
 * Page Numbers and total number of pages
+* Text rotation
 
 See the simple & stupid examples for a overview on how to generate a somewhat complex report.
 In these reports I tried to throw in a chunk of the features to try and give you and idea how powerful the engine is and how to use certain features.
