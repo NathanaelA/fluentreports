@@ -97,13 +97,16 @@ This allows you to be notified of the query result count before the printing act
 In the event you choose to cancel the report no report will be is generated; and the final render callback done will be passed "false" instead of a filename or buffer.
 ##### Parameters
 * recordCountCallback function
+##### continueCallback
+* dummy (the callback does not use the dummy; but to keep the same normal type of node callback (err, value))
+* continueReport - boolean false = cancel report; any other value (and no value) will continue the report.
 
 ##### Example:
 
 function rcCount(count, continueCallback) {
-  if (count === 0) { console.log("No records");  callback(false); }
-  else if (count > 250) { console.log("Too many records") callback(false); }
-  else callback( /* you can pass in true if you want */);
+  if (count === 0) { console.log("No records");  callback(null, false); }
+  else if (count > 250) { console.log("Too many records") callback(null, false); }
+  else callback();
 }
 MyReportObject.recordCount(rcCount);
 

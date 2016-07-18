@@ -77,7 +77,7 @@ function printreport(options) {
     // If you change the callback to FALSE the report will be cancelled!
     var recordCount = function(count, callback) {
         console.log("We have", count, "records!");
-        callback(true);
+        callback(null, true);
     };
 
     // You don't have to pass in a report name; it will default to "report.pdf"

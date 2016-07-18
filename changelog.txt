@@ -20,6 +20,7 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.0.7 - Added ability for pageNumber function to print not only current page number but total report pages.
 1.0.9 - Added rotate ability to print() text routine, exposed opacity in print routine
 1.1.0 - Added Ability to use .recordCount & cancel report and fixed issue where Header wasn't printing on no data.
+1.1.1 - Fix issue with Streamlined .recordCount callback support
 
 
 Breaking changes or API inconsistencies:
