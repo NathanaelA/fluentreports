@@ -1,3 +1,7 @@
 .idea/
 node-modules/
 node_modules
+examples/
+test/
+.npmignore
+.gitignore

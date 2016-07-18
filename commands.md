@@ -90,6 +90,25 @@ MyReportObject.data([{id: 1, name: 'Nathanael'}, {id: 2, name: 'Anderson'}]);
 
 <br><br><br>
 
+
+#### .recordCount(recordCountCallback(count, continueCallback))
+##### Description
+This allows you to be notified of the query result count before the printing actually happens.  This is useful where you can't know the report data count before the report starts, because you are passing in a object that does all the queries itself.  The report when it queries the data count, will call your *RecordCountCallback* function, this function will receive a record count, and a callback function.  You MUST call the continueCallback function.  You can optionally pass the continueCallback a boolean "false" to actually cancel the report, any other value (and no value) is considered that you want to continue printing.
+In the event you choose to cancel the report no report will be is generated; and the final render callback done will be passed "false" instead of a filename or buffer.
+##### Parameters
+* recordCountCallback function
+
+##### Example:
+
+function rcCount(count, continueCallback) {
+  if (count === 0) { console.log("No records");  callback(false); }
+  else if (count > 250) { console.log("Too many records") callback(false); }
+  else callback( /* you can pass in true if you want */);
+}
+MyReportObject.recordCount(rcCount);
+
+<br><br><br>
+
 #### .keys ( keys )
 ##### Description
 This is so you can set a key or keys that get passed to sub-report data query functions/class objects.
@@ -232,8 +251,9 @@ This is what actually starts the rendering of the document when you are done set
   * If rendering to disk (err, reportName) 
   * if Rendering to buffer (err, Buffer)
   * if rendering to pipe (err, pipe)
+  * If rendering is CANCELLED (i.e. like via the .recordCount callback) it will return (err, false);
 ##### Example
-MyReportObject.render(function(Err, name) {  console.log("The report was saved to", name);  });
+MyReportObject.render(function(Err, name) {  if (name === false) { console.log("Report was cancelled"); } else { console.log("The report was saved to", name);  });
 
 <br><br><br>
 

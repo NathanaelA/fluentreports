@@ -74,11 +74,18 @@ function printreport(options) {
         rpt.print(['This material is for the intended recipient.'], {fontBold: true, fontSize: 8, y: 740});
     };
 
+    // If you change the callback to FALSE the report will be cancelled!
+    var recordCount = function(count, callback) {
+        console.log("We have", count, "records!");
+        callback(true);
+    };
+
     // You don't have to pass in a report name; it will default to "report.pdf"
     var reportName = "demo3.pdf";
     var rpt = new Report(reportName);
 
     rpt
+      .recordCount(recordCount)
       .margins(30)
       //.autoPrint(true)
       .header(header)
@@ -93,7 +100,11 @@ function printreport(options) {
     console.time("Rendered");
     rpt.render(function(err, name) {
         console.timeEnd("Rendered");
-        displayReport(err, name);
+        if (name === false) {
+            console.log("Report has been cancelled!");
+        } else {
+            displayReport(err, name);
+        }
     });
 
 }
