@@ -21,6 +21,8 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.0.9 - Added rotate ability to print() text routine, exposed opacity in print routine
 1.1.0 - Added Ability to use .recordCount & cancel report and fixed issue where Header wasn't printing on no data.
 1.1.1 - Fix issue with Streamlined .recordCount callback support
+1.1.2 - Fix for ScopedDataObjects and Q returning null for no results.
+1.1.3 - Fixed truncating of text issues
 
 
 Breaking changes or API inconsistencies:
