@@ -26,6 +26,7 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.1.4 - Fixed issue with missing callback, and band sizes to small.
 1.1.5 - Padding wasn't adding bottom padding.
 1.1.6 - testit class prototypes are now lowercased.
+1.1.7 - Merged `isHeightExempt` for footers
 
 
 Breaking changes or API inconsistencies:
