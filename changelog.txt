@@ -24,6 +24,7 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.1.2 - Fix for ScopedDataObjects and Q returning null for no results.
 1.1.3 - Fixed truncating of text issues
 1.1.4 - Fixed issue with missing callback, and band sizes to small.
+1.1.5 - Padding wasn't adding bottom padding.
 
 
 Breaking changes or API inconsistencies:
