@@ -22,7 +22,7 @@
     "url": "http://github.com/Nathanaela/fluentreports/issues"
   },
   "dependencies": {
-    "@darkguardace/pdfkit": "^0.8.3"
+    "pdfkit": "KellPro/pdfkit"
   },
   "repository": {
     "type": "git",
