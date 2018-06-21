@@ -408,7 +408,7 @@ These commands are available to the header, title header, page header, page summ
 ##### Description
 This displays a image on the current page
 ##### Parameters
-* name - this is the image location of disk to use
+* name - this is the image location of disk to use or image buffer
 * options - 
   * x - X coordinate to start
   * y - Y coordinate to start
@@ -665,6 +665,7 @@ This prints a line or box from startX,startY to endX,endY
   * borderColor - the border color
   * fillColor - The fill color
   * thickness - the Line thickness
+  * dash - to make Line dashed
   * textColor - the text color
   * fill - to fill the shape
 
