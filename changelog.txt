@@ -28,6 +28,7 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.1.6 - testit class prototypes are now lowercased.
 1.1.7 - Merged `isHeightExempt` for footers
 1.1.8 - Upgraded to Latest version of PDFKit; and added ReportError class (Thanks Michael!)
+1.1.9 - Added measuring of the FinalSummary band, and fixed tiny band sizes crashing reporting engine.
 
 
 Breaking changes or API inconsistencies:

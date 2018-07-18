@@ -7,7 +7,8 @@
     "report",
     "reporting",
     "print",
-    "reports"
+    "reports",
+	"engine"
   ],
   "author": "Nathanael Anderson <nathan@master-technology.com> (http://fluentreports.com/)",
   "contributors": [
@@ -30,7 +31,7 @@
     "url": "http://github.com/Nathanaela/fluentreports.git"
   },
   "main": "lib/fluentReports",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "engines": {
     "node": ">= 0.6.0"
   }
