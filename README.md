@@ -3,7 +3,7 @@
 
 See: http://www.fluentreports.com for more information.
 
-Fluent Reports - Data Driven PDF Reporting Engine for Node.js
+Fluent Reports - Data Driven PDF Reporting Engine for Node.js and Browsers
 
 ## Install
 
