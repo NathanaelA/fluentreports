@@ -31,6 +31,7 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.1.9 - Added measuring of the FinalSummary band, and fixed tiny band sizes crashing reporting engine.
 1.2.0 - Updated widthOfString to be more in line with the latest PDFKit (Measurement is more accurate)
 1.2.1 - Fixed bug in new widthOfString
+1.2.2 - Fixed bug in width and bolded strings
 
 
 Breaking changes or API inconsistencies:
