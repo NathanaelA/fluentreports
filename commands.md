@@ -22,7 +22,7 @@
   * autoPrint: true or (false); to make the report automatically bring up the print dialog
   * fullScreen: true or (false); to make the report automatically full screen when it loads
   * negativeParentheses: true or (false); to make negative number show up like (20) rather than -20.
-  * info - object; you can set some of the pdf info
+  * info - object; you can set some of the pdf info (more info at http://pdfkit.org/docs/getting_started.html#setting_document_metadata)
 
 <br><br>
 
