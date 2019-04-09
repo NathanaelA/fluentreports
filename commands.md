@@ -22,7 +22,7 @@
   * autoPrint: true or (false); to make the report automatically bring up the print dialog
   * fullScreen: true or (false); to make the report automatically full screen when it loads
   * negativeParentheses: true or (false); to make negative number show up like (20) rather than -20.
-  * info - object; you can set some of the pdf info
+  * info - object; you can set some of the pdf info (more info at http://pdfkit.org/docs/getting_started.html#setting_document_metadata)
 
 <br><br>
 
@@ -408,7 +408,7 @@ These commands are available to the header, title header, page header, page summ
 ##### Description
 This displays a image on the current page
 ##### Parameters
-* name - this is the image location of disk to use
+* name - this is the image location of disk to use or image buffer
 * options - 
   * x - X coordinate to start
   * y - Y coordinate to start
@@ -652,19 +652,38 @@ This allow you to print a line the size of the last band command
 <br><br><br>
 
 #### line ( startX, startY, endX, endY, options )
-#### box ( startX, startY, endX, endY, options)
 ##### Description
-This prints a line or box from startX,startY to endX,endY
+This prints a line from startX,startY to endX, endY
 ##### Parameters
 * startX - Starting X coordinate
 * startY - Starting Y coordinate
-* endX - Ending X coordinate
-* endY - Ending Y coordinate
+* endX   - End X coord
+* endY   - End Y coord
 * options:
   * fillOpacity - the Opacity
   * borderColor - the border color
   * fillColor - The fill color
   * thickness - the Line thickness
+  * textColor - the text color
+  * fill - to fill the shape
+
+<br><br><br>
+
+
+#### box ( startX, startY, width, height, options)
+##### Description
+This prints a box from startX,startY with a width and height
+##### Parameters
+* startX - Starting X coordinate
+* startY - Starting Y coordinate
+* width  - Width of Box
+* height - Height of Box
+* options:
+  * fillOpacity - the Opacity
+  * borderColor - the border color
+  * fillColor - The fill color
+  * thickness - the Line thickness
+  * dash - to make Line dashed
   * textColor - the text color
   * fill - to fill the shape
 
