@@ -31,14 +31,14 @@
     "url": "http://github.com/Nathanaela/fluentreports/issues"
   },
   "dependencies": {
-    "pdfkit": "latest"
+    "pdfkit": "0.8.3"
   },
   "repository": {
     "type": "git",
     "url": "http://github.com/Nathanaela/fluentreports.git"
   },
   "main": "lib/fluentReports",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "engines": {
     "node": ">= 0.6.0"
   }
