@@ -1,13 +1,13 @@
 "use strict";
 
 var fs = require('fs');
-var path = require('path');
 var child_process = require('child_process');
 
 // ----------------------------------------------------------------------------------------------
 // Need to populate this with Application paths for popular PDF readers
 // ----------------------------------------------------------------------------------------------
-var PDFApplications = ["C:\\Program Files (x86)\\Foxit Software\\Foxit Reader\\Foxit Reader.exe",
+var PDFApplications = ["/usr/bin/xreader",
+    "C:\\Program Files (x86)\\Foxit Software\\Foxit Reader\\Foxit Reader.exe",
     "C:\\Program Files (x86)\\Foxit Software\\Foxit Reader\\FoxitReader.exe"];
 
 module.exports = function(err, reportName) {
@@ -18,7 +18,7 @@ module.exports = function(err, reportName) {
     var found = false;
 
     // Add the current working directory to the file so Foxit can find it
-    reportName = process.cwd() + "\\" + reportName;
+    reportName = process.cwd() + "/" + reportName;
 
     for (var i=0;i<PDFApplications.length;i++) {
         if (fs.existsSync(PDFApplications[i])) {

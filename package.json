@@ -8,14 +8,21 @@
     "reporting",
     "print",
     "reports",
-	"engine"
+    "engine",
+    "business",
+    "business management",
+    "pdf writer",
+    "pdf generator",
+    "document",
+    "pdf reports",
+    "pdf reporting"
   ],
   "author": "Nathanael Anderson <nathan@master-technology.com> (http://fluentreports.com/)",
   "contributors": [
     "Alan Henager <alan.henager@kellpro.com>",
     "Mark Getz <mark.getz@kellpro.com>",
     "Beau West <beau.west@kellpro.com>",
-	"Michael Keller <michael.keller@kellpro.com>",
+    "Michael Keller <michael.keller@kellpro.com>",
     "Marcus Christensson"
   ],
   "licenses": "MIT",
@@ -24,14 +31,14 @@
     "url": "http://github.com/Nathanaela/fluentreports/issues"
   },
   "dependencies": {
-    "pdfkit": "KellPro/pdfkit"
+    "pdfkit": "latest"
   },
   "repository": {
     "type": "git",
     "url": "http://github.com/Nathanaela/fluentreports.git"
   },
   "main": "lib/fluentReports",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "engines": {
     "node": ">= 0.6.0"
   }

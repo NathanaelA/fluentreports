@@ -1,9 +1,11 @@
 # Fluent Reports
 
 
-See: http://www.fluentreports.com for more information.
+See: [https://www.fluentreports.com](FluentReports.com) for more information.
 
-Fluent Reports - Data Driven PDF Reporting Engine for Node.js and Browsers
+Fluent Reports - Data Driven PDF Reporting Engine for **Node.js** and **Browsers**
+
+Try out the reporting engine in your own browser at [https://www.fluentreports.com/demo.html](https://www.fluentreports.com/demo.html)
 
 ## Install
 

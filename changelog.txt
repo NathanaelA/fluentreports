@@ -33,6 +33,8 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.2.1 - Fixed bug in new widthOfString
 1.2.2 - Fixed bug in width and bolded strings
 1.2.3 - Updated Keli embedded code.
+1.2.4 - Update pdfkit reference
+
 
 Breaking changes or API inconsistencies:
     In v0.1.2 bandField functionality was removed.  This "feature" didn't make sense since simple detail abilities
