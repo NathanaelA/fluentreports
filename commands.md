@@ -249,14 +249,34 @@ This allows you to change the output type of the report; this is rarely used as 
 #### .render(callback) 
 ##### Description
 This is what actually starts the rendering of the document when you are done setting it up with all these class methods.
+You can use either a callback or the returned promise to choose what to do...
 ##### Parameters
 * callback - this is called when the report is done being rendered; the callback will be
   * If rendering to disk (err, reportName) 
   * if Rendering to buffer (err, Buffer)
   * if rendering to pipe (err, pipe)
   * If rendering is CANCELLED (i.e. like via the .recordCount callback) it will return (err, false);
+
+* returned Promise 
+  * If rendering to disk resolved(reportName)
+  * if rendering to buffer resolved(buffer)
+  * if rendering to pipe resolved(pipe)
+  * if rendering is cancelled resolved(false)
+  * any errors rejected(error)
 ##### Example
 MyReportObject.render(function(Err, name) {  if (name === false) { console.log("Report was cancelled"); } else { console.log("The report was saved to", name);  });
+-- or --
+MyReportObject.render()
+  .then((name) => {
+    if (name === false) { 
+        console.log("Report was cancelled"); 
+    }  else { 
+        console.log("The report was saved to", name);
+    }
+  })
+  .catch((err) => {
+      console.log("Error in Report", err) 
+  });
 
 <br><br><br>
 
@@ -646,8 +666,8 @@ This tells you how big a current string will be using the current font and font 
 ##### Description
 This allow you to print a line the size of the last band command
 ##### Parameters
-* thickness - the thickness of the line; defaults to 1
-* verticalGap - the gap between the prior printed item and this line
+* thickness - the thickness of the line; defaults to 2
+* verticalGap - the gap between the prior printed item and this line (default 0)
 
 <br><br><br>
 
