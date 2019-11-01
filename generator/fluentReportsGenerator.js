@@ -1,6 +1,6 @@
 "use strict";
 
-/* global PlainDraggable */
+/* global PlainDraggable, ShadowRoot */
 
 // Notes:
 // plainDraggable .top / .left calculations use the parent containers.getBoundingClientRect() + the objects.getBoundingClientRect()
@@ -106,6 +106,7 @@ class FluentReportsGenerator {
         _UIBuilder = UI;
 
         // Tracking Information
+        this._parentElement = null;
         this._includeCSS = options.css !== false;
         this._includeJS = options.js !== false;
         this._builtUI = false;
@@ -119,6 +120,7 @@ class FluentReportsGenerator {
         this._propertiesLayout = null;
         this._currentSelected = null;
         this._sectionIn = 0;
+        this._debug = false;
 
         // Internal Data for UI
         this._calculations = [];
@@ -200,11 +202,17 @@ class FluentReportsGenerator {
         if (options.save) {
             this._saveFunction = options.save;
         }
-
+        if (options.element) {
+            this._parentElement = options.element;
+        } else
         if (options.id) {
-            this._id = options.id;
-            this.buildUI(this._id);
+            this._parentElement = document.getElementById(options.id);
         }
+        if (options.debug) {
+            this._debug = true;
+        }
+
+        this.buildUI(this._parentElement);
     }
 
     parseData(data) {
@@ -443,31 +451,38 @@ class FluentReportsGenerator {
         frSection.clearAll();
     }
 
-    buildUI(id) {
+    buildUI(idOrElement) {
         if (this._builtUI) {
             console.error("fluentReports: Attempting to call build on an already build _UIBuilder.");
             return true;
         }
-        if (id) {
-            this._id = id;
-        }
-        if (!this._id) {
-            console.error("fluentReports: Missing id");
-            return false;
-        }
-        const parent = document.getElementById(this._id);
-        if (!parent) {
-            console.error("fluentReports: Unable to find dev element: ", this._id);
-            return false;
+
+        // If it hasn't already been assigned in the Constructor...
+        if (!this._parentElement) {
+            if (idOrElement != null) {
+                if (typeof idOrElement === "string") {
+                    this._parentElement = document.getElementById(idOrElement);
+                    if (this._parentElement == null) {
+                        console.error("fluentReports: Unable to find dev element: ", idOrElement);
+                        return false;
+                    }
+                } else {
+                    this._parentElement = idOrElement;
+                }
+            }
+            if (!this._parentElement) {
+                console.error("fluentReports: Missing element");
+                return false;
+            }
         }
 
         this._frame = document.createElement("div");
 
-        this._frame.style.height = (parent.clientHeight < 300 ? 300 : parent.clientHeight)+"px";
+        this._frame.style.height = (this._parentElement.clientHeight < 300 ? 300 : this._parentElement.clientHeight)+"px";
 
         // Prefix the entire sub-tree with our name space for CSS resolution
         this._frame.classList.add("fluentReports");
-        parent.appendChild(this._frame);
+        this._parentElement.appendChild(this._frame);
 
         // Keep from running a second time...
         this._builtUI = true;
@@ -478,7 +493,26 @@ class FluentReportsGenerator {
             link.setAttribute('rel', 'stylesheet');
             link.setAttribute('type', 'text/css');
             link.setAttribute('href', './fr.css');
-            document.getElementsByTagName('head')[0].appendChild(link);
+
+            // Find the ShadowRoot, if it exists
+            let parent = this._parentElement;
+            let hasShadow = false;
+
+            while (parent != null) {
+                if (parent instanceof ShadowRoot) { hasShadow = true; break; }
+                if (parent instanceof HTMLBodyElement || parent instanceof HTMLHeadElement) { break; }
+                parent = parent.parentNode;
+            }
+            if (hasShadow && parent != null) {
+                parent.appendChild(link);
+                let fontSheet = document.createElement('style');
+                fontSheet.innerHTML = "@font-face { font-family: 'fr';  src: url('./fonts/fr.eot');  src: url('./fonts/fr.eot?1#iefix') format('embedded-opentype'), url('./fonts/fr.woff2') format('woff2'), url('./fonts/fr.woff') format('woff'), url('./fonts/fr.ttf') format('truetype'), url('./fonts/fr.svg?1#fr') format('svg'); font-weight: normal;  font-style: normal; }";
+                document.body.appendChild(fontSheet);
+            } else {
+                document.getElementsByTagName('head')[0].appendChild(link);
+            }
+
+
         }
 
         if (this._includeJS) {
@@ -487,7 +521,11 @@ class FluentReportsGenerator {
             script.src = "./plain-draggable.min.js";
             document.getElementsByTagName('head')[0].appendChild(script);
             let frScript = document.createElement('script');
-            frScript.src = "./fluentReportsBuilder.js";
+            if (this._debug) {
+                frScript.src = "./fluentReportsBrowser.js";
+            } else {
+                frScript.src = "./fluentReportsBrowser.min.js";
+            }
             document.getElementsByTagName('head')[0].appendChild(frScript);
         }
         this._frame.style.alignContent = "top";
@@ -537,8 +575,7 @@ class FluentReportsGenerator {
      * @private
      */
     _resetPaperSizeLocation() {
-        const parent = document.getElementById("frReport");
-        const rect = parent.getBoundingClientRect();
+        const rect = this._reportScroller.getBoundingClientRect();
         this._paperWidthLayout.style.top = rect.top+"px";
         this._paperWidthLayout.style.left = (rect.left + (this._paperDims[0]*_scale)) + "px";
         this._paperWidthLayout.style.height = rect.height+"px";
@@ -634,6 +671,10 @@ class FluentReportsGenerator {
             options.type = "variable";
             new frPrintDynamic(this, frSection.getSection(this._sectionIn), options); // jshint ignore:line
         }));
+        this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue83D", "Print Page", () => {
+            let options = frSection.getSectionOptions(this._sectionIn);
+            new frPrintPageNumber(this, frSection.getSection(this._sectionIn), options); // jshint ignore:line
+        }));
 
 
         this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue81F", "Print function", () => {
@@ -662,24 +703,23 @@ class FluentReportsGenerator {
 
         this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue833", "Save", () => {
             const topLayer = document.createElement("div");
-            const parent = document.getElementById(this._id);
             topLayer.style.zIndex = 100;
             topLayer.style.backgroundColor = "#000000";
             topLayer.style.opacity = 0.7;
             topLayer.style.position = "absolute";
             topLayer.style.cursor = "wait";
 
-            const rect = parent.getBoundingClientRect();
+            const rect = this._parentElement.getBoundingClientRect();
             topLayer.style.top = rect.top;
             topLayer.style.left = rect.left;
             topLayer.style.width = rect.width;
             topLayer.style.height = rect.height;
-            parent.appendChild(topLayer);
+            this._parentElement.appendChild(topLayer);
 
             const data = this._generateSave();
 
             this._saveFunction(data, () => {
-                parent.removeChild(topLayer);
+                this._parentElement.removeChild(topLayer);
             });
 
 
@@ -687,21 +727,20 @@ class FluentReportsGenerator {
 
         this._toolBarLayout.appendChild(_UIBuilder.createSpacer());
 
-        this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue809", "Preview", () => {
+        this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue832", "Preview", () => {
             const topLayer = document.createElement("div");
-            const parent = document.getElementById(this._id);
             topLayer.style.zIndex = 100;
             topLayer.style.backgroundColor = "#000000";
             topLayer.style.opacity = 0.9;
             topLayer.style.position = "absolute";
             topLayer.style.cursor = "wait";
 
-            const rect = parent.getBoundingClientRect();
+            const rect = this._parentElement.getBoundingClientRect();
             topLayer.style.top = rect.top;
             topLayer.style.left = rect.left;
             topLayer.style.width = rect.width;
             topLayer.style.height = rect.height;
-            parent.appendChild(topLayer);
+            this._parentElement.appendChild(topLayer);
             const iFrame = document.createElement('iframe');
             iFrame.style.position = "relative";
             iFrame.style.width = rect.width;
@@ -716,7 +755,7 @@ class FluentReportsGenerator {
             close.style.zIndex = "999";
             close.style.fontSize = "14pt";
             close.addEventListener("click", () => {
-                parent.removeChild(topLayer);
+                this._parentElement.removeChild(topLayer);
             });
             topLayer.appendChild(iFrame);
             topLayer.appendChild(close);
@@ -732,12 +771,11 @@ class FluentReportsGenerator {
             // Send it to a pipe stream...
             rpt.outputType(1, pipeStream);
 
-            // Console log the structureu
+            // Console log the structure
             rpt.printStructure();
 
             console.time("Rendered");
             rpt.render().then((pipe) => {
-                console.log("Pipe", pipe);
                 console.timeEnd("Rendered");
                 iFrame.src = pipe.toBlobURL('application/pdf');
             }).catch((err) => {
@@ -745,7 +783,7 @@ class FluentReportsGenerator {
                 Dialog.notice("Previewing Report Had Errors: " + err.toString());
             });
 
-//                parent.removeChild(topLayer);
+//                this._parentElement;.removeChild(topLayer);
 
 
         }));
@@ -909,6 +947,10 @@ class frSection { // jshint ignore:line
         for (let i=0;i<frSection._sections.length;i++) {
             frSection._sections[i]._generateSave(results);
         }
+    }
+
+    get readOnly() {
+        return this._readOnly;
     }
 
     get properties() {
@@ -1147,6 +1189,8 @@ class frSection { // jshint ignore:line
                     printElement = new frPrintDynamic(this._report, this, {ztop: top, type: 'calculation'});
                 } else if (data.variable) {
                      printElement = new frPrintDynamic(this._report, this, {ztop: top, type: 'variable'});
+                } else if (data.page) {
+                    printElement = new frPrintPageNumber(this._report, this, {});
                 }
                 printElement._parseElement(data);
                 break;
@@ -1227,7 +1271,7 @@ class frSection { // jshint ignore:line
         this._sectionId = frSection._sections.length;
         frSection._sections.push(this);
 
-
+        this._readOnly = false;
         this._uuid = _frItemUUID++;
         this._report = report;
         this._functions = [];
@@ -1610,7 +1654,8 @@ class frElement { // jshint ignore:line
             this.blur();
             this._report.showProperties(null);
         }
-        this._html.parentElement.removeChild(this._html);
+        this._parent.removeChild(this);
+        //this._html.parentElement.removeChild(this._html);
         let idx = _frElements.indexOf(this);
         _frElements.splice(idx, 1);
     }
@@ -1873,6 +1918,9 @@ class frElement { // jshint ignore:line
                 // Check to see if we passed in this field to be ignored by a descendant
                 if (ignore.indexOf(curProp.field) >= 0) { continue; }
 
+                // If the item is undefined, then we don't bother saving it.
+                if (typeof this[curProp.field] === 'undefined') { continue; }
+
                 // Check to see if the field has the default value
                 if (typeof curProp.default !== 'undefined' && curProp.default === this[curProp.field]) { continue; }
 
@@ -2105,14 +2153,17 @@ class frPrint extends  frTitledLabel {
         this._fill = '';
         this._textColor = '';
         this._link = "";
+        this._rotate = 0;
+        this._align = 0;
         this._text.style.overflow = "hidden";
 //        this._text.style.wordBreak = "keep-all";
         this._text.style.whiteSpace = "nowrap";
 
-
-
         this._border = 0;
         this._wrap = false;
+
+        // TODO: Do we need width, height?
+        this._deleteProperties(["top", "left", "width", "height"]);
 
         this._addProperties(
             [{type: 'number', field: "x", default: 0, destination: "settings"},
@@ -2124,8 +2175,31 @@ class frPrint extends  frTitledLabel {
                 {type: 'string', field: "textColor", functionable: true, default: "", destination: "settings"},
                 {type: 'string', field: "link", functionable: true, default: "", destination: "settings"}, 
                 {type: 'number', field: "border", default: 0, destination: "settings"},
-                {type: 'boolean', field: "wrap", default: false, destination: "settings"}]);
+                {type: 'number', field: 'rotate', default: 0, destination: 'settings'},
+                {type: 'select', field: "align", default: 0, display: this.createAlignSelect.bind(this), destination: 'settings'},
+                {type: 'boolean', field: "wrap", default: false, destination: "settings"}
+                ]);
     }
+
+    createAlignSelect() {
+        const curAlign = this._align;
+        let selectGroup = document.createElement('select');
+
+        let item = new Option("Left", "left");
+        if (curAlign === "left") { item.selected = true; }
+        selectGroup.appendChild(item);
+
+        item = new Option("Right", "right");
+        if (curAlign === "right") { item.selected = true; }
+        selectGroup.appendChild(item);
+
+        item = new Option("Center", "center");
+        if (curAlign === "center") { item.selected = true; }
+        selectGroup.appendChild(item);
+
+        return selectGroup;
+    }
+
 
     get x() { return this.left; }
     set x(val) { this.left = val; }
@@ -2151,13 +2225,16 @@ class frPrint extends  frTitledLabel {
     set wrap(val) {
         this._wrap = !!val;
         if (this._text) {
-//            this._text.style.wordBreak = this._wrap ? "normal" : "keep-all";
-            this._text.style.whiteSpace = this._wrap ? "normal" : "nowrap";
+           this._text.style.whiteSpace = this._wrap ? "normal" : "nowrap";
         }
     }
+    get rotate() { return this._rotate; }
+    set rotate(val) { this._rotate = !!val;}
+
 
     _parseElement(data) {
-        this._copyProperties(data, this, ["x", "y", "addX", "addY", "fontBold", "fill", "textColor", "link", "border", "wrap"]);
+        this._copyProperties(data, this, ["x", "y", "addX", "addY", "fontBold", "fill", "textColor",
+            "link", "border", "wrap", "rotate", "align"]);
     }
 
     _saveProperties(props) {
@@ -2174,7 +2251,7 @@ class frPrintLabel extends frPrint  { // jshint ignore:line
         options.elementTitle = "Label";
         super(report, parent, options);
         this._text.contentEditable = options && typeof options.contentEditable === 'undefined' ? "true" : options.contentEditable || "true";
-        this.label = "Label";
+        this.label = (options && options.label) || "Label";
         this._addProperties({type: "string", field: 'label'});
     }
 
@@ -2378,6 +2455,48 @@ class frPrintField extends frPrint { // jshint ignore:line
     }
 }
 
+class frPrintPageNumber extends frPrintLabel { // jshint ignore:line
+    constructor(report, parent, options = {}) {
+        options.elementTitle = "Page Number";
+        super(report, parent, options);
+        this.header = options && options.header;
+        this.footer = options && options.footer;
+        this.page = (options && options.page) || "Page {0} or {1}";
+        this._addProperties({type: "string", field: 'page'});
+        this._deleteProperties(["label"]);
+
+        this._addProperties([{type: "boolean", field: 'header', default: false}, {type: "boolean", field: 'footer', default: false}]);
+    }
+
+    get page() {
+        return this.label;
+    }
+
+    set page(val) {
+        this.label = val;
+    }
+
+    _saveProperties(props) {
+        super._saveProperties(props);
+    }
+
+    _parseElement(data) {
+        if (data.page) {
+            this.page = data.page;
+        }
+        if (data.header) {
+            this.header = data.header;
+        }
+        if (data.footer) {
+            this.footer = data.footer;
+        }
+        super._parseElement(data);
+    }
+
+
+}
+
+
 class frPrintDynamic extends frPrint { // jshint ignore:line
     constructor(report, parent, options = {}) {
         options.elementTitle = "Dynamic Field";
@@ -2525,6 +2644,7 @@ class frBandElement extends frPrint { // jshint ignore:line
 
         this._html.appendChild(this._table);
 
+        this._deleteProperties(['rotate']);
         this._addProperties([{type: 'boolean', field: 'suppression', default: false},
             {type: 'number', field: 'columns', destination: false}]);
         this._addProperties({type: 'button', title: 'Band Editor', click: () => { this._bandEditor(); }}, false);
@@ -3292,7 +3412,7 @@ class UI { // jshint ignore:line
 
         const properties = [
             {type: 'number', field: "width"},
-            {type: 'select', field: "align", default: 0, display: createAlignSelect},
+            {type: 'select', field: "align", default: "left", display: createAlignSelect},
             {type: 'string', field: "textColor", default: "", functionable: true}
         ];
 
@@ -4994,8 +5114,8 @@ class Dialog { // jshint ignore:line
             dialog.id = "frDialog"+Dialog._dialogs;
             dialog.className = "frDialog";
             dialog.style.position = "absolute";
-            dialog.style.top = "50%";
-            dialog.style.left = "50%";
+            dialog.style.top = "20%";
+            dialog.style.left = "33%";
 //            dialog.style.width = content.style.width === "" ? content.style.width : "33%";
             dialog.style.minWidth = "300px";
             //dialog.style.transform = "translate(-50%, -50%);";
