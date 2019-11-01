@@ -5094,6 +5094,7 @@ class Dialog { // jshint ignore:line
         if (!dialogBackground) {
             dialogBackground = document.createElement("div");
             dialogBackground.id = "frDialogBackground"+Dialog._dialogs;
+            dialogBackground.className = "frDialogBackground";
             dialogBackground.style.position = "absolute";
             dialogBackground.style.left = "0px";
             dialogBackground.style.right = "0px";
