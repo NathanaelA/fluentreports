@@ -133,7 +133,7 @@
     position: relative;
 }
 
-.fluentReports A.frIconmenu {
+.fluentReports a.frIconmenu {
     margin-top: 5px;
     background-color: #cacaca;
     color: black;
@@ -197,7 +197,7 @@
 
   display: inline-block;
   text-decoration: inherit;
-  zwidth: 1em;
+  width: 1em;
   text-align: center;
   /* opacity: .8; */
 

@@ -7,7 +7,10 @@
 
 
 // Need a static element to track all Elements created
+// TODO: Push this into the fRG class, this should not be global
 let _frElements = [];
+
+// This counter makes sure we generate unique elements against every instance, every object -- this needs to stay static
 let _frItemUUID = 10000; // jshint ignore:line
 
 // Scale the display
@@ -16,8 +19,11 @@ let _scale = 1.5;
 // Choose what UI Builder class
 let _UIBuilder;
 
-
 class FluentReportsGenerator {
+
+    /*
+    * Private Properties
+     */
     get uuid() { return this._uuid; }
 
     get reportLayout() { return this._reportLayout; }
@@ -41,13 +47,38 @@ class FluentReportsGenerator {
     set currentSelected(val) { this._currentSelected = val; }
     get properties() { return this._properties; }
 
+    get elementTitle() { return "Report"; }
+    get gridSnapping() { return this._gridSnapping; }
+
+    /*
+     * Public Properties
+     */
+
+    /**
+     * Enable/Disable auto printing
+     * @returns {boolean}
+     */
     get autoPrint() { return this._autoPrint; }
     set autoPrint(val) { this._autoPrint = !!val; }
+
+    /**
+     * Set/get the file name of the report
+     * @returns {string}
+     */
     get name() { return this._name; }
     set name(val) { this._name = val; }
+
+    /**
+     * Set/Get the font size
+     * @returns {number}
+     */
     get fontSize() { return this._fontSize; }
     set fontSize(val) { this._fontSize = parseInt(val, 10);}
 
+    /**
+     * set/get the paper size
+     * @returns {string}
+     */
     get paperSize() { return this._paperSize; }
     set paperSize(val) {
         if (val === this._paperSize) {
@@ -72,21 +103,36 @@ class FluentReportsGenerator {
         this._resetPaperSizeLocation();
     }
 
-    _switchOrientation() {
-        const temp = this._paperDims[0];
-        if (this._paperOrientation === 'landscape') {
-            if (this._paperDims[1] > temp) {
-                this._paperDims[0] = this._paperDims[1];
-                this._paperDims[1] = temp;
-            }
-        } else {
-            if (this._paperDims[1] < temp) {
-                this._paperDims[0] = this._paperDims[1];
-                this._paperDims[1] = temp;
-            }
+    /**
+     * Set / get the reports data
+     * @returns {object}
+     */
+    get data() {
+        return this._data;
+    }
+    set data(val) {
+        if (this._data !== val) {
+            this._parseData(val);
         }
     }
 
+    /**
+     * Set/Get report
+     * @returns {{type: string, dataSet: number}}
+     */
+    get report() {
+        return this._generateSave();
+    }
+    set report(val) {
+        if (val !== this._reportData) {
+            this._parseReport(val);
+        }
+    }
+
+    /**
+     * Set/Get the Paper orientation
+     * @returns {string}
+     */
     get paperOrientation() { return this._paperOrientation; }
     set paperOrientation(val) {
         if (val === this._paperOrientation) { return; }
@@ -98,9 +144,6 @@ class FluentReportsGenerator {
         this._switchOrientation();
         this._resetPaperSizeLocation();
     }
-
-    get elementTitle() { return "Report"; }
-    get gridSnapping() { return this._gridSnapping; }
 
     constructor(options) {
         _UIBuilder = UI;
@@ -130,6 +173,7 @@ class FluentReportsGenerator {
         this._subReports = {};
 
         this._saveFunction = (value, done) => { done(); };
+        this._previewFunction = null;
         this._uuid = _frItemUUID++;
         this._gridSnapping = {snapping: false, size: 10};
         this._saveTemporaryData = null;
@@ -151,30 +195,6 @@ class FluentReportsGenerator {
             {type: 'button', title: 'Totals', click: this._setTotals.bind(this)}
         ];
 
-
-        /*
-        let resize = null;
-        window.addEventListener("resize",  () => {
-            if (resize) {
-                clearTimeout(resize);
-            }
-            resize = setTimeout( () => {
-                resize = null;
-                this._resized();
-            }, 100);
-        }, true);
-
-        window.addEventListener('orientationchange', () => {
-            if (resize) {
-                clearTimeout(resize);
-            }
-            resize = setTimeout(() => {
-                resize = null;
-                this._resized();
-            }, 100);
-        }, true);
-         */
-
         if (options.scale) {
             _scale = parseFloat(options.scale);
         } else {
@@ -190,12 +210,12 @@ class FluentReportsGenerator {
         }
 
         if (options.data) {
-            this.parseData(options.data);
+            this._parseData(options.data);
         }
         if (options.report) {
             // TODO - FUTURE: Maybe save & verify report based on parsed data to verify data layout being sent into
             //      - editor matches the report layout's last data, and so we have the field layout in the event no data is passed in.
-            this.parseReport(options.report);
+            this._parseReport(options.report);
         } else {
             this._createReportOnData();
         }
@@ -211,11 +231,38 @@ class FluentReportsGenerator {
         if (options.debug) {
             this._debug = true;
         }
+        if (options.preview) {
+            this._previewFunction = options.preview;
+        }
 
         this.buildUI(this._parentElement);
     }
 
-    parseData(data) {
+    /**
+     * Handles dealing with switching the paper orientations
+     * @private
+     */
+    _switchOrientation() {
+        const temp = this._paperDims[0];
+        if (this._paperOrientation === 'landscape') {
+            if (this._paperDims[1] > temp) {
+                this._paperDims[0] = this._paperDims[1];
+                this._paperDims[1] = temp;
+            }
+        } else {
+            if (this._paperDims[1] < temp) {
+                this._paperDims[0] = this._paperDims[1];
+                this._paperDims[1] = temp;
+            }
+        }
+    }
+
+    /**
+     * Parses the new data file to make sure it is correct
+     * @param data
+     * @private
+     */
+    _parseData(data) {
         if (!Array.isArray(data)) {
             throw new Error("fluentReports: Invalid dataset, should be an array of objects.");
         }
@@ -231,6 +278,10 @@ class FluentReportsGenerator {
         this._parseDataLevel(data[0], 'primary','primary', 0);
     }
 
+    /**
+     * Creates a dummy report based on the data, if you haven't passed in a report.
+     * @private
+     */
     _createReportOnData() {
         let tempReport;
         if (this._data === null || this._data.length === 0) {
@@ -261,14 +312,14 @@ class FluentReportsGenerator {
             }
 
         }
-        this.parseReport(tempReport);
+        this._parseReport(tempReport);
     }
 
     /**
      * Parses a Report
      * @param report
      */
-    parseReport(report) {
+    _parseReport(report) {
         console.log("Parse Report");
         this._reportData = report;
         if (this._builtUI) {
@@ -624,7 +675,7 @@ class FluentReportsGenerator {
             if (this._groupBys.length !== changed) {
                 this._groupBys = groups;
                 const newReport = this._generateSave();
-                this.parseReport(newReport);
+                this._parseReport(newReport);
             } else {
                 this._groupBys = groups;
             }
@@ -636,7 +687,7 @@ class FluentReportsGenerator {
         // Generate the current layout report so we can easily parse it in the sectionBrowse
         let currentReport = this._generateSave();
         _UIBuilder.sectionBrowse(this, currentReport, (updateReport) => {
-            this.parseReport(updateReport);
+            this._parseReport(updateReport);
         } );
     }
 
@@ -675,14 +726,21 @@ class FluentReportsGenerator {
             let options = frSection.getSectionOptions(this._sectionIn);
             new frPrintPageNumber(this, frSection.getSection(this._sectionIn), options); // jshint ignore:line
         }));
-
-
         this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue81F", "Print function", () => {
             let options = frSection.getSectionOptions(this._sectionIn);
             new frPrintFunction(this, frSection.getSection(this._sectionIn), options); // jshint ignore:line
         }));
 
         this._toolBarLayout.appendChild(_UIBuilder.createSpacer());
+
+        this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue826", "Drawing", () => {
+            let options = frSection.getSectionOptions(this._sectionIn);
+            new frSVGElement(this, frSection.getSection(this._sectionIn), options); // jshint ignore:line
+        }));
+
+        this._toolBarLayout.appendChild(_UIBuilder.createSpacer());
+
+
         this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue838", "Band", () => {
             let options = frSection.getSectionOptions(this._sectionIn);
             new frBandElement(this, frSection.getSection(this._sectionIn), options); // jshint ignore:line
@@ -700,6 +758,8 @@ class FluentReportsGenerator {
             }
         });
         this._toolBarLayout.appendChild(snapIcon);
+
+        this._toolBarLayout.appendChild(_UIBuilder.createSpacer());
 
         this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue833", "Save", () => {
             const topLayer = document.createElement("div");
@@ -725,8 +785,6 @@ class FluentReportsGenerator {
 
         }));
 
-        this._toolBarLayout.appendChild(_UIBuilder.createSpacer());
-
         this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue832", "Preview", () => {
             const topLayer = document.createElement("div");
             topLayer.style.zIndex = 100;
@@ -741,55 +799,88 @@ class FluentReportsGenerator {
             topLayer.style.width = rect.width;
             topLayer.style.height = rect.height;
             this._parentElement.appendChild(topLayer);
-            const iFrame = document.createElement('iframe');
-            iFrame.style.position = "relative";
-            iFrame.style.width = rect.width;
-            iFrame.style.height = rect.height;
-            const close = document.createElement('input');
-            close.type = "button";
-            close.value = "Close";
-            close.style.position = "absolute";
-            close.style.top = (rect.height - 28) + "px";
-            close.style.height = "28px";
-            close.style.left = "1px";
-            close.style.zIndex = "999";
-            close.style.fontSize = "14pt";
-            close.addEventListener("click", () => {
-                this._parentElement.removeChild(topLayer);
-            });
-            topLayer.appendChild(iFrame);
-            topLayer.appendChild(close);
+            this._topLayer = topLayer;
 
+            // If we have a preview function, then we use it rather than continue the default behavior
+            if (typeof this._previewFunction === 'function') {
+                this._previewFunction(this, () => {
+                    this.closeLayer();
+                });
+                return;
+            }
 
-            const reportData = this._generateSave();
-            const data = this._data;
-
-            let  pipeStream = new window.fluentReports.BlobStream();
-            // Create the Report
-            let rpt = new window.fluentReports.ReportBuilder(reportData, data);
-
-            // Send it to a pipe stream...
-            rpt.outputType(1, pipeStream);
-
-            // Console log the structure
-            rpt.printStructure();
-
-            console.time("Rendered");
-            rpt.render().then((pipe) => {
-                console.timeEnd("Rendered");
-                iFrame.src = pipe.toBlobURL('application/pdf');
-            }).catch((err) => {
-                console.error("Your report had errors while running", err);
-                Dialog.notice("Previewing Report Had Errors: " + err.toString());
-            });
-
-//                this._parentElement;.removeChild(topLayer);
-
-
+            this.preview({parent: topLayer});
         }));
-
     }
 
+    closeLayer() {
+        if (this._topLayer) {
+            this._parentElement.removeChild(this._topLayer);
+            this._topLayer = null;
+        }
+    }
+
+    preview(options = {}) {
+        let topLayer = this._topLayer;
+        if (options.parent != null && typeof options.parent.appendChild === 'function') {
+            topLayer = options.parent;
+        }
+        if (topLayer == null) {
+            console.error("No 'parent' to add preview to, please pass in a html element for embedding preview in.");
+            return;
+        }
+        const rect = this._parentElement.getBoundingClientRect();
+        const iFrame = document.createElement('iframe');
+        iFrame.style.position = "relative";
+        iFrame.style.width = rect.width + "px";
+        iFrame.style.height = rect.height + "px";
+        const close = document.createElement('input');
+        close.type = "button";
+        close.value = "Close";
+        close.style.position = "absolute";
+        close.style.top = (rect.height - 28) + "px";
+        close.style.height = "28px";
+        close.style.left = "1px";
+        close.style.zIndex = "999";
+        close.style.fontSize = "14pt";
+        close.addEventListener("click", () => {
+            this.closeLayer();
+            if (typeof options.close === 'function') {
+                options.close();
+            }
+        });
+        topLayer.appendChild(iFrame);
+        topLayer.appendChild(close);
+
+
+        const reportData =  options.report || this._generateSave();
+        const data = options.data || this._data;
+
+        let pipeStream = new window.fluentReports.BlobStream();
+        // Create the Report
+        let rpt = new window.fluentReports.ReportBuilder(reportData, data);
+
+        // Send it to a pipe stream...
+        rpt.outputType(1, pipeStream);
+
+        if (this._debug) {
+            // Console log the structure in debug mode
+            rpt.printStructure();
+        }
+
+        if (this._debug) {
+            console.time("Rendered");
+        }
+        rpt.render().then((pipe) => {
+            if (this._debug) {
+                console.timeEnd("Rendered");
+            }
+            iFrame.src = pipe.toBlobURL('application/pdf');
+        }).catch((err) => {
+            console.error("Your report had errors while running", err);
+            Dialog.notice("Previewing Report Had Errors: " + err.toString(), "#FF0000", this._frame);
+        });
+    }
 
     _reportSettings() {
         this.showProperties(this, true);
@@ -1033,6 +1124,11 @@ class frSection { // jshint ignore:line
     }
 
     _resetTops(startId=0) {
+        // We need to temporarily increase the report layout so we can move sections without shrinking any of them...
+        let curHeight = parseInt(this._report.reportLayout.clientHeight,10);
+        this._report.reportLayout.style.height = (curHeight+1000)+"px";
+
+        // Lets start moving sections since we grew one of them...
         let top = frSection._sections[startId].bottom;
         const len = frSection._sections.length;
         for (let i=startId+1;i<len;i++) {
@@ -1040,9 +1136,13 @@ class frSection { // jshint ignore:line
             top += frSection._sections[i].height;
             frSection._sections[i]._draggable.position();
         }
+
+        // Fix the report layout height back to a real number
         let btm = frSection._sections[len-1].bottom;
-        if (parseInt(this._report.reportLayout.clientHeight,10) < btm) {
+        if (curHeight < btm) {
             this._report.reportLayout.style.height = btm+"px";
+        } else {
+            this._report.reportLayout.style.height = curHeight+"px";
         }
     }
 
@@ -1146,6 +1246,16 @@ class frSection { // jshint ignore:line
 
 
     _saveSectionInfo(results) {
+        if (this._calculations.length) {
+            for (let i=0;i<this._calculations.length;i++) {
+                results.push(this._calculations[i]);
+            }
+        }
+        if (this._functions.length) {
+            for (let i=0;i<this._functions.length; i++) {
+                results.push(this._functions[i]);
+            }
+        }
         for (let i=0;i<this._children.length;i++) {
             let child = {};
             results.push(child);
@@ -1198,6 +1308,11 @@ class frSection { // jshint ignore:line
             case 'band':
                 let bandElement = new frBandElement(this._report, this, {ztop: top});
                 bandElement._parseElement(data);
+                break;
+
+            case 'shape':
+                let shapeElement = new frSVGElement(this._report, this, {});
+                shapeElement._parseElement(data);
                 break;
 
             case 'newLine':
@@ -1637,6 +1752,7 @@ class frElement { // jshint ignore:line
         this._html = null;
         this._draggable = null;
         this._locked = false;
+        this._readonly = false;
         this._width = 0;
         this._height = 0;
         this._handlers = {};
@@ -1667,7 +1783,12 @@ class frElement { // jshint ignore:line
     get html() { return this._html; }
 
     get top() { return parseInt(this._html.style.top,10); }
-    set top(val) { this._html.style.top = val+"px"; }
+    set top(val) {
+        this._html.style.top = val+"px";
+        if ((this.elementHeight * _scale) + this.top > this._parent.height) {
+            this._parent.height = (this.elementHeight * _scale) + this.top;
+        }
+    }
 
     get left() { return parseInt(parseInt(this._html.style.left, 10) / _scale, 10); }
     set left(val) { this._html.style.left = (val*_scale)+"px"; }
@@ -1688,7 +1809,17 @@ class frElement { // jshint ignore:line
     get locked() { return this._locked; }
     set locked(val) {
         this._locked = !!val;
-        this._draggable.disabled = this._locked;
+        this._draggable.disabled = this._locked | this._readonly; // jshint ignore:line
+    }
+
+    get readonly() {
+         return this._readonly;
+    }
+
+    set readonly(val) {
+        // TODO: Disable all changes, readonly is only a place holder currently
+        this._readonly = val;
+        this._draggable.disabled = this._locked | this._readonly; // jshint ignore:line
     }
 
     get height() { return this._height; }
@@ -1700,6 +1831,11 @@ class frElement { // jshint ignore:line
         } else {
             this._html.style.height = (val*_scale)+"px";
         }
+
+        if ((this.elementHeight * _scale) + this.top > this._parent.height) {
+            this._parent.height = (this.elementHeight * _scale) + this.top;
+        }
+
     }
 
     get elementHeight() {
@@ -1800,13 +1936,14 @@ class frElement { // jshint ignore:line
         this._draggable.containment = this._parent._html;
 
         this._draggable.onDragStart = () => {
-            if (this._locked) { return; }
+            if (this._locked || this._readonly) { return; }
+
             this._draggable.containment = this._report.reportLayout;
             this._draggable.snap = this._generateSnapping();
         };
 
         this._draggable.onDragEnd = () => {
-            if (this._locked) { return; }
+            if (this._locked || this._readonly) { return; }
             let newSection = this._parent.sectionId;
             if (this.top < 0) {
                 newSection = frSection.getSectionIn(this._parent.top + this.top);
@@ -1815,13 +1952,27 @@ class frElement { // jshint ignore:line
                 if (newSection === 0) { newSection = frSection._sections.length-1; }
             }
             if (newSection !== this._parent.sectionId) {
-                let top = this._parent.top + this.top;
+                // We are grabbing the original _parent.top
+                let top = this._parent.top +  this.top;
+
                 this._parent.removeChild(this);
                 let sec = frSection.getSection(newSection);
                 sec.appendChild(this);
                 this._parent = sec;
+
+                // We are now subtracking the NEW _parent.top
                 top -= this._parent.top;
+
                 this.top = top;
+                // Resize Section
+                if ((this.elementHeight * _scale) + top > this._parent.height) {
+                    this._parent.height = ((this.elementHeight * _scale) + top);
+                }
+            } else {
+                // Same Section
+                if ((this.elementHeight * _scale) + this.top  > this._parent.height) {
+                    this._parent.height = ((this.elementHeight * _scale)+ this.top);
+                }
             }
 
             this._report.showProperties(this, false);
@@ -1997,6 +2148,148 @@ class frTitledElement extends  frElement {
 
 }
 
+class frSVGElement extends frTitledElement { // jshint ignore:line
+    constructor(report, parent, options = {}) {
+        if (typeof options.elementTitle === 'undefined') {
+            options.elementTitle = "Drawing";
+        }
+        super(report, parent, options);
+        this.width = (options && options.width) || 50;
+        this.height = (options && options.height) || 50;
+        this._shape = (options && options.shape) || "line";
+        this._radius = (options && options.radius) || 50;
+
+        this._svgRoot = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        this._svgRoot.style.width = (this.width * _scale).toString();
+        this._svgRoot.style.height = (this.height * _scale).toString();
+        this._html.appendChild(this._svgRoot);
+        this.setupShape();
+
+        this._addProperties([
+            {type: 'select', field: "shape", display: this.createSelect.bind(this), destination: 'settings'},
+            {type: 'number', field: 'radius', default: 0, destination: 'settings'}
+        ]);
+    }
+
+    _saveProperties(props, ignore = []) {
+        super._saveProperties(props, ignore);
+        props.type = 'shape';
+    }
+
+    setupShape() {
+        if (this._svg) {
+            this._svgRoot.removeChild(this._svg);
+            this._svg = null;
+        }
+        switch (this._shape) {
+            case 'line':
+                this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'line');
+                this._svg.setAttribute("x1","0");
+                this._svg.setAttribute("y1","3");
+                this._svg.setAttribute("x2", (this.width * _scale).toString());
+                this._svg.setAttribute("y2", (3+(this.height*_scale)).toString());
+                break;
+            case 'box':
+                this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+                break;
+            case 'circle':
+                this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
+
+                const midY = Math.floor((this.height *_scale ) / 2);
+                const midX = Math.floor((this.width * _scale) / 2);
+                this._svg.setAttribute("cx",midX.toString());
+                this._svg.setAttribute("cy",midY.toString());
+                this._svg.setAttribute("r",this.radius.toString());
+                break;
+        }
+
+        this._svg.style.stroke = "#000000";
+        this._svg.style.strokeWidth = "2px";
+        this._svg.style.fill = "none";
+        this._svg.style.width = (this.width * _scale).toString();
+        this._svg.style.height = (this.height * _scale).toString();
+        this._svgRoot.appendChild(this._svg);
+    }
+
+    get radius() {
+        return this._radius;
+    }
+
+    set radius(val) {
+        this._radius = val;
+        if (this._svg && this._shape === "circle") {
+            this._svg.setAttribute("r",this.radius.toString());
+        }
+    }
+
+    get shape() {
+        return this._shape;
+    }
+
+    set shape(val) {
+        if (val !== this._shape) {
+            this._shape = val;
+            this.setupShape();
+        }
+    }
+
+    get width() {
+        return super.width;
+    }
+    set width(val) {
+        super.width = val;
+        if (this._svg) {
+            this._svgRoot.style.width = (this._width * _scale).toString();
+            this._svg.style.width = (this._width * _scale).toString();
+            if (this._shape === "line") {
+                this._svg.setAttribute("x2", (this.width * _scale).toString());
+            }
+        }
+    }
+
+    get height() {
+        return super.height;
+    }
+    set height(val) {
+        super.height = val;
+        this._html.style.height = (5+(this.height * _scale))+"px";
+        if (this._svg) {
+            this._svgRoot.style.height = (5 + (this.height * _scale)).toString();
+            this._svg.style.height = (5 + (this.height * _scale)).toString();
+            if (this._shape === "line") {
+                this._svg.setAttribute("y2", (3 + (this.height * _scale)).toString());
+            }
+        }
+    }
+
+    createSelect() {
+        const curShape = this._shape;
+        let selectGroup = document.createElement('select');
+
+        let item = new Option("Line", "line");
+        if (curShape === "line") {
+            item.selected = true;
+        }
+        selectGroup.appendChild(item);
+
+        item = new Option("Box", "box");
+        if (curShape === "box") {
+            item.selected = true;
+        }
+        selectGroup.appendChild(item);
+
+        item = new Option("Circle", "circle");
+        if (curShape === "circle") {
+            item.selected = true;
+        }
+        selectGroup.appendChild(item);
+
+        return selectGroup;
+    }
+
+}
+
+
 class frTitledLabel extends frTitledElement { // jshint ignore:line
     constructor(report, parent, options = {}) {
         super(report, parent, options);
@@ -2061,7 +2354,7 @@ class frStandardHeader extends frTitledLabel { // jshint ignore:line
     }
 }
 
-// TODO: Maybe a descendant of Band?
+// TODO: Maybe Footer should be a descendant of Band?
 class frStandardFooter extends frTitledLabel { // jshint ignore:line
     constructor(report, parent, options = {}) {
         options.elementTitle = "Standard Footer";
@@ -2176,7 +2469,7 @@ class frPrint extends  frTitledLabel {
                 {type: 'string', field: "link", functionable: true, default: "", destination: "settings"}, 
                 {type: 'number', field: "border", default: 0, destination: "settings"},
                 {type: 'number', field: 'rotate', default: 0, destination: 'settings'},
-                {type: 'select', field: "align", default: 0, display: this.createAlignSelect.bind(this), destination: 'settings'},
+                {type: 'select', field: "align", default: "left", display: this.createAlignSelect.bind(this), destination: 'settings'},
                 {type: 'boolean', field: "wrap", default: false, destination: "settings"}
                 ]);
     }
@@ -2248,7 +2541,9 @@ class frPrint extends  frTitledLabel {
 
 class frPrintLabel extends frPrint  { // jshint ignore:line
     constructor(report, parent, options = {}) {
-        options.elementTitle = "Label";
+        if (typeof options.elementTitle === 'undefined') {
+            options.elementTitle = "Label";
+        }
         super(report, parent, options);
         this._text.contentEditable = options && typeof options.contentEditable === 'undefined' ? "true" : options.contentEditable || "true";
         this.label = (options && options.label) || "Label";
@@ -2291,7 +2586,7 @@ class frPrintLabel extends frPrint  { // jshint ignore:line
         }
 
         // Re-enable Dragging, unless it is locked...
-        this._draggable.disabled = this._locked;
+        this._draggable.disabled = (this._locked | this._readonly); // jshint ignore:line
 
         super._blur(args);
     }
@@ -2495,7 +2790,6 @@ class frPrintPageNumber extends frPrintLabel { // jshint ignore:line
 
 
 }
-
 
 class frPrintDynamic extends frPrint { // jshint ignore:line
     constructor(report, parent, options = {}) {
@@ -2756,7 +3050,6 @@ class UI { // jshint ignore:line
 
     static variableValueEditor(name, value, ok, cancel) {
         const body = document.createElement('div');
-
 
         const nameDiv = document.createElement('div');
         const name1 = document.createElement('span');
@@ -3763,7 +4056,7 @@ class UI { // jshint ignore:line
 
     }
 
-    static TotalsBrowse(totals, report, ok, cancel) {
+    static totalsBrowse(totals, report, ok, cancel) {
         const body = document.createElement('div');
         const span = document.createElement('span');
         span.innerText = "Totals:";
@@ -5095,6 +5388,7 @@ class Dialog { // jshint ignore:line
             dialogBackground = document.createElement("div");
             dialogBackground.id = "frDialogBackground"+Dialog._dialogs;
             dialogBackground.style.position = "absolute";
+            dialogBackground.className = "frDialogBackground";
             dialogBackground.style.left = "0px";
             dialogBackground.style.right = "0px";
             dialogBackground.style.top = "0px";
@@ -5145,7 +5439,7 @@ class Dialog { // jshint ignore:line
         }
     }
 
-    static notice(data, color) {
+    static notice(data, color, frame) {
         let notice = document.getElementById("notice");
         if (!notice) {
             if (data === false) { return; }
@@ -5158,7 +5452,7 @@ class Dialog { // jshint ignore:line
             notice.style.right = '0';
             notice.style.top = "0px";
             notice.style.color = '#FFF';
-            this._frame.appendChild(notice);
+            frame.appendChild(notice);
         }
         if (this._noticeId !== null) {
             clearTimeout(this._noticeId);
