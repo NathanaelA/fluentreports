@@ -3763,7 +3763,7 @@ class UI { // jshint ignore:line
 
     }
 
-    static TotalsBrowse(totals, report, ok, cancel) {
+    static totalsBrowse(totals, report, ok, cancel) {
         const body = document.createElement('div');
         const span = document.createElement('span');
         span.innerText = "Totals:";
