@@ -38,8 +38,17 @@
     "url": "http://github.com/Nathanaela/fluentreports.git"
   },
   "main": "lib/fluentReports",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "engines": {
     "node": ">= 0.6.0"
+  },
+  "devDependencies": {
+    "browser-pack-flat": "^3.4.2",
+    "common-shakeify": "^0.6.2",
+    "envify": "^4.1.0",
+    "tinyify": "^2.5.1",
+    "uglify-js": "^3.6.4",
+    "uglifyify": "^5.0.2",
+    "unassertify": "^2.1.1"
   }
 }

@@ -761,6 +761,18 @@ This will print the date time at the current location or header or footer locati
 
 <br><br><br>
 
+#### pageWidth() 
+##### Description
+This will return the page width - any margins, so this is the actual printable area.
+
+<br><br><br>
+
+#### pageHeight()
+##### Description
+This will return the page height - any margins, so this is the actual printable area.
+
+<br><br><br>
+
 #### pageNumber ( options )
 ##### Description
 This will print the current page number at the current location, or the header / footer locations

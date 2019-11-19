@@ -32,9 +32,15 @@
     pointer-events: none;
 }
 
-.frGrid {
+.frBand {
     font-family: "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 12px;
+}
+
+.frBand td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .fluentReports input[type="input"], .fluentReports select {
@@ -121,10 +127,9 @@
 
 .frDialog {
     left: 50%;
-    top: 50%;
     font-family: "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 12px;
-    transform: translate(-50%, -50%);
+    ztransform: translate(-50%, -50%);
 }
 .fluentReports .frReportInner {
     background-color: grey;

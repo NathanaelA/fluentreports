@@ -17,6 +17,8 @@ Please [read the commands.md file](commands.md) for a overview of all the comman
 
 ## Features:
 
+* **New: JSON based reports**
+* **New: Report Generator**
 * Completely Data Driven.  You pass in the data; you tell it easily how to print the data, and it generates the PDF report.
 * Data agnostic, can be arrays, and/or objects; whatever you prefer.
 * Headers, Footers, Title Headers, Summary Footers - Both built-in and totally customizable

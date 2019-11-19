@@ -5,19 +5,8 @@
 // Notes:
 // plainDraggable .top / .left calculations use the parent containers.getBoundingClientRect() + the objects.getBoundingClientRect()
 
-
-// Need a static element to track all Elements created
-// TODO: Push this into the fRG class, this should not be global
-let _frElements = [];
-
 // This counter makes sure we generate unique elements against every instance, every object -- this needs to stay static
 let _frItemUUID = 10000; // jshint ignore:line
-
-// Scale the display
-let _scale = 1.5;
-
-// Choose what UI Builder class
-let _UIBuilder;
 
 class FluentReportsGenerator {
 
@@ -35,6 +24,7 @@ class FluentReportsGenerator {
     get reportCalculations() { return this._calculations; }
     get reportVariables() { return this._reportData.variables;}
     get reportTotals() { return this._totals; }
+    // noinspection JSUnusedGlobalSymbols
     get reportSections() { return this._sections; }
     // noinspection JSUnusedGlobalSymbols
     get reportGroups() { return this._groupBys; }
@@ -50,6 +40,21 @@ class FluentReportsGenerator {
     get elementTitle() { return "Report"; }
     get gridSnapping() { return this._gridSnapping; }
 
+    get debugging() { return this._debugging; }
+    get scale() { return this._scale; }
+    get UIBuilder() { 
+        if (this._UIBuilderClass == null) {
+            this._UIBuilderClass = new this._UIBuilder(this);
+        }
+        return this._UIBuilderClass; 
+    }
+    get frSections() {
+        return this._frSections;
+    }
+    get frElements() {
+        return this._frElements;
+    }
+    
     /*
      * Public Properties
      */
@@ -60,6 +65,19 @@ class FluentReportsGenerator {
      */
     get autoPrint() { return this._autoPrint; }
     set autoPrint(val) { this._autoPrint = !!val; }
+
+    /**
+     * Expose Margins
+     * @returns {*}
+     */
+    get marginLeft() { return this._marginLeft; }
+    set marginLeft(val) { this._marginLeft = val; }
+    get marginRight() { return this._marginRight; }
+    set marginRight(val) { this._marginRight = val; }
+    get marginTop() { return this._marginTop; }
+    set marginTop(val) { this._marginTop = val; }
+    get marginBottom() { return this._marginBottom; }
+    set marginBottom(val) { this._marginBottom = val; }
 
     /**
      * Set/get the file name of the report
@@ -80,6 +98,7 @@ class FluentReportsGenerator {
      * @returns {string}
      */
     get paperSize() { return this._paperSize; }
+    // noinspection JSUnusedGlobalSymbols
     set paperSize(val) {
         if (val === this._paperSize) {
             return;
@@ -134,6 +153,7 @@ class FluentReportsGenerator {
      * @returns {string}
      */
     get paperOrientation() { return this._paperOrientation; }
+    // noinspection JSUnusedGlobalSymbols
     set paperOrientation(val) {
         if (val === this._paperOrientation) { return; }
         if (val === 'landscape') {
@@ -145,8 +165,13 @@ class FluentReportsGenerator {
         this._resetPaperSizeLocation();
     }
 
+    /**
+     * The Constructor
+     * @param options
+     */
     constructor(options) {
-        _UIBuilder = UI;
+        this._UIBuilderClass = null;
+        this._UIBuilder = UI;
 
         // Tracking Information
         this._parentElement = null;
@@ -163,7 +188,10 @@ class FluentReportsGenerator {
         this._propertiesLayout = null;
         this._currentSelected = null;
         this._sectionIn = 0;
-        this._debug = false;
+        this._debugging = false;
+        this._scale = 1.5;
+        this._frElements = [];
+        this._frSections = [];
 
         // Internal Data for UI
         this._calculations = [];
@@ -184,34 +212,43 @@ class FluentReportsGenerator {
         this._paperDims = [612.00, 792.00];  // 72px per inch
         this._fontSize = 10;
         this._autoPrint = false;
+        this._marginLeft = 72;
+        this._marginRight= 72;
+        this._marginTop = 72;
+        this._marginBottom = 72;
+
         this._name = "report.pdf";
         this._properties = [
             {type: 'string', field: 'name', functionable: true},
             {type: 'boolean', field: 'autoPrint', default: false},
             {type: 'number', field: 'fontSize', default: 0},
+            {type: 'number', title: 'margin.left', field: 'marginLeft', default: 72},
+            {type: 'number', title: 'margin.right', field: 'marginRight', default: 72},
+            {type: 'number', title: 'margin.top', field: 'marginTop', default: 72},
+            {type: 'number', title: 'margin.bottom', field: 'marginBottom', default: 72},
             {type: 'selection', title: 'Paper Size', field: 'paperSize', values: ['letter', 'legal'], default: 'letter'},
             {type: 'selection', title: 'Orientation', field:'paperOrientation', values: ['portrait', 'landscape'], default: 'portrait'},
             {type: 'button', title: 'Variables', click: this._setVariables.bind(this)},
             {type: 'button', title: 'Totals', click: this._setTotals.bind(this)}
         ];
 
+
         if (options.scale) {
-            _scale = parseFloat(options.scale);
+            this.setConfig('scale', options.scale);
         } else {
             // TODO: Maybe determine size of UI layout and scale dynamically?
-            _scale = 1.5;
+            this._scale = 1.5;
         }
 
         // Allows overriding UI System
-        if (options.UIBuilder) {
-            if (typeof options.UIBuilder.clearArea !== 'undefined') {
-                _UIBuilder = options.UIBuilder;
-            }
+        if (typeof options.UIBuilder !== 'undefined') {
+            this.setConfig('UIBuilder', options.UIBuilder);
         }
 
-        if (options.data) {
+        if (typeof options.data !== 'undefined') {
             this._parseData(options.data);
         }
+
         if (options.report) {
             // TODO - FUTURE: Maybe save & verify report based on parsed data to verify data layout being sent into
             //      - editor matches the report layout's last data, and so we have the field layout in the event no data is passed in.
@@ -219,23 +256,133 @@ class FluentReportsGenerator {
         } else {
             this._createReportOnData();
         }
-        if (options.save) {
-            this._saveFunction = options.save;
+        if (typeof options.save === 'function') {
+            this.setConfig('save', options.save);
         }
-        if (options.element) {
-            this._parentElement = options.element;
-        } else
-        if (options.id) {
-            this._parentElement = document.getElementById(options.id);
+        if (typeof options.element !== 'undefined') {
+            this.setConfig('element', options.element);
+        } else {
+            if (options.id) {
+                this.setConfig('id', options.id);
+            }
         }
         if (options.debug) {
-            this._debug = true;
+            this.setConfig('debug', options.debug);
         }
-        if (options.preview) {
-            this._previewFunction = options.preview;
+        if (typeof options.preview === 'function') {
+            this.setConfig('preview', options.preview);
         }
 
         this.buildUI(this._parentElement);
+    }
+
+    /**
+     * Set the Configuration for a report parameter
+     * @param option
+     * @param value
+     */
+    setConfig(option, value) {
+        if (value == null) { return; }
+        switch (option) {
+            case 'scale':
+                this._scale = parseFloat(value);
+                break;
+
+            case 'UIBuilder':
+                if (typeof value.clearArea !== 'undefined') {
+                    this._UIBuilder = value;
+                    if (this._UIBuilderClass) {
+                        this._UIBuilderClass.destroy();
+                        this._UIBuilderClass = null;
+                    }
+                }
+                break;
+
+            case 'data':
+                this._parseData(value);
+                break;
+
+            case 'report':
+                this._parseReport(value);
+                break;
+
+            case 'save':
+                if (typeof value === 'function') {
+                    this._saveFunction = value;
+                }
+                break;
+
+            case 'element':
+                this._parentElement = value;
+                break;
+
+            case 'id':
+                this._parentElement = document.getElementById(value);
+                break;
+
+            case 'debug':
+                this._debugging = !!value;
+                console.log("Debugging", this._debugging);
+                break;
+
+            case 'preview':
+                if (typeof value === 'function') {
+                    this._previewFunction = value;
+                }
+                break;
+
+            default:
+                if (this.debugging) {
+                    console.error("fluentReports: unknown setConfig option", option);
+                }
+        }
+
+    }
+
+    /**
+     * Figures out where the element was dragged to know which section it is now in
+     * @param offset
+     * @returns {number}
+     * @private
+     */
+    _getSectionIn(offset) {
+        let sec = 0;
+        const len = this._frSections.length;
+        for (let i=0;i<len;i++) {
+            const top = this._frSections[i].top;
+            if (offset >= top && offset <= top + this._frSections[i].height) {
+                sec = i;
+                break;
+            }
+        }
+        return sec;
+    }
+
+    /**
+     * Returns a section
+     * @param id
+     * @returns {*}
+     * @private
+     */
+    _getSection(id) {
+        return this._frSections[id];
+    }
+
+    /**
+     * Gets the section options
+     * @param sectionIn
+     * @returns {{top: string}}
+     * @private
+     */
+    _getSectionOptions(sectionIn) {
+        let options = {top: "5px"};
+        if (sectionIn > 0) {
+            const section = this._frSections[sectionIn-1];
+
+            // TODO: Change to calculated number 25 is 20 for Label and +5 for white space offset
+            options.top = (parseInt(section._draggable.element.style.top, 10)+25)+"px";
+        }
+        return options;
     }
 
     /**
@@ -328,25 +475,45 @@ class FluentReportsGenerator {
             this._generateReportLayout(this._reportData, 57, "", 0);
         }
 
-        // TODO: Add rest of properties
+        // TODO: Add any missing properties
         this._copyProperties(report, this, ["name", "fontSize", "autoPrint", "paperSize", "paperOrientation"]);
+
+        // Add Margins
+        if (typeof report.margins !== 'undefined') {
+            this._marginBottom = report.margins.bottom || 72;
+            this._marginTop = report.margins.top || 72;
+            this._marginRight = report.margins.right || 72;
+            this._marginLeft = report.margins.left || 72;
+        }
 
         if (this._builtUI) {
             this._reportSettings();
         }
     }
 
+    /**
+     * Starts generating the save data
+     * @returns {{type: string, dataSet: number}}
+     * @private
+     */
     _generateSave() {
         // Setup our temporary data storage
         this._saveTemporaryData = {reports: []};
 
         const results = {type: 'report', dataSet: 0};
         this._copyProperties(this, results, ["fontSize", "autoPrint", "name", "paperSize", "paperOrientation"]);
+        if (this._marginBottom !== 72 || this._marginTop !== 72 || this._marginLeft !== 72 || this._marginRight !== 72) {
+            results.margins = {left: this._marginLeft, top: this._marginTop, right: this._marginRight, bottom: this._marginBottom};
+        }
         this._saveTemporaryData.reports.push(results);
 
-        results.variables = this.reportVariables;
-        frSection.generateSave(results);
-
+        results.variables = shallowClone(this.reportVariables);
+        
+        // Save the Sections
+        for (let i=0;i<this._frSections.length;i++) {
+                this._frSections[i]._generateSave(results);
+        }
+        
         // Save the Totals..
         for (let i=0;i<this._saveTemporaryData.reports.length;i++) {
             this._saveTotals(this._saveTemporaryData.reports[i], this._saveTemporaryData.reports[i].dataSet);
@@ -398,6 +565,12 @@ class FluentReportsGenerator {
         return results;
     }
 
+    /**
+     * Saves any total information
+     * @param dest
+     * @param dataSet
+     * @private
+     */
     _saveTotals(dest, dataSet) {
         const totals = this.reportTotals;
         let fields, calcs=null;
@@ -428,18 +601,34 @@ class FluentReportsGenerator {
         }
     }
 
+    /**
+     * Saves any Variable information
+     * @private
+     */
     _setVariables() {
-        _UIBuilder.variableBrowse(this._reportData.variables, (value) => {
+       this.UIBuilder.variableBrowse(this._reportData.variables, (value) => {
             this._reportData.variables = value;
         });
     }
 
+    /**
+     * Edit the Total variables
+     * @private
+     */
     _setTotals() {
-        _UIBuilder.totalsBrowse(this.reportTotals, this, (value) => {
+       this.UIBuilder.totalsBrowse(this.reportTotals, this, (value) => {
             this._totals = value;
         });
     }
 
+    /**
+     * Simple shallow clone of properties to another object
+     * Used to copy properties from/to save structure
+     * @param src
+     * @param dest
+     * @param props
+     * @private
+     */
     _copyProperties(src, dest, props) {
         if (src == null) { return; }
         for (let i=0;i<props.length;i++) {
@@ -493,18 +682,18 @@ class FluentReportsGenerator {
         this._groupBys = [];
         this._subReports = {};
 
-        _UIBuilder.clearArea(this._reportLayout);
+       this.UIBuilder.clearArea(this._reportLayout);
         // Read-add our Section Constrainer
         this._reportLayout.appendChild(this._sectionConstrainer);
 
-        _UIBuilder.clearArea(this._propertiesLayout);
-        frElement.clearAll();
-        frSection.clearAll();
+       this.UIBuilder.clearArea(this._propertiesLayout);
+        this._frElements = [];
+        this._frSections = [];
     }
 
     buildUI(idOrElement) {
         if (this._builtUI) {
-            console.error("fluentReports: Attempting to call build on an already build _UIBuilder.");
+            console.error("fluentReports: Attempting to call build on an already buildthis.");
             return true;
         }
 
@@ -528,6 +717,7 @@ class FluentReportsGenerator {
         }
 
         this._frame = document.createElement("div");
+        this._frame.style.position = "relative";
 
         this._frame.style.height = (this._parentElement.clientHeight < 300 ? 300 : this._parentElement.clientHeight)+"px";
 
@@ -572,7 +762,7 @@ class FluentReportsGenerator {
             script.src = "./plain-draggable.min.js";
             document.getElementsByTagName('head')[0].appendChild(script);
             let frScript = document.createElement('script');
-            if (this._debug) {
+            if (this.debugging) {
                 frScript.src = "./fluentReportsBrowser.js";
             } else {
                 frScript.src = "./fluentReportsBrowser.min.js";
@@ -626,11 +816,13 @@ class FluentReportsGenerator {
      * @private
      */
     _resetPaperSizeLocation() {
-        const rect = this._reportScroller.getBoundingClientRect();
-        this._paperWidthLayout.style.top = rect.top+"px";
-        this._paperWidthLayout.style.left = (rect.left + (this._paperDims[0]*_scale)) + "px";
+        const topRect = this._frame.getBoundingClientRect();
+
+        const rect = this._reportLayout.getBoundingClientRect();
+        this._paperWidthLayout.style.top = (rect.top-topRect.top)+"px";
+        this._paperWidthLayout.style.left = (rect.left + (this._paperDims[0]*this.scale)) + "px";
         this._paperWidthLayout.style.height = rect.height+"px";
-        if (rect.width < ((this._paperDims[0]*_scale)+18)) {
+        if (rect.width < ((this._paperDims[0]*this.scale)+18)) {
             this._paperWidthLayout.style.display = "none";
         } else {
             this._paperWidthLayout.style.display = "";
@@ -643,8 +835,8 @@ class FluentReportsGenerator {
         }
 
         const y = (args.clientY - this._reportLayout.offsetTop) + this._reportScroller.scrollTop;
-        this._sectionIn = frSection.getSectionIn(y);
-        this.showProperties(frSection.getSection(this._sectionIn), true);
+        this._sectionIn = this._getSectionIn(y);
+        this.showProperties(this._getSection(this._sectionIn), true);
     }
 
     _generateInterface() {
@@ -662,7 +854,7 @@ class FluentReportsGenerator {
     
     _openGroupings() {
         //groupBy
-        _UIBuilder.groupsBrowse(this._groupBys,  this,    (groups) => {
+       this.UIBuilder.groupsBrowse(this._groupBys,  this,    (groups) => {
             let changed = 0;
             for (let i=0;i<this._groupBys.length;i++) {
                 for (let j=0;j<groups.length;j++) {
@@ -683,72 +875,83 @@ class FluentReportsGenerator {
     }
 
     _openSections() {
-
-        // Generate the current layout report so we can easily parse it in the sectionBrowse
-        let currentReport = this._generateSave();
-        _UIBuilder.sectionBrowse(this, currentReport, (updateReport) => {
+       // Generate the current layout report so we can easily parse it in the sectionBrowse
+       let currentReport = this._generateSave();
+       this.UIBuilder.sectionBrowse(this, currentReport, (updateReport) => {
             this._parseReport(updateReport);
         } );
     }
 
+    _addNewElementFromToolBar(classType, overrideOptions) {
+        const options = this._getSectionOptions(this._sectionIn);
+        for (let key in overrideOptions) {
+            if (overrideOptions.hasOwnProperty(key)) {
+                options[key] = overrideOptions[key];
+            }
+        }
+        new classType(this, this._getSection(this._sectionIn), options); // jshint ignore:line
+    }
+
     _generateToolBarLayout() {
 
-          this._toolBarLayout.appendChild(_UIBuilder.createSpacer());
-          this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue834", "Report settings", () => { this._reportSettings(); }));
-          this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue822", "Group data by", () => { this._openGroupings(); }));
-          this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue819", "Sections", () => { this._openSections(); }));
-          this._toolBarLayout.appendChild(_UIBuilder.createSpacer());
+          this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
+          this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue834", "Report settings", () => { this._reportSettings(); }));
+          this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue822", "Group data by", () => { this._openGroupings(); }));
+          this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue819", "Sections", () => { this._openSections(); }));
+          this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
 
-        this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue801", "New line", () => {
-            let options = frSection.getSectionOptions(this._sectionIn);
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue801", "New line", () => {
+            this._addNewElementFromToolBar(frNewLine, {top: 1});
+
+/*            let options = this._getSectionOptions(this._sectionIn);
             options.top = 1;
-            new frNewLine(this, frSection.getSection(this._sectionIn), options ); // jshint ignore:line
+            new frNewLine(this, this._getSection(this._sectionIn), options ); // jshint ignore:line */
         }));
-          this._toolBarLayout.appendChild(_UIBuilder.createSpacer());
+          this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
 
-        this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue82D", "Print label", () => {
-            let options = frSection.getSectionOptions(this._sectionIn);
-            new frPrintLabel(this, frSection.getSection(this._sectionIn), options); // jshint ignore:line
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue82D", "Print label", () => {
+            let options = this._getSectionOptions(this._sectionIn);
+            new frPrintLabel(this, this._getSection(this._sectionIn), options); // jshint ignore:line
         }));
-          this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue828", "Print data field", () => {
-              let options = frSection.getSectionOptions(this._sectionIn);
+          this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue828", "Print data field", () => {
+              let options = this._getSectionOptions(this._sectionIn);
               options.label = (this._fields.primary[0] || "????");
               options.field = this._fields.primary[0];
-             new frPrintField(this, frSection.getSection(this._sectionIn), options); // jshint ignore:line
+             new frPrintField(this, this._getSection(this._sectionIn), options); // jshint ignore:line
           }));
-        this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue818", "Print dynamic data", () => {
-            let options = frSection.getSectionOptions(this._sectionIn);
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue818", "Print dynamic data", () => {
+            let options = this._getSectionOptions(this._sectionIn);
             options.variable = "";
             options.type = "variable";
-            new frPrintDynamic(this, frSection.getSection(this._sectionIn), options); // jshint ignore:line
+            new frPrintDynamic(this, this._getSection(this._sectionIn), options); // jshint ignore:line
         }));
-        this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue83D", "Print Page", () => {
-            let options = frSection.getSectionOptions(this._sectionIn);
-            new frPrintPageNumber(this, frSection.getSection(this._sectionIn), options); // jshint ignore:line
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue83D", "Print Page", () => {
+            let options = this._getSectionOptions(this._sectionIn);
+            new frPrintPageNumber(this, this._getSection(this._sectionIn), options); // jshint ignore:line
         }));
-        this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue81F", "Print function", () => {
-            let options = frSection.getSectionOptions(this._sectionIn);
-            new frPrintFunction(this, frSection.getSection(this._sectionIn), options); // jshint ignore:line
-        }));
-
-        this._toolBarLayout.appendChild(_UIBuilder.createSpacer());
-
-        this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue826", "Drawing", () => {
-            let options = frSection.getSectionOptions(this._sectionIn);
-            new frSVGElement(this, frSection.getSection(this._sectionIn), options); // jshint ignore:line
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue81F", "Print function", () => {
+            let options = this._getSectionOptions(this._sectionIn);
+            new frPrintFunction(this, this._getSection(this._sectionIn), options); // jshint ignore:line
         }));
 
-        this._toolBarLayout.appendChild(_UIBuilder.createSpacer());
+        this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
 
-
-        this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue838", "Band", () => {
-            let options = frSection.getSectionOptions(this._sectionIn);
-            new frBandElement(this, frSection.getSection(this._sectionIn), options); // jshint ignore:line
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue826", "Drawing", () => {
+            let options = this._getSectionOptions(this._sectionIn);
+            new frSVGElement(this, this._getSection(this._sectionIn), options); // jshint ignore:line
         }));
 
-        this._toolBarLayout.appendChild(_UIBuilder.createSpacer());
+        this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
 
-        let snapIcon = _UIBuilder.createToolbarButton("\ue83A", "Snap to grid", () => {
+
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue838", "Band", () => {
+            let options = this._getSectionOptions(this._sectionIn);
+            new frBandElement(this, this._getSection(this._sectionIn), options); // jshint ignore:line
+        }));
+
+        this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
+
+        let snapIcon =this.UIBuilder.createToolbarButton("\ue83A", "Snap to grid", () => {
             this._gridSnapping.snapping = !this._gridSnapping.snapping;
             if (this._gridSnapping.snapping) {
                 snapIcon.innerText = "\ue839";
@@ -759,13 +962,13 @@ class FluentReportsGenerator {
         });
         this._toolBarLayout.appendChild(snapIcon);
 
-        this._toolBarLayout.appendChild(_UIBuilder.createSpacer());
+        this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
 
-        this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue833", "Save", () => {
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue833", "Save", () => {
             const topLayer = document.createElement("div");
-            topLayer.style.zIndex = 100;
+            topLayer.style.zIndex = "100";
             topLayer.style.backgroundColor = "#000000";
-            topLayer.style.opacity = 0.7;
+            topLayer.style.opacity = "0.7";
             topLayer.style.position = "absolute";
             topLayer.style.cursor = "wait";
 
@@ -785,11 +988,11 @@ class FluentReportsGenerator {
 
         }));
 
-        this._toolBarLayout.appendChild(_UIBuilder.createToolbarButton("\ue832", "Preview", () => {
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue832", "Preview", () => {
             const topLayer = document.createElement("div");
-            topLayer.style.zIndex = 100;
+            topLayer.style.zIndex = "100";
             topLayer.style.backgroundColor = "#000000";
-            topLayer.style.opacity = 0.9;
+            topLayer.style.opacity = "0.9";
             topLayer.style.position = "absolute";
             topLayer.style.cursor = "wait";
 
@@ -863,16 +1066,16 @@ class FluentReportsGenerator {
         // Send it to a pipe stream...
         rpt.outputType(1, pipeStream);
 
-        if (this._debug) {
+        if (this.debugging) {
             // Console log the structure in debug mode
             rpt.printStructure();
         }
 
-        if (this._debug) {
+        if (this.debugging) {
             console.time("Rendered");
         }
         rpt.render().then((pipe) => {
-            if (this._debug) {
+            if (this.debugging) {
                 console.timeEnd("Rendered");
             }
             iFrame.src = pipe.toBlobURL('application/pdf');
@@ -992,7 +1195,7 @@ class FluentReportsGenerator {
     }
 
     showProperties(obj, refresh=false) {
-        _UIBuilder.showProperties(obj, this._propertiesLayout, refresh);
+       this.UIBuilder.showProperties(obj, this._propertiesLayout, refresh);
     }
 
 }
@@ -1001,45 +1204,7 @@ class FluentReportsGenerator {
 // ----------------------------------------- [ Sections ] ----------------------------------------------
 
 class frSection { // jshint ignore:line
-
-    // noinspection JSUnusedGlobalSymbols
-    static getAll() { return frSection._sections; }
-    static clearAll() { frSection._sections = []; }
-    static resetSectionIds() {
-        for (let i=0;i<frSection._sections.length;i++) {
-            frSection._sections[i]._sectionId = i;
-        }
-    }
-    static getSectionIn(offset) {
-        let sec = 0;
-        const len = frSection._sections.length;
-        for (let i=0;i<len;i++) {
-            const top = frSection._sections[i].top;
-            if (offset >= top && offset <= top + frSection._sections[i].height) {
-                sec = i;
-                break;
-            }
-        }
-        return sec;
-    }
-    static getSection(id) {
-        return frSection._sections[id];
-    }
-    static getSectionOptions(sectionIn) {
-        let options = {top: "5px"};
-        if (sectionIn > 0) {
-            const section = frSection._sections[sectionIn-1];
-            // TODO: Change to calculated number 25 is 20 for Label and +5 for white space offset
-            options.top = (parseInt(section._draggable.element.style.top, 10)+25)+"px";
-        }
-        return options;
-    }
-    static generateSave(results) {
-        for (let i=0;i<frSection._sections.length;i++) {
-            frSection._sections[i]._generateSave(results);
-        }
-    }
-
+    
     get readOnly() {
         return this._readOnly;
     }
@@ -1078,6 +1243,7 @@ class frSection { // jshint ignore:line
 
     get type() { return this._type; }
 
+    // noinspection JSUnusedGlobalSymbols
     get hasStockElement() { return this._stockElement != null; }
     set usingStock(val) {
         this._usingStock = !!val;
@@ -1106,7 +1272,8 @@ class frSection { // jshint ignore:line
 
     createStockElement() {
         if (this._stockElement) { return this._stockElement; }
-        let left = (parseInt( (612 *_scale), 10)  / 2) - 45;
+        // noinspection JSCheckFunctionSignatures
+        let left = (parseInt( (612 * this.scale), 10)  / 2) - 45;
         switch (this._type) {
             case 1: // Header
                 this._stockElement = new frStandardHeader(this._report, this, {top: parseInt(this._html.style.top,10)+5, left: left });
@@ -1118,7 +1285,9 @@ class frSection { // jshint ignore:line
                 this._stockElement = new frStandardFooter(this._report, this, {top: parseInt(this._html.style.top,10)+5, left: left});
                 break;
             default:
-                console.error("fluentReports: Unknown type", this._type);
+                if (this.debugging) {
+                    console.error("fluentReports: Unknown type", this._type);
+                }
         }
         return this._stockElement;
     }
@@ -1129,16 +1298,16 @@ class frSection { // jshint ignore:line
         this._report.reportLayout.style.height = (curHeight+1000)+"px";
 
         // Lets start moving sections since we grew one of them...
-        let top = frSection._sections[startId].bottom;
-        const len = frSection._sections.length;
+        let top = this.frSections[startId].bottom;
+        const len = this.frSections.length;
         for (let i=startId+1;i<len;i++) {
-            frSection._sections[i].top = top;
-            top += frSection._sections[i].height;
-            frSection._sections[i]._draggable.position();
+            this.frSections[i].top = top;
+            top += this.frSections[i].height;
+            this.frSections[i]._draggable.position();
         }
 
         // Fix the report layout height back to a real number
-        let btm = frSection._sections[len-1].bottom;
+        let btm = this.frSections[len-1].bottom;
         if (curHeight < btm) {
             this._report.reportLayout.style.height = btm+"px";
         } else {
@@ -1234,7 +1403,9 @@ class frSection { // jshint ignore:line
                 type = 'finalSummary';
                 break;
             default:
-                console.error("Unknown Section type", this._title);
+                if (this.debugging) {
+                    console.error("Unknown Section type", this._title);
+                }
         }
         if (!Array.isArray(results[type])) {
             results[type] = [];
@@ -1244,16 +1415,15 @@ class frSection { // jshint ignore:line
 
     }
 
-
     _saveSectionInfo(results) {
         if (this._calculations.length) {
             for (let i=0;i<this._calculations.length;i++) {
-                results.push(this._calculations[i]);
+                results.push(shallowClone(this._calculations[i]));
             }
         }
         if (this._functions.length) {
             for (let i=0;i<this._functions.length; i++) {
-                results.push(this._functions[i]);
+                results.push(shallowClone(this._functions[i]));
             }
         }
         for (let i=0;i<this._children.length;i++) {
@@ -1268,7 +1438,6 @@ class frSection { // jshint ignore:line
         }
 
     }
-
 
     _parseSection(data) {
         let top = (this._children.length * 32) + 6;
@@ -1326,17 +1495,16 @@ class frSection { // jshint ignore:line
                 break;
 
             case 'function':
-                //let funcs = this._report.reportFunctions;
                 this._functions.push(data);
-                //funcs.push(data);
                 this.hasFunctions = true;
                 break;
 
             default:
-                console.error("fluentReports: Unknown", data.type, "in _parseSection");
+                if (this.debugging) {
+                    console.error("fluentReports: Unknown", data.type, "in _parseSection");
+                }
         }
     }
-
 
     _generateTitle() {
         if (this._type === 3 /* Detail */) {
@@ -1359,7 +1527,7 @@ class frSection { // jshint ignore:line
     }
 
     clickFunctions() {
-        _UIBuilder.functionBrowse(this._functions, ( funcs ) => {
+       this.UIBuilder.functionBrowse(this._functions, ( funcs ) => {
             this._functions = funcs;
             this.hasFunctions = funcs.length > 0;
             this._refreshProperties();
@@ -1367,7 +1535,7 @@ class frSection { // jshint ignore:line
     }
 
     clickCalcs() {
-        _UIBuilder.calculationBrowse(this._calculations, ( calcs ) => {
+       this.UIBuilder.calculationBrowse(this._calculations, ( calcs ) => {
             this._calculations = calcs;
             this.hasCalculations = calcs.length > 0;
             this._refreshProperties();
@@ -1378,17 +1546,32 @@ class frSection { // jshint ignore:line
         this._report.showProperties(this, true);
    }
 
-    constructor(report, options = {}) {
-        // Create Static Shared array to track all Sections
-        if (!Array.isArray(frSection._sections)) {
-            frSection._sections = [];
-        }
-        this._sectionId = frSection._sections.length;
-        frSection._sections.push(this);
+   get frSections() {
+        return this._report.frSections;
+   }
 
+   get scale() {
+        return this._report.scale;
+   }
+   
+   get debugging() {
+        return this._report.debugging;
+   }
+
+   get UIBuilder() {
+        return this._report.UIBuilder;
+   }
+   
+    constructor(report, options = {}) {
+        this._report = report;
+        
+        // Add our section to the report tracking 
+        this._sectionId = this.frSections.length;
+        this.frSections.push(this);
+        
+        
         this._readOnly = false;
         this._uuid = _frItemUUID++;
-        this._report = report;
         this._functions = [];
         this._hasFunctions = false;
         this._calculations = [];
@@ -1438,7 +1621,7 @@ class frSection { // jshint ignore:line
         if (this._sectionId === 0) {
             top = 0;
         } else {
-            top = frSection._sections[this._sectionId - 1].bottom;
+            top = this.frSections[this._sectionId - 1].bottom;
         }
 
         // Auto-resize report height if the size is bigger than the next section...
@@ -1490,8 +1673,8 @@ class frSection { // jshint ignore:line
             const rect = this._html.getBoundingClientRect();
             this._html.style.height = (this._draggable.rect.bottom - (rect.top + window.pageYOffset) )+ 'px';
             let top = (parseInt(this._html.style.height,10)+parseInt(this._html.style.top, 10));
-            for (let i=this._sectionId+1;i<frSection._sections.length;i++) {
-                let next = frSection._sections[i];
+            for (let i=this._sectionId+1;i<this.frSections.length;i++) {
+                let next = this.frSections[i];
                 next._html.style.top = top + "px";
                 top += next.height;
                 next._draggable.position();
@@ -1560,6 +1743,7 @@ class frSection { // jshint ignore:line
         return span;
     }
 
+    // noinspection JSUnusedGlobalSymbols
     _generateDataSetSelection() {
         const selectList = document.createElement("select");
         selectList.className = "frSelect";
@@ -1661,8 +1845,8 @@ class frSection { // jshint ignore:line
     _onDragStart() {
 
         let pageEnd = parseInt(this._report.reportScroller.clientHeight,10);
-        if (frSection._sections.length) {
-            pageEnd = frSection._sections[frSection._sections.length - 1].bottom;
+        if (this.frSections.length) {
+            pageEnd = this.frSections[this.frSections.length - 1].bottom;
         }
 
         // Figure out the MIN-Size
@@ -1670,7 +1854,7 @@ class frSection { // jshint ignore:line
         let top = 22;
         if (this._sectionId) {
             // Bottom of Prior section
-            top = frSection._sections[this._sectionId-1].bottom+22;
+            top = this.frSections[this._sectionId-1].bottom+22;
         }
         // Let top be to bottom of any children elements...
         for (let i=0;i<this._children.length;i++) {
@@ -1688,8 +1872,8 @@ class frSection { // jshint ignore:line
         }
 
         let end = currentHeight-22 - this.top;
-        for (let i=this._sectionId+1;i<frSection._sections.length;i++) {
-            end -= frSection._sections[i].height;
+        for (let i=this._sectionId+1;i<this.frSections.length;i++) {
+            end -= this.frSections[i].height;
         }
         this._report.sectionConstrainer.style.top = top+"px";
         this._report.sectionConstrainer.style.height = end+"px";
@@ -1706,8 +1890,8 @@ class frSection { // jshint ignore:line
 
     _onDragEnd() {
             // Reset bottom of report to be where the last section is at...
-            if (frSection._sections.length) {
-                let bottom = frSection._sections[frSection._sections.length - 1].bottom;
+            if (this.frSections.length) {
+                let bottom = this.frSections[this.frSections.length - 1].bottom;
                 if (bottom < this._report._reportScroller.clientHeight) { bottom = this._report._reportScroller.clientHeight; }
                 this._report.reportLayout.style.height = bottom + "px";
             }
@@ -1735,15 +1919,6 @@ class frSection { // jshint ignore:line
  * FluentReports Base Element
  */
 class frElement { // jshint ignore:line
-
-    static clearAll() {
-        _frElements = [];
-    }
-
-    static getAll() {
-        return _frElements;
-    }
-
     
     constructor(report, parent /* , options */) {
         this._uuid = _frItemUUID++;
@@ -1762,9 +1937,30 @@ class frElement { // jshint ignore:line
             {type: 'number', field: 'width', default: 0, destination: "settings"},
             {type: 'number', field: 'height', default: 0, destination: "settings"}
             ];
-        _frElements.push(this);
+        this.frElements.push(this);
+    }
+    
+    get uuid() { return this._uuid; }
+    get frElements() {
+        return this._report.frElements;
+    }
+    get UIBuilder() {
+        return this._report.UIBuilder;
     }
 
+    get scale() {
+        return this._report.scale;
+    }
+
+    get debugging() {
+        return this._report.debugging;
+    }
+
+
+
+    /**
+     * Delete this Element
+     */
     delete() {
         if (this._report.currentSelected === this) {
             this.blur();
@@ -1772,11 +1968,10 @@ class frElement { // jshint ignore:line
         }
         this._parent.removeChild(this);
         //this._html.parentElement.removeChild(this._html);
-        let idx = _frElements.indexOf(this);
-        _frElements.splice(idx, 1);
+        let idx = this.frElements.indexOf(this);
+        this.frElements.splice(idx, 1);
     }
-
-    get uuid() { return this._uuid; }
+    
     get properties() { return this._properties; }
 
     get draggable() { return this._draggable; }
@@ -1785,13 +1980,14 @@ class frElement { // jshint ignore:line
     get top() { return parseInt(this._html.style.top,10); }
     set top(val) {
         this._html.style.top = val+"px";
-        if ((this.elementHeight * _scale) + this.top > this._parent.height) {
-            this._parent.height = (this.elementHeight * _scale) + this.top;
+        if ((this.elementHeight *  this.scale) + this.top > this._parent.height) {
+            this._parent.height = (this.elementHeight * this.scale) + this.top;
         }
     }
 
-    get left() { return parseInt(parseInt(this._html.style.left, 10) / _scale, 10); }
-    set left(val) { this._html.style.left = (val*_scale)+"px"; }
+    get left() { // noinspection JSCheckFunctionSignatures
+        return parseInt(parseInt(this._html.style.left, 10) / this.scale, 10); }
+    set left(val) { this._html.style.left = (val * this.scale)+"px"; }
 
     get width() { return this._width; }
     set width(val) {
@@ -1802,7 +1998,7 @@ class frElement { // jshint ignore:line
         } else if (val < 10) {
             this._html.style.width = "10px";
         } else {
-            this._html.style.width = (val*_scale)+"px";
+            this._html.style.width = (val * this.scale)+"px";
         }
     }
 
@@ -1829,11 +2025,11 @@ class frElement { // jshint ignore:line
         if (val === 0 || val === "0") {
             this._html.style.height = "";
         } else {
-            this._html.style.height = (val*_scale)+"px";
+            this._html.style.height = (val * this.scale)+"px";
         }
 
-        if ((this.elementHeight * _scale) + this.top > this._parent.height) {
-            this._parent.height = (this.elementHeight * _scale) + this.top;
+        if ((this.elementHeight * this.scale) + this.top > this._parent.height) {
+            this._parent.height = (this.elementHeight * this.scale) + this.top;
         }
 
     }
@@ -1843,6 +2039,7 @@ class frElement { // jshint ignore:line
         return this._height > clientHeight ? this._height : clientHeight;
     }
 
+    // noinspection JSUnusedGlobalSymbols
     get elementWidth() {
         let clientWidth = parseInt(this._html.clientWidth,10);
         return this._width > clientWidth ? this._width : clientWidth;
@@ -1916,7 +2113,7 @@ class frElement { // jshint ignore:line
 
     _generateSnapping() {
         let targets=[];
-        let secs = frSection.getAll();
+        let secs = this._parent.frSections;
         for (let i=0;i<secs.length;i++) {
             targets.push(secs[i]._html);
         }
@@ -1946,32 +2143,32 @@ class frElement { // jshint ignore:line
             if (this._locked || this._readonly) { return; }
             let newSection = this._parent.sectionId;
             if (this.top < 0) {
-                newSection = frSection.getSectionIn(this._parent.top + this.top);
+                newSection = this._parent.getSectionIn(this._parent.top + this.top);
             } else if (this.top >= this._parent.height) {
-                newSection = frSection.getSectionIn(this._parent.top + this.top+1);
-                if (newSection === 0) { newSection = frSection._sections.length-1; }
+                newSection = this._parent.getSectionIn(this._parent.top + this.top+1);
+                if (newSection === 0) { newSection = this.frSections.length-1; }
             }
             if (newSection !== this._parent.sectionId) {
                 // We are grabbing the original _parent.top
                 let top = this._parent.top +  this.top;
 
                 this._parent.removeChild(this);
-                let sec = frSection.getSection(newSection);
+                let sec = this._parent.getSection(newSection);
                 sec.appendChild(this);
                 this._parent = sec;
 
-                // We are now subtracking the NEW _parent.top
+                // We are now subtracting the NEW _parent.top
                 top -= this._parent.top;
 
                 this.top = top;
                 // Resize Section
-                if ((this.elementHeight * _scale) + top > this._parent.height) {
-                    this._parent.height = ((this.elementHeight * _scale) + top);
+                if ((this.elementHeight * this.scale) + top > this._parent.height) {
+                    this._parent.height = ((this.elementHeight * this.scale) + top);
                 }
             } else {
                 // Same Section
-                if ((this.elementHeight * _scale) + this.top  > this._parent.height) {
-                    this._parent.height = ((this.elementHeight * _scale)+ this.top);
+                if ((this.elementHeight * this.scale) + this.top  > this._parent.height) {
+                    this._parent.height = ((this.elementHeight * this.scale)+ this.top);
                 }
             }
 
@@ -2118,7 +2315,7 @@ class frElement { // jshint ignore:line
     }
 }
 
-class frTitledElement extends  frElement {
+class frTitledElement extends frElement {
     constructor(report, parent, options = {}) {
         super(report, parent, options);
 
@@ -2160,8 +2357,8 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this._radius = (options && options.radius) || 50;
 
         this._svgRoot = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        this._svgRoot.style.width = (this.width * _scale).toString();
-        this._svgRoot.style.height = (this.height * _scale).toString();
+        this._svgRoot.style.width = (this.width * this.scale).toString();
+        this._svgRoot.style.height = (this.height * this.scale).toString();
         this._html.appendChild(this._svgRoot);
         this.setupShape();
 
@@ -2186,8 +2383,8 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
                 this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'line');
                 this._svg.setAttribute("x1","0");
                 this._svg.setAttribute("y1","3");
-                this._svg.setAttribute("x2", (this.width * _scale).toString());
-                this._svg.setAttribute("y2", (3+(this.height*_scale)).toString());
+                this._svg.setAttribute("x2", (this.width * this.scale).toString());
+                this._svg.setAttribute("y2", (3+(this.height * this.scale)).toString());
                 break;
             case 'box':
                 this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
@@ -2195,19 +2392,24 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
             case 'circle':
                 this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
 
-                const midY = Math.floor((this.height *_scale ) / 2);
-                const midX = Math.floor((this.width * _scale) / 2);
+                const midY = Math.floor((this.height * this.scale ) / 2);
+                const midX = Math.floor((this.width * this.scale) / 2);
                 this._svg.setAttribute("cx",midX.toString());
                 this._svg.setAttribute("cy",midY.toString());
                 this._svg.setAttribute("r",this.radius.toString());
                 break;
+
+        }
+        if (!this._svg) {
+            console.error("fluentReportGenerator: SVG shape is not configured in setupShape, set to: ", this._shape);
+            return;
         }
 
         this._svg.style.stroke = "#000000";
         this._svg.style.strokeWidth = "2px";
         this._svg.style.fill = "none";
-        this._svg.style.width = (this.width * _scale).toString();
-        this._svg.style.height = (this.height * _scale).toString();
+        this._svg.style.width = (this.width * this.scale).toString();
+        this._svg.style.height = (this.height * this.scale).toString();
         this._svgRoot.appendChild(this._svg);
     }
 
@@ -2239,10 +2441,10 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
     set width(val) {
         super.width = val;
         if (this._svg) {
-            this._svgRoot.style.width = (this._width * _scale).toString();
-            this._svg.style.width = (this._width * _scale).toString();
+            this._svgRoot.style.width = (this._width * this.scale).toString();
+            this._svg.style.width = (this._width * this.scale).toString();
             if (this._shape === "line") {
-                this._svg.setAttribute("x2", (this.width * _scale).toString());
+                this._svg.setAttribute("x2", (this.width * this.scale).toString());
             }
         }
     }
@@ -2252,12 +2454,12 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
     }
     set height(val) {
         super.height = val;
-        this._html.style.height = (5+(this.height * _scale))+"px";
+        this._html.style.height = (5+(this.height * this.scale))+"px";
         if (this._svg) {
-            this._svgRoot.style.height = (5 + (this.height * _scale)).toString();
-            this._svg.style.height = (5 + (this.height * _scale)).toString();
+            this._svgRoot.style.height = (5 + (this.height * this.scale)).toString();
+            this._svg.style.height = (5 + (this.height * this.scale)).toString();
             if (this._shape === "line") {
-                this._svg.setAttribute("y2", (3 + (this.height * _scale)).toString());
+                this._svg.setAttribute("y2", (3 + (this.height * this.scale)).toString());
             }
         }
     }
@@ -2288,7 +2490,6 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
     }
 
 }
-
 
 class frTitledLabel extends frTitledElement { // jshint ignore:line
     constructor(report, parent, options = {}) {
@@ -2635,6 +2836,7 @@ class frPrintFunction extends frPrint { // jshint ignore:line
         this._async = !!val;
     }
 
+    // noinspection JSUnusedGlobalSymbols
     _runFunction() {
         try {
             const func = new Function('report', 'data', 'state', 'vars', 'done', this._function);   // jshint ignore:line
@@ -2677,7 +2879,7 @@ class frPrintFunction extends frPrint { // jshint ignore:line
     }
 
     _dblClickHandler() {
-        _UIBuilder.functionEditor(this._function, null, this.async, this.skip, (result, name, isAsync, isSkip) => {
+       this.UIBuilder.functionEditor(this._function, null, this.async, this.skip, (result, name, isAsync, isSkip) => {
             let changed = false;
             if (this._function !== result) {
                 this.function = result;
@@ -2722,7 +2924,7 @@ class frPrintField extends frPrint { // jshint ignore:line
     }
 
     _generateDataFieldSelection() {
-        return _UIBuilder.createDataSelect(this._report, this._field, 3);
+        return this.UIBuilder.createDataSelect(this._report, this._field, 3);
     }
 
     get field() { return this._field; }
@@ -2733,7 +2935,7 @@ class frPrintField extends frPrint { // jshint ignore:line
 
 
     _dblClickHandler() {
-       _UIBuilder.dataFieldEditor(this._generateDataFieldSelection(), (value) => {
+      this.UIBuilder.dataFieldEditor(this._generateDataFieldSelection(), (value) => {
             if (this.field !== value) {
                 this.field = value;
                 this._report.showProperties(this, true);
@@ -2858,11 +3060,11 @@ class frPrintDynamic extends frPrint { // jshint ignore:line
             case 'total':
                 dataSets = 16; break;
         }
-        return _UIBuilder.createDataSelect(this._report, this._other, dataSets);
+        return this.createDataSelect(this._report, this._other, dataSets);
     }
 
     _dblClickHandler() {
-        _UIBuilder.dataFieldEditor(this._generateDataFieldSelection(), (value) => {
+       this.dataFieldEditor(this._generateDataFieldSelection(), (value) => {
             if (this.other !== value) {
                 this.other = value;
                 this._report.showProperties(this, true);
@@ -2893,7 +3095,6 @@ class frPrintDynamic extends frPrint { // jshint ignore:line
         super._parseElement(data);
     }
 }
-
 
 class frBandElement extends frPrint { // jshint ignore:line
     get columns() { return this._columns; }
@@ -2926,7 +3127,7 @@ class frBandElement extends frPrint { // jshint ignore:line
         this._suppression = false;
 
         this._table = document.createElement("table");
-        this._table.className = "frGrid";
+        this._table.className = "frBand";
         this._table.style.border = "1px solid black";
         this._table.style.borderCollapse = "collapse";
         this._table.style.backgroundColor = "#808080";
@@ -2949,7 +3150,7 @@ class frBandElement extends frPrint { // jshint ignore:line
     }
 
     _bandEditor() {
-        _UIBuilder.bandBrowse(this._report, this._bands, (value) => {
+       this.UIBuilder.bandBrowse(this._report, this._bands, (value) => {
             this._bands = value;
             this._columns = value.length;
             this._fixColumns();
@@ -3027,7 +3228,8 @@ class frBandElement extends frPrint { // jshint ignore:line
     }
 
     _fixCellProps(td, field) {
-        td.width = (field.width*_scale || 80) + "px";
+        td.style.width = (field.width * this.scale || 80) + "px";
+        td.style.maxWidth = td.style.width;
         if (field.align != null) {
             switch(field.align) {
                 case 1: // LEFT
@@ -3046,9 +3248,22 @@ class frBandElement extends frPrint { // jshint ignore:line
 }
 
 
+
 class UI { // jshint ignore:line
 
-    static variableValueEditor(name, value, ok, cancel) {
+    constructor(parent) {
+        this._parent = parent;
+    }
+    
+    destroy() {
+        this._parent = null;
+    }
+
+    get hostElement() {
+        return this._parent._frame;
+    }
+
+    variableValueEditor(name, value, ok, cancel) {
         const body = document.createElement('div');
 
         const nameDiv = document.createElement('div');
@@ -3069,13 +3284,13 @@ class UI { // jshint ignore:line
         valueDiv.appendChild(variableValue);
         body.appendChild(valueDiv);
 
-        let buttons = _UIBuilder.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Value Editor", body);
+        let d = new Dialog("Value Editor", body, this.hostElement);
 
         buttons[0].addEventListener('click', () => {
             d.hide();
@@ -3091,7 +3306,7 @@ class UI { // jshint ignore:line
         });
     }
 
-    static variableBrowse(variables, ok, cancel) {
+    variableBrowse(variables, ok, cancel) {
         const body = document.createElement('div');
         const span = document.createElement('span');
         span.innerText = "Variables:";
@@ -3135,7 +3350,7 @@ class UI { // jshint ignore:line
         });
 
 
-        let addButtons = _UIBuilder.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
+        let addButtons =this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
         let addBtnContainer = document.createElement('div');
         //addBtnContainer.style.display = ''
         addBtnContainer.style.padding = "5px";
@@ -3153,7 +3368,7 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-            _UIBuilder.variableValueEditor("", "", (name, value) => {
+           this.variableValueEditor("", "", (name, value) => {
                 if (name != null && name !== '') {
                     if (!resultVariables.hasOwnProperty(name)) {
                         select.appendChild(new Option(name));
@@ -3166,7 +3381,7 @@ class UI { // jshint ignore:line
         // Edit
         addButtons[1].addEventListener("click", () => {
             let key = select.value;
-            _UIBuilder.variableValueEditor(key, resultVariables[key], (name, value) => {
+           this.variableValueEditor(key, resultVariables[key], (name, value) => {
                 if (name !== key) {
                     delete resultVariables[key];
                     select.options[select.selectedIndex].text = name;
@@ -3188,13 +3403,13 @@ class UI { // jshint ignore:line
 
 
 
-        let buttons = _UIBuilder.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Variables", body);
+        let d = new Dialog("Variables", body, this.hostElement);
 
         buttons[0].addEventListener('click', () => {
             d.hide();
@@ -3210,7 +3425,7 @@ class UI { // jshint ignore:line
         });
     }
 
-    static groupsBrowse(groups, report, ok, cancel) {
+    groupsBrowse(groups, report, ok, cancel) {
         const body = document.createElement('div');
         const span = document.createElement('span');
         span.innerText = "Group By:";
@@ -3250,7 +3465,7 @@ class UI { // jshint ignore:line
         body.appendChild(selectDiv);
 
 
-        let addButtons = _UIBuilder.createButtons(["Add", "Edit", "Delete", "\uE83B", "\uE83C"], {width: "100px", marginTop: "5px"});
+        let addButtons =this.createButtons(["Add", "Edit", "Delete", "\uE83B", "\uE83C"], {width: "100px", marginTop: "5px"});
         let addBtnContainer = document.createElement('div');
         //addBtnContainer.style.display = ''
         addBtnContainer.style.padding = "5px";
@@ -3330,8 +3545,8 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-            const fields = _UIBuilder.createDataSelect(report, null , 3);
-            _UIBuilder.dataFieldEditor(fields,(name, idx, dataSet) => {
+            const fields =this.createDataSelect(report, null , 3);
+           this.dataFieldEditor(fields,(name, idx, dataSet) => {
                 if (name != null && name !== '') {
                     let optGroup = tempOptGroups[dataSet];
                     let found = false;
@@ -3366,9 +3581,9 @@ class UI { // jshint ignore:line
         // Edit
         addButtons[1].addEventListener("click", () => {
             if (select.selectedIndex < 0) { return; }
-            const fields = _UIBuilder.createDataSelect(report, select.value , 3);
+            const fields =this.createDataSelect(report, select.value , 3);
 
-            _UIBuilder.dataFieldEditor(fields, (name, idx, dataSet) => {
+           this.dataFieldEditor(fields, (name, idx, dataSet) => {
                 let curIndex = select.selectedIndex;
                 let curGroup = resultVariables[curIndex];
 
@@ -3423,13 +3638,13 @@ class UI { // jshint ignore:line
 
 
 
-        let buttons = _UIBuilder.createButtons(["Ok", "Cancel"]);
+        let buttons =this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Group data by", body);
+        let d = new Dialog("Group data by", body, this.hostElement);
 
         buttons[0].addEventListener('click', () => {
             d.hide();
@@ -3445,7 +3660,7 @@ class UI { // jshint ignore:line
         });
     }
 
-    static createToolbarButton(txt, hover, fn) {
+    createToolbarButton(txt, hover, fn) {
         const btn = document.createElement("a");
         btn.text = txt;
         btn.className = "frIcon frIconMenu";
@@ -3454,13 +3669,13 @@ class UI { // jshint ignore:line
         return btn;
     }
 
-    static createSpacer() {
+    createSpacer() {
         const spacer = document.createElement('span');
         spacer.className = "frIconSpacer";
         return spacer;
     }
 
-    static sectionBrowse(report, reportData, ok, cancel) {
+    sectionBrowse(report, reportData, ok, cancel) {
         const body = document.createElement('div');
         const span = document.createElement('span');
         span.innerText = "Sections:";
@@ -3596,13 +3811,13 @@ class UI { // jshint ignore:line
 
         body.appendChild(group);
 
-        let buttons = _UIBuilder.createButtons(["Ok", "Cancel"]);
+        let buttons =this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Sections", body);
+        let d = new Dialog("Sections", body, this.hostElement);
 
         const rebuildReportSection = (reportInfo, data) => {
               for (let key in reportInfo) {
@@ -3659,7 +3874,7 @@ class UI { // jshint ignore:line
 
     }
 
-    static bandBrowse(report, bands, ok, cancel) {
+    bandBrowse(report, bands, ok, cancel) {
         const body = document.createElement('div');
         const span = document.createElement('span');
         let currentBand = null;
@@ -3704,7 +3919,7 @@ class UI { // jshint ignore:line
 
 
         const properties = [
-            {type: 'number', field: "width"},
+            {type: 'string', field: "width", functionable: true},
             {type: 'select', field: "align", default: "left", display: createAlignSelect},
             {type: 'string', field: "textColor", default: "", functionable: true}
         ];
@@ -3732,7 +3947,8 @@ class UI { // jshint ignore:line
         select.addEventListener("change", () => {
             if (select.selectedIndex < 0) { return; }
             currentBand = resultVariables[select.selectedIndex];
-            _UIBuilder.showProperties(currentBand, propDiv, true, properties);
+            currentBand.properties = properties;
+           this.showProperties(currentBand, propDiv, true);
         });
 
 
@@ -3761,13 +3977,13 @@ class UI { // jshint ignore:line
                     select.appendChild(option);
                 }
             }
-            _UIBuilder.clearArea(propDiv);
+           this.clearArea(propDiv);
         };
         rebuildOptions();
 
 
 
-        let addButtons = _UIBuilder.createButtons(["Add", "Edit", "Delete", "\uE83B", "\uE83C"], {width: "100px", marginTop: "5px"});
+        let addButtons =this.createButtons(["Add", "Edit", "Delete", "\uE83B", "\uE83C"], {width: "100px", marginTop: "5px"});
         let addBtnContainer = document.createElement('div');
         addBtnContainer.style.padding = "5px";
         addBtnContainer.style.display = 'inline-block';
@@ -3824,7 +4040,7 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-            _UIBuilder.bandValueEditor(report, {text: "", type:"text", width: 100}, (value) => {
+           this.bandValueEditor(report, {text: "", type:"text", width: 100}, (value) => {
                     resultVariables.push(value);
                     rebuildOptions();
             });
@@ -3833,7 +4049,7 @@ class UI { // jshint ignore:line
         // Edit
         addButtons[1].addEventListener("click", () => {
             if (select.selectedIndex < 0) { return; }
-            _UIBuilder.bandValueEditor(report, resultVariables[select.selectedIndex], (value) => {
+           this.bandValueEditor(report, resultVariables[select.selectedIndex], (value) => {
                 resultVariables[select.selectedIndex] = value;
                 rebuildOptions();
             });
@@ -3848,17 +4064,21 @@ class UI { // jshint ignore:line
         });
 
 
-        let buttons = _UIBuilder.createButtons(["Ok", "Cancel"]);
+        let buttons =this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Bands", body);
+        let d = new Dialog("Bands", body, this.hostElement);
 
         buttons[0].addEventListener('click', () => {
             d.hide();
             if (typeof ok === 'function') {
+                // Eliminate the temporary properties object
+                for (let i=0;i<resultVariables.length;i++) {
+                    delete resultVariables[i].properties;
+                }
                 ok(resultVariables);
             }
         });
@@ -3870,7 +4090,7 @@ class UI { // jshint ignore:line
         });
     }
 
-    static bandValueEditor(report, fields, ok, cancel) {
+    bandValueEditor(report, fields, ok, cancel) {
 
         // Figure out Band type...
         let field = null, isTotal = false;
@@ -3888,7 +4108,7 @@ class UI { // jshint ignore:line
             field = fields.total;
             isTotal = true;
         }
-        let select = _UIBuilder.createDataSelect(report, field, 63, isTotal);
+        let select =this.createDataSelect(report, field, 63, isTotal);
         let newField =  shallowClone(fields);
         if (newField.function) {
             newField.function = shallowClone(fields.function);
@@ -3916,11 +4136,11 @@ class UI { // jshint ignore:line
         });
         body.appendChild(textInput);
 
-        const functionButton = _UIBuilder.createButtons(["Edit Function"])[0];
+        const functionButton =this.createButtons(["Edit Function"])[0];
         functionButton.style.display = "none";
         functionButton.style.marginLeft = "5px";
         functionButton.addEventListener("click", () => {
-            _UIBuilder.functionEditor(newField.function.function || '', newField.function.name, newField.function.async, newField.function.skip,
+           this.functionEditor(newField.function.function || '', newField.function.name, newField.function.async, newField.function.skip,
                 (value, name, isAsync, skipped) => {
                     let obj = {};
                     if (isAsync != null) {
@@ -3984,13 +4204,13 @@ class UI { // jshint ignore:line
 
         select.addEventListener("change", setupSubFields);
 
-        const buttons = _UIBuilder.createButtons(["Ok", "Cancel"]);
+        const buttons =this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Band Editor", body);
+        let d = new Dialog("Band Editor", body, this.hostElement);
 
         // Ok Button
         buttons[0].addEventListener('click', () => {
@@ -4056,7 +4276,7 @@ class UI { // jshint ignore:line
 
     }
 
-    static totalsBrowse(totals, report, ok, cancel) {
+    totalsBrowse(totals, report, ok, cancel) {
         const body = document.createElement('div');
         const span = document.createElement('span');
         span.innerText = "Totals:";
@@ -4099,7 +4319,7 @@ class UI { // jshint ignore:line
         selectDiv.style.display = 'inline-block';
         body.appendChild(selectDiv);
 
-        let addButtons = _UIBuilder.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
+        let addButtons =this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
         let addBtnContainer = document.createElement('div');
         //addBtnContainer.style.display = ''
         addBtnContainer.style.padding = "5px";
@@ -4115,7 +4335,7 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-            _UIBuilder.totalFieldEditor(report, "", "sum", (name, type) => {
+           this.totalFieldEditor(report, "", "sum", (name, type) => {
                 if (name != null && name !== '') {
 
                     // Check to see if total in type already exists
@@ -4140,7 +4360,7 @@ class UI { // jshint ignore:line
                     type = key; break;
                 }
             }
-            _UIBuilder.totalFieldEditor(report, value, type, (name, newType) => {
+           this.totalFieldEditor(report, value, type, (name, newType) => {
                if (name == null || name === '') { return; }
 
                // Find old index location
@@ -4190,13 +4410,13 @@ class UI { // jshint ignore:line
 
 
 
-        let buttons = _UIBuilder.createButtons(["Ok", "Cancel"]);
+        let buttons =this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Totals", body);
+        let d = new Dialog("Totals", body, this.hostElement);
 
         buttons[0].addEventListener('click', () => {
             d.hide();
@@ -4212,7 +4432,7 @@ class UI { // jshint ignore:line
         });
     }
 
-    static totalFieldEditor(report, selected, type, ok, cancel) {
+    totalFieldEditor(report, selected, type, ok, cancel) {
 
         let types = ["sum", "average", "count", "min", "max"];
 
@@ -4238,18 +4458,18 @@ class UI { // jshint ignore:line
         title = document.createElement("span");
         title.innerText = " on field ";
         body.appendChild(title);
-        const select = _UIBuilder.createDataSelect(report, selected, 3);
+        const select =this.createDataSelect(report, selected, 3);
         body.appendChild(select);
 
 
 
-        let buttons = _UIBuilder.createButtons(["Ok", "Cancel"]);
+        let buttons =this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Total Field", body);
+        let d = new Dialog("Total Field", body, this.hostElement);
 
         // Ok Button
         buttons[0].addEventListener('click', () => {
@@ -4268,7 +4488,7 @@ class UI { // jshint ignore:line
 
     }
 
-    static dataFieldEditor(fields, ok, cancel) {
+    dataFieldEditor(fields, ok, cancel) {
         const body = document.createElement('div');
         const title = document.createElement("span");
         title.style.marginLeft = "5px";
@@ -4276,13 +4496,13 @@ class UI { // jshint ignore:line
         body.appendChild(title);
         const select = fields;
         body.appendChild(select);
-        let buttons = _UIBuilder.createButtons(["Ok", "Cancel"]);
+        let buttons =this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Choose DataField", body);
+        let d = new Dialog("Choose DataField", body, this.hostElement);
 
         // Ok Button
         buttons[0].addEventListener('click', () => {
@@ -4302,7 +4522,7 @@ class UI { // jshint ignore:line
 
     }
 
-    static functionBrowse(functions, ok, cancel) {
+    functionBrowse(functions, ok, cancel) {
         const body = document.createElement('div');
         const span = document.createElement('span');
         span.innerText = "Functions:";
@@ -4332,7 +4552,7 @@ class UI { // jshint ignore:line
         selectDiv.style.display = 'inline-block';
         body.appendChild(selectDiv);
 
-        let addButtons = _UIBuilder.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
+        let addButtons = this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
         let addBtnContainer = document.createElement('div');
         //addBtnContainer.style.display = ''
         addBtnContainer.style.padding = "5px";
@@ -4347,7 +4567,7 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-            _UIBuilder.functionEditor("", "", false, false, (value, name, isAsync, skipped) => {
+           this.functionEditor("", "", false, false, (value, name, isAsync, skipped) => {
                 let obj = {};
                 if (isAsync != null) {
                     obj.async = isAsync;
@@ -4367,7 +4587,7 @@ class UI { // jshint ignore:line
         // Edit
         addButtons[1].addEventListener("click", () => {
             let obj = resultFunctions[select.value];
-            _UIBuilder.functionEditor(obj.function, obj.name, obj.async || false, obj.skip || false, (value, name, isAsync, skipped) => {
+           this.functionEditor(obj.function, obj.name, obj.async || false, obj.skip || false, (value, name, isAsync, skipped) => {
                 if (isAsync != null) {
                     obj.async = isAsync;
                 }
@@ -4393,13 +4613,13 @@ class UI { // jshint ignore:line
 
 
 
-        let buttons = _UIBuilder.createButtons(["Ok", "Cancel"]);
+        let buttons =this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Functions", body);
+        let d = new Dialog("Functions", body, this.hostElement);
 
         buttons[0].addEventListener('click', () => {
             d.hide();
@@ -4422,7 +4642,7 @@ class UI { // jshint ignore:line
         });
     }
 
-    static functionEditor(source, name, async, disabled, ok, cancel) {
+    functionEditor(source, name, async, disabled, ok, cancel) {
         const body = document.createElement('div');
         const functionText = document.createElement('span');
         if (async) {
@@ -4490,13 +4710,13 @@ class UI { // jshint ignore:line
             label.appendChild(skipCheckbox);
             body.appendChild(label);
         }
-        let buttons = _UIBuilder.createButtons(["Ok", "Cancel"]);
+        let buttons =this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Function Editor", body);
+        let d = new Dialog("Function Editor", body, this.hostElement);
 
         buttons[0].addEventListener('click', () => {
             d.hide();
@@ -4518,7 +4738,7 @@ class UI { // jshint ignore:line
         });
     }
 
-    static calculationBrowse(calculations, ok, cancel) {
+    calculationBrowse(calculations, ok, cancel) {
         const body = document.createElement('div');
         const span = document.createElement('span');
         span.innerText = "Calculations:";
@@ -4547,7 +4767,7 @@ class UI { // jshint ignore:line
         selectDiv.style.display = 'inline-block';
         body.appendChild(selectDiv);
 
-        let addButtons = _UIBuilder.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
+        let addButtons =this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
         let addBtnContainer = document.createElement('div');
         //addBtnContainer.style.display = ''
         addBtnContainer.style.padding = "5px";
@@ -4562,7 +4782,7 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-            _UIBuilder.calculationEditor("", "concat", [],  (name, op, fields) => {
+           this.calculationEditor("", "concat", [],  (name, op, fields) => {
                 let obj = {};
                 obj.type = 'calculation';
                 obj.name = name;
@@ -4577,7 +4797,7 @@ class UI { // jshint ignore:line
         // Edit
         addButtons[1].addEventListener("click", () => {
             let obj = resultFunctions[select.value];
-            _UIBuilder.calculationEditor(obj.name, obj.op, obj.fields, (name, op, fields) => {
+           this.calculationEditor(obj.name, obj.op, obj.fields, (name, op, fields) => {
                 if (name !== obj.name) {
                     select.options[select.selectedIndex].text = name;
                 }
@@ -4596,13 +4816,13 @@ class UI { // jshint ignore:line
             }
         });
 
-        let buttons = _UIBuilder.createButtons(["Ok", "Cancel"]);
+        let buttons =this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Calculations", body);
+        let d = new Dialog("Calculations", body, this.hostElement);
 
         buttons[0].addEventListener('click', () => {
             d.hide();
@@ -4625,7 +4845,7 @@ class UI { // jshint ignore:line
         });
     }
 
-    static calculationEditor(name, op, fields, ok, cancel) {
+    calculationEditor(name, op, fields, ok, cancel) {
         const body = document.createElement('div');
         let nameValue;
 
@@ -4694,7 +4914,7 @@ class UI { // jshint ignore:line
         }
 
 
-        let addButtons = _UIBuilder.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
+        let addButtons =this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
         let addBtnContainer = document.createElement('div');
         addBtnContainer.style.padding = "5px";
         addBtnContainer.style.display = 'inline-block';
@@ -4709,7 +4929,7 @@ class UI { // jshint ignore:line
 
 
         addButtons[0].addEventListener("click", () => {
-            _UIBuilder.calculationValueEditor("Text value", {text: ""}, (name, value) => {
+           this.calculationValueEditor("Text value", {text: ""}, (name, value) => {
                 if (name != null && name !== '') {
                     if (!resultFields.hasOwnProperty(name)) {
                         fieldSelect.appendChild(new Option(name));
@@ -4722,7 +4942,7 @@ class UI { // jshint ignore:line
         // Edit
         addButtons[1].addEventListener("click", () => {
             let key = fieldSelect.value;
-            _UIBuilder.calculationValueEditor(key, resultFields[key], (name, value) => {
+           this.calculationValueEditor(key, resultFields[key], (name, value) => {
                 if (name !== key) {
                     delete resultFields[key];
                     fieldSelect.options[fieldSelect.selectedIndex].text = name;
@@ -4748,13 +4968,13 @@ class UI { // jshint ignore:line
         // TODO: valid ops: concat, add, minus, multiply, divide
         // TODO: Fields, "Add Static", "Add Data Element", "Add Total", "Add Function"
 
-        let buttons = _UIBuilder.createButtons(["Ok", "Cancel"]);
+        let buttons =this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Calculation Editor", body);
+        let d = new Dialog("Calculation Editor", body, this.hostElement);
 
         buttons[0].addEventListener('click', () => {
             d.hide();
@@ -4770,7 +4990,7 @@ class UI { // jshint ignore:line
         });
     }
 
-    static calculationValueEditor(name, value, ok, cancel) {
+    calculationValueEditor(name, value, ok, cancel) {
         const body = document.createElement('div');
 
         const nameDiv = document.createElement('div');
@@ -4793,13 +5013,13 @@ class UI { // jshint ignore:line
         valueDiv.appendChild(variableValue);
         body.appendChild(valueDiv);
 
-        let buttons = _UIBuilder.createButtons(["Ok", "Cancel"]);
+        let buttons =this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Value Editor", body);
+        let d = new Dialog("Value Editor", body, this.hostElement);
 
         buttons[0].addEventListener('click', () => {
             d.hide();
@@ -4815,7 +5035,7 @@ class UI { // jshint ignore:line
         });
     }
 
-    static createDataSelect(report, field=null, dataSets=31, isTotal = false) {
+    createDataSelect(report, field=null, dataSets=31, isTotal = false) {
         const selectList = document.createElement("select");
         selectList.className = "frSelect";
         const fields = report.reportFields;
@@ -4963,7 +5183,7 @@ class UI { // jshint ignore:line
         return selectList;
     }
 
-    static showProperties(obj, layout, refresh=false, overrideProps=null) {
+    showProperties(obj, layout, refresh=false, overrideProps=null) {
         if (obj === layout.trackProperties) {
             if (refresh !== true) { return; }
         } else {
@@ -4972,7 +5192,7 @@ class UI { // jshint ignore:line
         }
         layout.trackCreated = [];
         if (refresh || obj == null) {
-            _UIBuilder.clearArea(layout);
+           this.clearArea(layout);
         }
         layout.trackProperties = obj;
         if (obj == null) { return; }
@@ -5017,7 +5237,7 @@ class UI { // jshint ignore:line
 
         }
         const props = overrideProps || obj.properties;
-        _UIBuilder._handleShowProperties(props, obj, table, layout);
+       this._handleShowProperties(props, obj, table, layout);
         layout.appendChild(table);
 
         // Might be able to scan the TR children
@@ -5034,12 +5254,12 @@ class UI { // jshint ignore:line
 
     }
 
-    static _fixShowPropertyTitle(name) {
+    _fixShowPropertyTitle(name) {
         // TODO: Split on Upper case to add spaces
         return name.charAt(0).toUpperCase()+name.slice(1).split(/(?=[A-Z])/).join(' ');
     }
 
-    static _getShowPropertyId(prop, obj) {
+    _getShowPropertyId(prop, obj) {
         let name = 'fr_prop_';
         if (typeof prop === "string") {
             name += prop.replace(/\s/g, '');
@@ -5051,21 +5271,21 @@ class UI { // jshint ignore:line
         return name + "_"+obj.uuid;
     }
 
-    static _handleShowProperties(props, obj, table, layout) {
+    _handleShowProperties(props, obj, table, layout) {
         for (let i = 0; i < props.length; i++) {
             if (props[i] && props[i].skip === true) { continue; }
-            let name = _UIBuilder._getShowPropertyId(props[i],obj);
+            let name =this._getShowPropertyId(props[i],obj);
             let tr = layout.querySelector("#"+name);
             if (!tr) {
                 tr = table.insertRow(-1);
                 tr.id = name;
             }
 
-            _UIBuilder._handleShowProperty(props[i], obj, name, tr, layout);
+           this._handleShowProperty(props[i], obj, name, tr, layout);
         }
     }
 
-    static _handleShowProperty(prop, obj, name, tr, layout) {
+    _handleShowProperty(prop, obj, name, tr, layout) {
         layout.trackCreated.push(name);
 
         let td1, td2, created=true, value, input;
@@ -5094,7 +5314,7 @@ class UI { // jshint ignore:line
                     // Do we have proper type
                     if (prop.type) {
                         let propType = prop.type;
-                        td1.innerText = _UIBuilder._fixShowPropertyTitle(prop.title || prop.field);
+                        td1.innerText =this._fixShowPropertyTitle(prop.title || prop.field);
                         if (prop.field && obj[prop.field] && obj[prop.field].function) { propType = 'function'; }
 
                         switch (propType) {
@@ -5155,7 +5375,7 @@ class UI { // jshint ignore:line
                                 td2.appendChild(input);
                                 input.checked = !!obj[prop.field];
                                 if (prop.functionable === true) {
-                                    td2.appendChild(_UIBuilder._createFunctionSpan(obj, prop, layout));
+                                    td2.appendChild(this._createFunctionSpan(obj, prop, layout));
                                 }
 
                                 break;
@@ -5178,7 +5398,7 @@ class UI { // jshint ignore:line
 
                                 td2.appendChild(input);
                                 if (prop.functionable === true) {
-                                    td2.appendChild(_UIBuilder._createFunctionSpan(obj, prop, layout));
+                                    td2.appendChild(this._createFunctionSpan(obj, prop, layout));
                                 }
                                 input.value = obj[prop.field] || "";
                                 break;
@@ -5195,9 +5415,11 @@ class UI { // jshint ignore:line
                                 innerSpan.style.border = "solid black 1px";
                                 innerSpan.style.backgroundColor = "#cacaca";
                                 innerSpan.addEventListener("click", () => {
-                                    _UIBuilder.functionEditor(obj[prop.field].function, null,null, null, (result) => {
+                                   this.functionEditor(obj[prop.field].function, null,null, null, (result) => {
                                         if (obj[prop.field].function !== result) {
                                             obj[prop.field].function = result;
+                                            // Clear any cached Preview func object
+                                            delete obj[prop.field].func;
                                         }
                                     });
                                 });
@@ -5211,7 +5433,7 @@ class UI { // jshint ignore:line
                                 deleteSpan.style.backgroundColor = "#cacaca";
                                 deleteSpan.addEventListener("click", () => {
                                     obj[prop.field] = '';
-                                    _UIBuilder.showProperties(layout.trackProperties, layout, true);
+                                   this.showProperties(layout.trackProperties, layout, true);
                                 });
 
                                 input.appendChild(innerSpan);
@@ -5236,7 +5458,7 @@ class UI { // jshint ignore:line
                                 let p = prop.properties();
                                 for (let i = 0; i < lastProps.length; i++) {
                                     if (p.indexOf(lastProps[i]) < 0) {
-                                        let name = _UIBuilder._getShowPropertyId(lastProps[i], obj) + "_sub";
+                                        let name =this._getShowPropertyId(lastProps[i], obj) + "_sub";
                                         let h = layout.querySelector("#" + name);
                                         if (h) {
 
@@ -5245,7 +5467,7 @@ class UI { // jshint ignore:line
                                     }
                                 }
                                 if (p.length) {
-                                    _UIBuilder._handleShowProperties(p, obj, tr.parentElement, layout);
+                                   this._handleShowProperties(p, obj, tr.parentElement, layout);
                                 }
                                 lastProps = p;
                             });
@@ -5253,7 +5475,7 @@ class UI { // jshint ignore:line
                             // Check to see if any props need to be added when re-rebuild the layout...
                             let p = prop.properties();
                             if (p.length) {
-                                _UIBuilder._handleShowProperties(p, obj, tr.parentElement, layout);
+                               this._handleShowProperties(p, obj, tr.parentElement, layout);
                             }
                             lastProps = p;
                         }
@@ -5286,18 +5508,20 @@ class UI { // jshint ignore:line
                     if (prop.properties) {
                         let p = prop.properties();
                         if (p.length) {
-                            _UIBuilder._handleShowProperties(p, obj, tr.parentElement, layout);
+                           this._handleShowProperties(p, obj, tr.parentElement, layout);
                         }
                         lastProps = p;
                     }
                 }
             } else {
-                console.error("fluentReports: Unknown property", prop);
+                if (this.debugging) {
+                    console.error("fluentReports: Unknown property", prop);
+                }
             }
         }
     }
 
-    static _createFunctionSpan(obj, prop, layout) {
+    _createFunctionSpan(obj, prop, layout) {
         const functionSpan = document.createElement('span');
         functionSpan.style.position = "absolute";
         functionSpan.style.right = "4px";
@@ -5307,15 +5531,15 @@ class UI { // jshint ignore:line
         functionSpan.style.border = "solid black 1px";
         functionSpan.style.backgroundColor = "#cacaca";
         functionSpan.addEventListener("click", () => {
-            _UIBuilder.functionEditor("return '"+obj[prop.field]+"';", null,null, null, (result) => {
+           this.functionEditor("return '"+obj[prop.field]+"';", null,null, null, (result) => {
                 obj[prop.field] = {type: 'function', name: 'Function', function: result, async: false};
-                _UIBuilder.showProperties(layout.trackProperties, layout, true);
+               this.showProperties(layout.trackProperties, layout, true);
             });
         });
         return functionSpan;
     }
 
-    static createButtons(buttons, styles) {
+    createButtons(buttons, styles) {
         let results = [];
         for (let i=0;i<buttons.length;i++) {
             //const tempButton = document.createElement("input");
@@ -5324,6 +5548,7 @@ class UI { // jshint ignore:line
             tempButton.innerText = buttons[i];
             tempButton.className = "frIcon";
             tempButton.style.height = "30px";
+            tempButton.style.minWidth = "50px";
             tempButton.style.marginRight = "5px";
             if (styles) {
                 for (let key in styles) {
@@ -5342,7 +5567,7 @@ class UI { // jshint ignore:line
      * General function to remove all sub-children, used by many of the functions
      * @param ScreenDiv
      */
-    static clearArea(ScreenDiv) { // jshint ignore:line
+    clearArea(ScreenDiv) { // jshint ignore:line
         // Could be faster by detaching the ScreenDiv; then deleting everything, and re-adding -- but at this point it isn't a big issue.
         while (ScreenDiv.firstElementChild) {
             ScreenDiv.removeChild(ScreenDiv.firstElementChild);
@@ -5354,39 +5579,44 @@ class UI { // jshint ignore:line
  * Simple dialog Class
  */
 class Dialog { // jshint ignore:line
-    constructor(title, body) {
+
+    constructor(title, body, host) {
+        if (host) {
+            this._host = host;
+        } else {
+            console.error("Using BODY for dialog");
+            this._host = document.getElementsByTagName("body");
+        }
+        if (typeof this._host.dialogCount === 'undefined') {
+            this._host.dialogCount = 0;
+        }
+
         if (title && body)  {
             this.show(title, body);
         }
     }
 
     hide() {
-        Dialog.hide();
+        let dialogBackground = this._host.querySelector("#frDialogBackground" + this._host.dialogCount);
+        if (!dialogBackground) {
+            console.error("fluentReportsGenerator: missing background", this._host.dialogCount);
+            return;
+        }
+        dialogBackground.style.display = "none";
+        let dialog = this._host.querySelector("#frDialog"+this._host.dialogCount);
+        dialog.style.display = "none";
+
+        // Do not do this: clearArea(dialog) - Clearing the dialog means the code following a hide has no access to the data the dialog contains...
+        this._host.dialogCount--;
     }
 
     show(title, content) {
-        Dialog.show(title, content);
-    }
+        this._host.dialogCount++;
 
-    static hide() {
-        let dialogBackground = document.getElementById("frDialogBackground"+Dialog._dialogs);
-        dialogBackground.style.display="none";
-        let dialog = document.getElementById("frDialog"+Dialog._dialogs);
-        dialog.style.display="none";
-        // Do not do this: clearArea(dialog) - Clearing the dialog means the code following a hide has no access to the data the dialog contains...
-        Dialog._dialogs--;
-    }
-
-    static show(title, content) {
-        if (typeof Dialog._dialogs === 'undefined') {
-            Dialog._dialogs = 0;
-        }
-        Dialog._dialogs++;
-
-        let dialogBackground = document.getElementById("frDialogBackground"+Dialog._dialogs);
+        let dialogBackground = this._host.querySelector("#frDialogBackground"+this._host.dialogCount);
         if (!dialogBackground) {
             dialogBackground = document.createElement("div");
-            dialogBackground.id = "frDialogBackground"+Dialog._dialogs;
+            dialogBackground.id = "frDialogBackground"+this._host.dialogCount;
             dialogBackground.style.position = "absolute";
             dialogBackground.className = "frDialogBackground";
             dialogBackground.style.left = "0px";
@@ -5395,32 +5625,36 @@ class Dialog { // jshint ignore:line
             dialogBackground.style.bottom = "0px";
             dialogBackground.style.backgroundColor = "#000000";
             dialogBackground.style.opacity = "0.7";
-            // TODO: Might need to set ZINDEX?
-            let tag = document.getElementsByTagName("body");
-            tag[0].appendChild(dialogBackground);
+            this._host.appendChild(dialogBackground);
         } else {
             dialogBackground.style.display='';
         }
 
-        let dialog = document.getElementById('frDialog'+Dialog._dialogs);
+        let dialog = this._host.querySelector('#frDialog'+this._host.dialogCount);
         if (!dialog) {
             dialog = document.createElement("div");
-            dialog.id = "frDialog"+Dialog._dialogs;
+            dialog.id = "frDialog"+this._host.dialogCount;
             dialog.className = "frDialog";
             dialog.style.position = "absolute";
-            dialog.style.top = "20%";
+
+            const rect = this._host.getBoundingClientRect();
+            if (rect.height > 300) {
+                dialog.style.top = "20%";
+            } else {
+                dialog.style.top = "0px";
+            }
             dialog.style.left = "33%";
 //            dialog.style.width = content.style.width === "" ? content.style.width : "33%";
             dialog.style.minWidth = "300px";
             //dialog.style.transform = "translate(-50%, -50%);";
             dialog.style.backgroundColor = "#FFFFFF";
             dialog.style.border = "solid 2px black";
-            let tag = document.getElementsByTagName("body");
-            tag[0].appendChild(dialog);
+            this._host.appendChild(dialog);
         } else {
             dialog.style.display = '';
-            _UIBuilder.clearArea(dialog);
+           this.clearArea(dialog);
         }
+
         let titleElement = document.createElement("div");
         titleElement.style.backgroundColor = "#aaaaaa";
         titleElement.style.textAlign = "center";
@@ -5439,7 +5673,14 @@ class Dialog { // jshint ignore:line
         }
     }
 
-    static notice(data, color, frame) {
+    clearArea(ScreenDiv) { // jshint ignore:line
+        // Could be faster by detaching the ScreenDiv; then deleting everything, and re-adding -- but at this point it isn't a big issue.
+        while (ScreenDiv.firstElementChild) {
+            ScreenDiv.removeChild(ScreenDiv.firstElementChild);
+        }
+    }
+
+    notice(data, color, frame) {
         let notice = document.getElementById("notice");
         if (!notice) {
             if (data === false) { return; }
