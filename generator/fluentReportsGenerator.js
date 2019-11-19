@@ -54,6 +54,9 @@ class FluentReportsGenerator {
     get frElements() {
         return this._frElements;
     }
+    get pageWidth() {
+        return this._paperDims[0] - this._marginLeft - this._marginRight;
+    }
     
     /*
      * Public Properties
@@ -1939,7 +1942,7 @@ class frElement { // jshint ignore:line
         this._properties = [
             {type: 'number', field: 'top', default: 0, destination: "settings"},
             {type: 'number', field: 'left', default: 0, destination: "settings"},
-            {type: 'number', field: 'width', default: 0, destination: "settings"},
+            {type: 'string', field: 'width', default: 0, destination: "settings"},
             {type: 'number', field: 'height', default: 0, destination: "settings"}
             ];
         this.frElements.push(this);
@@ -1961,7 +1964,9 @@ class frElement { // jshint ignore:line
         return this._report.debugging;
     }
 
-
+    get pageWidth() {
+        return this._report.pageWidth;
+    }
 
     /**
      * Delete this Element
@@ -1996,8 +2001,9 @@ class frElement { // jshint ignore:line
 
     get width() { return this._width; }
     set width(val) {
-        if (val == null || val === "" || val === "auto" || val === "0px") { val = 0;}
+        if (val == null || val === "" || val === "auto" || val === "0px") { val = 0; }
         this._width = val;
+        val = this._parseSize(val);
         if (val === 0 || val === "0") {
             this._html.style.width = "";
         } else if (val < 10) {
@@ -2086,6 +2092,16 @@ class frElement { // jshint ignore:line
 
     _refreshProperties(){
         this._report.showProperties(this, true);
+    }
+
+    _parseSize(val) {
+        if (val == null) { return 0; }
+        if (typeof val === 'number') { return val; }
+        if (val.indexOf("%") > 0) {
+            let temp = parseInt(val, 10) / 100;
+            return this.pageWidth * temp;
+        }
+        return val;
     }
 
     _generateSave(prop) {
@@ -3236,7 +3252,7 @@ class frBandElement extends frPrint { // jshint ignore:line
     }
 
     _fixCellProps(td, field) {
-        td.style.width = (field.width * this.scale || 80) + "px";
+        td.style.width = (this._parseSize(field.width) * this.scale || 80) + "px";
         td.style.maxWidth = td.style.width;
         if (field.align != null) {
             switch(field.align) {
