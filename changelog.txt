@@ -36,6 +36,7 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.2.4 - Update pdfkit reference & fixed alignment not support text values in band() array short form
 1.2.5 - Fixed package.json to use last version of .8 PDFKit as .9 changed several internals...
 1.2.6 - Updated to support pageWidth & pageHeight, fixed band `dash` setting
+1.2.7 - Fix issues with Builder/Generators
 
 
 Breaking changes or API inconsistencies:
