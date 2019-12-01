@@ -382,8 +382,8 @@ class FluentReportsGenerator {
         if (sectionIn > 0) {
             const section = this._frSections[sectionIn-1];
 
-            // TODO: Change to calculated number 25 is 20 for Label and +5 for white space offset
-            options.top = (parseInt(section._draggable.element.style.top, 10)+25)+"px";
+            // TODO: Change to calculated number 5 is +5 for white space offset
+            options.top = (parseInt(section._draggable.element.style.top, 10)+5)+"px";
         }
         return options;
     }
@@ -840,7 +840,8 @@ class FluentReportsGenerator {
             this._currentSelected.blur();
         }
 
-        const y = (args.clientY - this._reportLayout.offsetTop) + this._reportScroller.scrollTop;
+        const offset = this._reportLayout.getBoundingClientRect();
+        const y = (args.clientY - offset.top) + this._reportScroller.scrollTop;
         this._sectionIn = this._getSectionIn(y);
         this.showProperties(this._getSection(this._sectionIn), true);
     }
@@ -941,6 +942,12 @@ class FluentReportsGenerator {
         }));
 
         this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
+
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue81a", "Image", () => {
+            let options = this._getSectionOptions(this._sectionIn);
+            new frImage(this, this._getSection(this._sectionIn), options); // jshint ignore:line
+        }));
+
 
         this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue826", "Drawing", () => {
             let options = this._getSectionOptions(this._sectionIn);
@@ -1052,15 +1059,28 @@ class FluentReportsGenerator {
         close.style.left = "1px";
         close.style.zIndex = "999";
         close.style.fontSize = "14pt";
-        close.addEventListener("click", () => {
+
+
+        const closeListener = () => {
+            close.removeEventListener("click", closeListener);
+            document.removeEventListener("keydown", keyListener);
             this.closeLayer();
             if (typeof options.close === 'function') {
-                options.close();
+                    options.close();
             }
-        });
+        };
+
+        const keyListener = (event) => { // jshint ignore:line
+            if (event.key === "Escape") {
+                closeListener();
+                event.stopPropagation();
+            }
+        };
+
+        close.addEventListener("click", closeListener);
+        document.addEventListener("keydown", keyListener);
         topLayer.appendChild(iFrame);
         topLayer.appendChild(close);
-
 
         const reportData =  options.report || this._generateSave();
         const data = options.data || this._data;
@@ -1187,7 +1207,6 @@ class FluentReportsGenerator {
         }
     }
 
-
     _generateSection(title, height, type, groupName, dataSet, sectionData, fromGroup=false) {
         const section = new frSection(this, {title: title, height: height, type: type, group: groupName, dataSet: dataSet, fromGroup: fromGroup});
         if (sectionData == null) { return; }
@@ -1229,16 +1248,39 @@ class frSection { // jshint ignore:line
     get height() {
         return parseInt(this._html.style.height, 10);
     }
-    set height(val) {
+
+    set height(valIn) {
+        const val = parseInt(valIn, 10);
         if (this.height === val) { return; }
-        this._html.style.height = val+"px";
+
+        this._html.style.height = (val)+"px";
         this._frLine.style.top = (val-2)+"px";
         this._resetTops(this._sectionId);
         this._draggable.position();
     }
 
+    get elementContainerHeight() {
+        const x = this._titleTD.getBoundingClientRect();
+        return this.height - x.height;
+    }
+    set elementContainerHeight(val) {
+        // We have to actually resize the entire outer container,
+        // so we get the titles height to be able to track this...
+        const x = this._titleTD.getBoundingClientRect();
+        this.height = val+x.height;
+    }
+
+    get elementContainerTop() {
+        const x = this._titleTD.getBoundingClientRect();
+        return this.top + x.height;
+    }
+
     get bottom() {
         return (parseInt(this._html.style.top, 10) +  parseInt(this._html.style.height, 10));
+    }
+
+    get elementContainer() {
+        return this._elementDiv;
     }
 
     get fixedHeight() { return this._fixedHeight; }
@@ -1282,13 +1324,13 @@ class frSection { // jshint ignore:line
         let left = (parseInt( (612 * this.scale), 10)  / 2) - 45;
         switch (this._type) {
             case 1: // Header
-                this._stockElement = new frStandardHeader(this._report, this, {top: parseInt(this._html.style.top,10)+5, left: left });
+                this._stockElement = new frStandardHeader(this._report, this, {top: parseInt(this._html.style.top,10), left: left });
                 break;
             case 3: // Details
                 console.error("CreateStockElement called on a Detail section....");
                 break;
             case 2: // Footer
-                this._stockElement = new frStandardFooter(this._report, this, {top: parseInt(this._html.style.top,10)+5, left: left});
+                this._stockElement = new frStandardFooter(this._report, this, {top: parseInt(this._html.style.top,10), left: left});
                 break;
             default:
                 if (this.debugging) {
@@ -1442,7 +1484,6 @@ class frSection { // jshint ignore:line
                 this._children[i]._generateSave(child);
             }
         }
-
     }
 
     _parseSection(data) {
@@ -1485,6 +1526,11 @@ class frSection { // jshint ignore:line
                 bandElement._parseElement(data);
                 break;
 
+            case 'image':
+                let imageElement = new frImage(this._report, this, {});
+                imageElement._parseElement(data);
+                break;
+
             case 'shape':
                 let shapeElement = new frSVGElement(this._report, this, {});
                 shapeElement._parseElement(data);
@@ -1521,7 +1567,7 @@ class frSection { // jshint ignore:line
 
     appendChild(child) {
         this._children.push(child);
-        this._html.appendChild(child._html);
+        this._elementDiv.appendChild(child._html);
     }
 
     removeChild(child) {
@@ -1529,7 +1575,7 @@ class frSection { // jshint ignore:line
         if (idx >= 0) {
             this._children.splice(idx, 1);
         }
-        this._html.removeChild(child._html);
+        this._elementDiv.removeChild(child._html);
     }
 
     clickFunctions() {
@@ -1622,7 +1668,7 @@ class frSection { // jshint ignore:line
         }
         this._title = options.title || (this._type === 1 ? "Header" : (this._type === 2 ? "Footer" : "Detail"));
 
-        let height = (options && options.height) || 50;
+        let height = (options && options.height) || 70;
         let top;
         if (this._sectionId === 0) {
             top = 0;
@@ -1643,31 +1689,58 @@ class frSection { // jshint ignore:line
         this._html.style.height = height + "px";
         this._html.style.position = "absolute";
 
+        const table = document.createElement("table");
+        table.className = "frElementTable";
+        table.style.width = "100%";
+        table.style.height = "100%";
+        const tr = document.createElement("tr");
+        tr.style.height = "18px";
+        tr.className = "frTitleDiv";
+
+        this._titleTD = document.createElement("td");
+        tr.appendChild(this._titleTD);
+        table.appendChild(tr);
+
+        const tr2 = document.createElement("tr");
+        const td2 = document.createElement("td");
+        this._elementDiv = document.createElement("div");
+        this._elementDiv.style.position = "relative";
+        this._elementDiv.style.width = "100%";
+        this._elementDiv.style.height = "100%";
+        this._elementDiv.className = "frElementContainer";
+        td2.appendChild(this._elementDiv);
+        tr2.appendChild(td2);
+        table.appendChild(tr2);
+
         this._titleSpan = document.createElement("span");
         this._titleSpan.innerText = this._generateTitle();
         this._titleSpan.className = "frLineText";
-        this._titleSpan.style.position = "absolute";
-        this._titleSpan.style.bottom = "1px";
+        this._titleTD.appendChild(this._titleSpan);
 
         this._optionSpan = document.createElement("span");
         this._optionSpan.className = "frLineIcon frIcon frHidden";
         this._optionSpan.style.position = "absolute";
-        this._optionSpan.style.bottom = "1px";
         this._optionSpan.style.right = "1px";
+        this._titleTD.appendChild(this._optionSpan);
 
         this._frLine = document.createElement("div");
         this._frLine.className = "frLine";
         this._frLine.style.position = "absolute";
         this._frLine.style.bottom = "0px";
-        this._frLine.appendChild(this._titleSpan);
-        this._frLine.appendChild(this._optionSpan);
+
+        this._html.appendChild(table);
         this._html.appendChild(this._frLine);
 
         this._report.reportLayout.appendChild(this._html);
 
         // noinspection ES6ModulesDependencies,JSHint
         this._draggable = new PlainDraggable(this._frLine, {leftTop: true});
-        this._draggable.handle = this._titleSpan;
+        this._draggable.handle = this._frLine;
+        if (this.frSections.length > 1) {
+//            this.frSections[this.frSections.length-2]._frLine.style.display = 'none';
+
+            this.frSections[this.frSections.length-2]._draggable.handle = this._titleTD;
+        }
 
         this._draggable.autoScroll = {target: this._report.reportLayout.parentElement};
 
@@ -1700,10 +1773,9 @@ class frSection { // jshint ignore:line
         const innerSpan = document.createElement('span');
         innerSpan.style.position = "absolute";
         innerSpan.style.right = "4px";
-        innerSpan.className = "frIcon";
+        innerSpan.className = "frIcon frIconClickable";
         innerSpan.innerText = code;
         innerSpan.style.border = "solid black 1px";
-        innerSpan.style.backgroundColor = "#cacaca";
         if (func) {
             innerSpan.addEventListener("click", func);
         }
@@ -1977,7 +2049,6 @@ class frElement { // jshint ignore:line
             this._report.showProperties(null);
         }
         this._parent.removeChild(this);
-        //this._html.parentElement.removeChild(this._html);
         let idx = this.frElements.indexOf(this);
         this.frElements.splice(idx, 1);
     }
@@ -1989,14 +2060,17 @@ class frElement { // jshint ignore:line
 
     get top() { return parseInt(this._html.style.top,10); }
     set top(val) {
-        this._html.style.top = val+"px";
-        if ((this.elementHeight *  this.scale) + this.top > this._parent.height) {
-            this._parent.height = (this.elementHeight * this.scale) + this.top;
-        }
+        let top = val;
+        // We have to be below the header area
+        if (typeof top !== 'number') { top = 0; }
+
+        this._html.style.top = top+"px";
+        this._resizeParentContainer(this.top);
     }
 
     get left() { // noinspection JSCheckFunctionSignatures
-        return parseInt(parseInt(this._html.style.left, 10) / this.scale, 10); }
+        return parseInt(parseInt(this._html.style.left, 10) / this.scale, 10);
+    }
     set left(val) { this._html.style.left = (val * this.scale)+"px"; }
 
     get width() { return this._width; }
@@ -2031,7 +2105,7 @@ class frElement { // jshint ignore:line
 
     get height() { return this._height; }
     set height(val) {
-        if (val == null || val === "" || val === "auto" || val === "0px") { val = 0;}
+        if (val == null || val === "undefinedpx" || val === "" || val === "auto" || val === "0px") { val = 0;}
         this._height = parseInt(val,10);
         if (val === 0 || val === "0") {
             this._html.style.height = "";
@@ -2039,20 +2113,18 @@ class frElement { // jshint ignore:line
             this._html.style.height = (val * this.scale)+"px";
         }
 
-        if ((this.elementHeight * this.scale) + this.top > this._parent.height) {
-            this._parent.height = (this.elementHeight * this.scale) + this.top;
-        }
-
+        // Resize Section in case it is too small
+        this._resizeParentContainer(this.top);
     }
 
     get elementHeight() {
-        let clientHeight = parseInt(this._html.clientHeight,10);
+        let clientHeight = parseInt(this._html.clientHeight,10) / this.scale;
         return this._height > clientHeight ? this._height : clientHeight;
     }
 
     // noinspection JSUnusedGlobalSymbols
     get elementWidth() {
-        let clientWidth = parseInt(this._html.clientWidth,10);
+        let clientWidth = parseInt(this._html.clientWidth,10) / this.scale;
         return this._width > clientWidth ? this._width : clientWidth;
     }
 
@@ -2136,14 +2208,15 @@ class frElement { // jshint ignore:line
         let targets=[];
         let secs = this._parent.frSections;
         for (let i=0;i<secs.length;i++) {
-            targets.push(secs[i]._html);
+            targets.push({y: secs[i].top, side: 'end'});
+            targets.push({y: secs[i].top+20, side: 'start'});
         }
         if (this._report.gridSnapping.snapping) {
             targets.push({step: this._report.gridSnapping.size});
         }
         return  {
             targets: targets,
-            gravity: 5
+            gravity: 5,
         };
     }
 
@@ -2151,7 +2224,7 @@ class frElement { // jshint ignore:line
         // noinspection ES6ModulesDependencies
         this._draggable = new PlainDraggable(object, {leftTop: true});
         //this._draggable.autoScroll = {target: document.getElementById("frReport")};
-        this._draggable.containment = this._parent._html;
+        this._draggable.containment = this._parent.elementContainer;
 
         this._draggable.onDragStart = () => {
             if (this._locked || this._readonly) { return; }
@@ -2164,9 +2237,15 @@ class frElement { // jshint ignore:line
             if (this._locked || this._readonly) { return; }
             let newSection = this._parent.sectionId;
             if (this.top < 0) {
-                newSection = this._report._getSectionIn(this._parent.top + this.top);
-            } else if (this.top >= this._parent.height) {
-                newSection = this._report._getSectionIn(this._parent.top + this.top+1);
+                if (this.top < -17) {
+                    // Went into another section....
+                    newSection = this._report._getSectionIn(this._parent.elementContainerTop + this.top);
+                } else {
+                    // If we go into the Header, we just want to reset back to 0
+                    this.top = 0;
+                }
+            } else if (this.top >= this._parent.elementContainerHeight) {
+                newSection = this._report._getSectionIn(this._parent.elementContainerTop + this.top+1);
                 if (newSection === 0) { newSection = this.frSections.length-1; }
             }
             if (newSection !== this._parent.sectionId) {
@@ -2181,19 +2260,20 @@ class frElement { // jshint ignore:line
                 // We are now subtracting the NEW _parent.top
                 top -= this._parent.top;
 
+                // In case dropped in header
+                if (top < 0) { top = 0;}
+
+                // Position the element
                 this.top = top;
-                // Resize Section
-                if ((this.elementHeight * this.scale) + top > this._parent.height) {
-                    this._parent.height = ((this.elementHeight * this.scale) + top);
-                    this._parent._draggable.position();
-                }
             } else {
-                // Same Section
-                if ((this.elementHeight * this.scale) + this.top  > this._parent.height) {
-                    this._parent.height = ((this.elementHeight * this.scale)+ this.top);
-                    this._parent._draggable.position();
+                // Moved into the header
+                if (this.top < 0) {
+                    this.top = 0;
                 }
             }
+            // Resize Section in case it is too small
+            this._resizeParentContainer(this.top);
+
             this._draggable.position();
 
             this._report.showProperties(this, false);
@@ -2218,6 +2298,13 @@ class frElement { // jshint ignore:line
         }
 
         return this._draggable;
+    }
+
+    _resizeParentContainer(top) {
+        if ((this.elementHeight * this.scale) + top > this._parent.elementContainerHeight) {
+            this._parent.elementContainerHeight = ((this.elementHeight * this.scale) + top);
+            this._parent._draggable.position();
+        }
     }
 
     _mouseDown() {
@@ -2345,7 +2432,11 @@ class frTitledElement extends frElement {
 
         this._html = document.createElement("div");
         this._html.className = "frTitledElement " + (options && options.className  || '');
-        this._html.style.top = (options && options.top+"px") || "0px";
+
+        let top = options && options.top || 0;
+        if (typeof top !== 'number' || top < 0) { top = 0; }
+
+        this._html.style.top = top+"px";
         this._html.style.left = (options && options.left+"px") || "0px";
         this._html.style.position = 'absolute';
 
@@ -2375,8 +2466,8 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
             options.elementTitle = "Drawing";
         }
         super(report, parent, options);
-        this.width = (options && options.width + "px") || 50;
-        this.height = (options && options.height + "px") || 50;
+        this.width = (options && options.width) || 50;
+        this.height = (options && options.height) || 50;
         this._shape = (options && options.shape) || "line";
         this._radius = (options && options.radius) || 50;
 
@@ -2486,6 +2577,11 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
                 this._svg.setAttribute("y2", (3 + (this.height * this.scale)).toString());
             }
         }
+    }
+
+    // SVG has extra 5 pixels, see height setter...
+    get elementHeight() {
+        return this.height+5;
     }
 
     createSelect() {
@@ -2662,6 +2758,169 @@ class frNewLine extends  frTitledLabel { // jshint ignore:line
     }
 }
 
+class frImage extends frTitledElement { // jshint ignore:line
+    constructor(report, parent, options={}) {
+        super(report, parent, options);
+
+        this._image = null;
+        this._aspect = "size";
+        this._align = "left";
+        this._valign = "top";
+        this._imgScale = 0;
+        this.elementTitle = "Image";
+        this._imgRoot = document.createElement('img');
+        this._html.appendChild(this._imgRoot);
+
+        this.width = (options && options.width) || 50;
+        this.height = (options && options.height) || 50;
+
+        this._addProperties([{type: 'file', click: this._dblClickHandler.bind(this), title: "Set image", field: "image", default: null},
+            {type: 'select', field: "aspect", default: "none", display: this._createFitSelect.bind(this), destination: 'settings'},
+            {type: 'select', field: "align", default: "left", display: this._createAlignSelect.bind(this), destination: 'settings'},
+            {type: 'select', field: "valign", default: "top", display: this._createVAlignSelect.bind(this), destination: 'settings'},
+            {type: 'number', title: 'scale', field: 'imgScale', default: 0, destination: 'settings'}
+        ]);
+    }
+
+    get imgScale() {
+        return this._imgScale;
+    }
+    set imgScale(val) {
+        this._imgScale = parseInt(val, 10);
+    }
+
+    get aspect() {
+        return this._aspect;
+    }
+    set aspect(val) {
+        this._aspect = val;
+    }
+
+    get align() {
+        return this._align;
+    }
+    set align(val) {
+        this._align = val;
+    }
+
+    get valign() {
+        return this._valign;
+    }
+    set valign(val) {
+        this._valign = val;
+    }
+
+    _createAlignSelect() {
+        const curAlign = this._align;
+        let selectGroup = document.createElement('select');
+
+        let item = new Option("Left", "left");
+        if (curAlign === "left") { item.selected = true; }
+        selectGroup.appendChild(item);
+
+        item = new Option("Right", "right");
+        if (curAlign === "right") { item.selected = true; }
+        selectGroup.appendChild(item);
+
+        item = new Option("Center", "center");
+        if (curAlign === "center") { item.selected = true; }
+        selectGroup.appendChild(item);
+
+        return selectGroup;
+    }
+
+    _createVAlignSelect() {
+        const curAlign = this._valign;
+        let selectGroup = document.createElement('select');
+
+        let item = new Option("Top", "top");
+        if (curAlign === "top") { item.selected = true; }
+        selectGroup.appendChild(item);
+
+        item = new Option("Center", "center");
+        if (curAlign === "center") { item.selected = true; }
+        selectGroup.appendChild(item);
+
+        item = new Option("Bottom", "bottom");
+        if (curAlign === "bottom") { item.selected = true; }
+        selectGroup.appendChild(item);
+
+        return selectGroup;
+    }
+
+
+    _createFitSelect() {
+        const curAlign = this._aspect;
+        let selectGroup = document.createElement('select');
+
+        let item = new Option("None", "none");
+        if (curAlign === "none") { item.selected = true; }
+        selectGroup.appendChild(item);
+
+        item = new Option("Size", "size");
+        if (curAlign === "size") { item.selected = true; }
+        selectGroup.appendChild(item);
+
+        item = new Option("Scale", "scale");
+        if (curAlign === "scale") { item.selected = true; }
+        selectGroup.appendChild(item);
+
+        item = new Option("Fit", "fit");
+        if (curAlign === "fit") { item.selected = true; }
+        selectGroup.appendChild(item);
+
+        item = new Option("Cover", "cover");
+        if (curAlign === "cover") { item.selected = true; }
+        selectGroup.appendChild(item);
+
+        return selectGroup;
+    }
+
+
+    _dblClickHandler() {
+        this.UIBuilder.fileEditor(this._image, [".jpg",".jpeg",".png"], (val) => {
+            this.image = val;
+        });
+    }
+
+    get elementHeight() {
+        return this.height + 5;
+    }
+
+    get width() {
+        return super.width;
+    }
+    set width(val) {
+        super.width = val;
+        this._imgRoot.style.width = (super.width * this.scale) + "px";
+    }
+    get height() {
+        return super.height;
+    }
+    set height(val) {
+        super.height = val;
+        this._imgRoot.style.height = (super.height * this.scale) + "px";
+    }
+
+    get image() {
+        return this._image;
+    }
+    set image(val) {
+        this._image = val;
+        this._imgRoot.src = val;
+    }
+
+    _saveProperties(props) {
+        super._saveProperties(props);
+        props.type = "image";
+    }
+
+    _parseElement(data) {
+        return super._parseElement(data);
+        // None Needed?
+    }
+}
+
 class frPrint extends  frTitledLabel {
     constructor(report, parent, options={}) {
         super(report, parent, options);
@@ -2694,12 +2953,12 @@ class frPrint extends  frTitledLabel {
                 {type: 'string', field: "link", functionable: true, default: "", destination: "settings"}, 
                 {type: 'number', field: "border", default: 0, destination: "settings"},
                 {type: 'number', field: 'rotate', default: 0, destination: 'settings'},
-                {type: 'select', field: "align", default: "left", display: this.createAlignSelect.bind(this), destination: 'settings'},
+                {type: 'select', field: "align", default: "left", display: this._createAlignSelect.bind(this), destination: 'settings'},
                 {type: 'boolean', field: "wrap", default: false, destination: "settings"}
                 ]);
     }
 
-    createAlignSelect() {
+    _createAlignSelect() {
         const curAlign = this._align;
         let selectGroup = document.createElement('select');
 
@@ -3088,7 +3347,7 @@ class frPrintDynamic extends frPrint { // jshint ignore:line
     }
 
     _dblClickHandler() {
-       this.dataFieldEditor(this._generateDataFieldSelection(), (value) => {
+       this.UIBuilder.dataFieldEditor(this._generateDataFieldSelection(), (value) => {
             if (this.other !== value) {
                 this.other = value;
                 this._report.showProperties(this, true);
@@ -3154,7 +3413,6 @@ class frBandElement extends frPrint { // jshint ignore:line
         this._table.className = "frBand";
         this._table.style.border = "1px solid black";
         this._table.style.borderCollapse = "collapse";
-        this._table.style.backgroundColor = "#808080";
 
 
         this._tr = document.createElement("tr");
@@ -3684,11 +3942,20 @@ class UI { // jshint ignore:line
         });
     }
 
+    _preventDefault(evt) {
+        console.log("Drag start");
+        evt.preventDefault();
+        return false;
+    }
+
     createToolbarButton(txt, hover, fn) {
         const btn = document.createElement("a");
         btn.text = txt;
         btn.className = "frIcon frIconMenu";
         btn.title = hover;
+        btn.draggable = false;
+        btn.addEventListener("dragstart", this._preventDefault);
+        btn.addEventListener("drop", this._preventDefault);
         btn.addEventListener("click", fn);
         return btn;
     }
@@ -4546,6 +4813,103 @@ class UI { // jshint ignore:line
 
     }
 
+    _processFile(file, callback) {
+        if ( /\.(jpe?g|png|gif)$/i.test(file.name) ) {
+            const reader = new FileReader();
+            reader.addEventListener("load", function () {
+                callback(reader.result);
+            }, false);
+            reader.readAsDataURL(file);
+        }
+    }
+
+    fileEditor(value, acceptable=[], ok=null, cancel=null) {
+        const body = document.createElement('div');
+        const title = document.createElement("span");
+        title.style.marginLeft = "5px";
+        title.innerText = "Choose a file:";
+        body.appendChild(title);
+        const file = document.createElement('input');
+        file.type = "file";
+
+        const br = document.createElement('br');
+
+        const error = document.createElement('div');
+        error.className = "frError";
+
+        body.appendChild(file);
+        body.appendChild(br);
+        body.appendChild(error);
+
+        let accept = "";
+        for (let i=0;i<acceptable.length;i++) {
+            if (i>1) { accept += ","; }
+            accept+= acceptable[i];
+        }
+        if (accept.length) {
+            file.accept = accept;
+        }
+
+        let buttons =this.createButtons(["Ok", "Cancel"]);
+        buttons[0].disabled = true;
+        let newValue = value;
+
+        file.addEventListener("change", () => {
+            let found = true;
+            if (file.files.length) {
+                if (acceptable.length) {
+                    found = false;
+                    for (let i=0;i<acceptable.length;i++) {
+                        if (file.files[0].name.indexOf(acceptable[i]) > 0 ) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                if (!found) {
+                    error.innerText = "Please choose a valid file!";
+                    return;
+                } else {
+                    error.innerText = "";
+                }
+
+                file.disabled = true;
+                buttons[1].disabled = true;
+                this._processFile(file.files[0], (val) => {
+                    buttons[0].disabled = false;
+                    buttons[1].disabled = false;
+                    newValue = val;
+                });
+            } else {
+                newValue = null;
+            }
+        });
+
+        let btnContainer = document.createElement('div');
+        btnContainer.appendChild(buttons[0]);
+        btnContainer.appendChild(buttons[1]);
+        body.appendChild(btnContainer);
+
+        let d = new Dialog("Upload", body, this.hostElement);
+
+        // Ok Button
+        buttons[0].addEventListener('click', () => {
+            d.hide();
+            if (typeof ok === 'function') {
+                ok(newValue);
+            }
+        });
+        // Cancel Button
+        buttons[1].addEventListener('click', () => {
+            d.hide();
+            if (typeof cancel === 'function') {
+                cancel();
+            }
+        });
+
+    }
+
+
     functionBrowse(functions, ok, cancel) {
         const body = document.createElement('div');
         const span = document.createElement('span');
@@ -5249,7 +5613,7 @@ class UI { // jshint ignore:line
             if (obj instanceof frElement) {
                 let deleteIcon = document.createElement('span');
                 deleteIcon.innerText = "\uE80B";
-                deleteIcon.className = "frIcon";
+                deleteIcon.className = "frIcon frIconClickableNB";
                 deleteIcon.style.position = "absolute";
                 deleteIcon.style.right = "5px";
                 deleteIcon.style.top = "3px";
@@ -5342,6 +5706,7 @@ class UI { // jshint ignore:line
                         if (prop.field && obj[prop.field] && obj[prop.field].function) { propType = 'function'; }
 
                         switch (propType) {
+                            case 'file':
                             case 'button':
                                 input = document.createElement("input");
                                 input.type = "button";
@@ -5432,10 +5797,9 @@ class UI { // jshint ignore:line
                                 const innerSpan = document.createElement('span');
                                 innerSpan.style.position = "absolute";
                                 innerSpan.style.right = "20px";
-                                innerSpan.className = "frIcon";
+                                innerSpan.className = "frIcon frIconClickable";
                                 innerSpan.innerText = "\ue81f";
                                 innerSpan.style.border = "solid black 1px";
-                                innerSpan.style.backgroundColor = "#cacaca";
                                 innerSpan.addEventListener("click", () => {
                                    this.functionEditor(obj[prop.field].function, null,null, null, (result) => {
                                         if (obj[prop.field].function !== result) {
@@ -5449,10 +5813,9 @@ class UI { // jshint ignore:line
                                 const deleteSpan = document.createElement('span');
                                 deleteSpan.style.position = "absolute";
                                 deleteSpan.style.right = "4px";
-                                deleteSpan.className = "frIcon";
+                                deleteSpan.className = "frIcon frIconClickable";
                                 deleteSpan.innerText = "\uE80B";
                                 deleteSpan.style.border = "solid black 1px";
-                                deleteSpan.style.backgroundColor = "#cacaca";
                                 deleteSpan.addEventListener("click", () => {
                                     obj[prop.field] = '';
                                    this.showProperties(layout.trackProperties, layout, true);
@@ -5548,10 +5911,9 @@ class UI { // jshint ignore:line
         functionSpan.style.position = "absolute";
         functionSpan.style.right = "4px";
         functionSpan.style.marginTop = "4px";
-        functionSpan.className = "frIcon";
+        functionSpan.className = "frIcon frIconClickable";
         functionSpan.innerText = "\ue81f";
         functionSpan.style.border = "solid black 1px";
-        functionSpan.style.backgroundColor = "#cacaca";
         functionSpan.addEventListener("click", () => {
            this.functionEditor("return '"+obj[prop.field]+"';", null,null, null, (result) => {
                 obj[prop.field] = {type: 'function', name: 'Function', function: result, async: false};
@@ -5570,7 +5932,7 @@ class UI { // jshint ignore:line
             tempButton.innerText = buttons[i];
             tempButton.className = "frIcon";
             tempButton.style.height = "30px";
-            tempButton.style.minWidth = "50px";
+            tempButton.style.minWidth = "100px";
             tempButton.style.marginRight = "5px";
             if (styles) {
                 for (let key in styles) {
@@ -5603,6 +5965,8 @@ class UI { // jshint ignore:line
 class Dialog { // jshint ignore:line
 
     constructor(title, body, host) {
+        this._boundKeyHandler = this._keyHandler.bind(this);
+        this._dialogId = 0;
         if (host) {
             this._host = host;
         } else {
@@ -5618,6 +5982,15 @@ class Dialog { // jshint ignore:line
         }
     }
 
+    _keyHandler(event) {
+            if (event.key === "Escape") {
+                if (this._dialogId !== this._host.dialogCount) { return; }
+                this.hide();
+                event.stopPropagation();
+                return false;
+            }
+    }
+
     hide() {
         let dialogBackground = this._host.querySelector("#frDialogBackground" + this._host.dialogCount);
         if (!dialogBackground) {
@@ -5630,10 +6003,12 @@ class Dialog { // jshint ignore:line
 
         // Do not do this: clearArea(dialog) - Clearing the dialog means the code following a hide has no access to the data the dialog contains...
         this._host.dialogCount--;
+        document.removeEventListener("keydown", this._boundKeyHandler);
     }
 
     show(title, content) {
         this._host.dialogCount++;
+        this._dialogId = this._host.dialogCount;
 
         let dialogBackground = this._host.querySelector("#frDialogBackground"+this._host.dialogCount);
         if (!dialogBackground) {
@@ -5693,6 +6068,7 @@ class Dialog { // jshint ignore:line
         } else {
             contentElement.innerHTML = content;
         }
+        document.addEventListener("keydown", this._boundKeyHandler);
     }
 
     clearArea(ScreenDiv) { // jshint ignore:line

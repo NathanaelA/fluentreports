@@ -23,6 +23,8 @@
 .frBand {
     font-family: "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 12px;
+    background-color: #b9b9b9;
+
 }
 
 .frBand td {
@@ -56,26 +58,25 @@
 
 .fluentReports .frSelected {
     border: #30c7ff solid 3px;
-    border-radius:10%;
 }
 
 
 .fluentReports .frToolBar {
     grid-column: 1 / 3;
     grid-row: 1;
-    background-color: #207aff;
+    background-color: #336699;
 }
 
 .fluentReports .frPropScroller {
     grid-column: 1;
     grid-row: 2;
-    background-color: #207aff;
+    background-color: #336699;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
 .fluentReports .frProperties {
-    background-color: #207aff;
+    background-color: #336699;
     position: relative;
 }
 
@@ -108,7 +109,7 @@
     padding: 0px;
     margin-right: 0px;
 
-    background-color: grey;
+    background-color: #a9a9a9;
     overflow-y: scroll;
     overflow-x: hidden;
 }
@@ -120,10 +121,27 @@
     ztransform: translate(-50%, -50%);
 }
 .fluentReports .frReportInner {
-    background-color: grey;
+    background-color: #a9a9a9;
     left: 0px;
     width: calc(100% - 2px);
     position: relative;
+}
+
+.fluentReports .frIconClickable {
+    cursor: pointer;
+    background-color: darkgrey;
+}
+
+.fluentReports .frIconClickableNB {
+    cursor: pointer;
+}
+
+.fluentReports .frError {
+    background-color: red;
+    width: 100%;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    color: white;
 }
 
 .fluentReports a.frIconMenu {
@@ -136,6 +154,21 @@
     cursor: pointer;
 }
 
+.fluentReports .frIconClickableNB:active:hover {
+    cursor: grabbing;
+}
+
+
+.fluentReports .frIconClickable:active:hover {
+    cursor: grabbing;
+    background-color: grey;
+}
+
+.fluentReports a.frIconMenu:active:hover {
+    cursor: grabbing;
+    background-color: darkgrey;
+}
+
 .fluentReports .frLineWrapper {
     position: absolute;
     width: 100%;
@@ -143,31 +176,25 @@
 }
 
 .fluentReports .frLineText {
-    background-color: white;
-    padding: 1px 2px;
-    border: solid black 1px;
-    opacity: .1;
+    text-align: center;
 }
 
 .fluentReports .frLineIcon {
-    background-color: white;
     padding: 1px 2px;
-    border: solid black 1px;
-}
-
-.fluentReports .frLineText:hover {
-    opacity: 1.0;
 }
 
 .fluentReports .frLine {
-    background-color: white;
-    border: black 1px dashed;
+    border-bottom: black 1px solid;
     width: calc(100% - 2px);
     height: 0px;
 }
 
 .fluentReports .frIconSpacer {
     margin-right: .4em;
+}
+
+.fluentReports .frElementContainer {
+    border-top: solid black 1px;
 }
 
 .fluentReports .frPropButton {
@@ -181,6 +208,26 @@
     line-height: 21px;
     width: 98%;
 }
+
+.fluentReports .frTitleDiv {
+    background-color: grey;
+    width: 100%;
+    padding: 1px 1px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 10pt;
+    background-image: linear-gradient(180deg, white, grey);
+}
+
+.fluentReports .frElementTable {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.fluentReports .frElementTable TR,  .fluentReports .frElementTable TD {
+    padding: 0;
+}
+
 
 .frIcon {
   font-family: "fr";
