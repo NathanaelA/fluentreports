@@ -1526,6 +1526,12 @@ class frSection { // jshint ignore:line
                 bandElement._parseElement(data);
                 break;
 
+            case 'bandLine':
+                let bandLineElement = new frBandLine(this._report, this, {});
+                bandLineElement._parseElement(data);
+                break;
+
+
             case 'image':
                 let imageElement = new frImage(this._report, this, {});
                 imageElement._parseElement(data);
@@ -2457,7 +2463,6 @@ class frTitledElement extends frElement {
 
     get elementTitle() { return this._elementTitle.innerText; }
     set elementTitle(val) { this._elementTitle.innerText = val; }
-
 }
 
 class frSVGElement extends frTitledElement { // jshint ignore:line
@@ -2757,6 +2762,27 @@ class frNewLine extends  frTitledLabel { // jshint ignore:line
         if (data.count > 0) { this.count = data.count; }
     }
 }
+
+class frBandLine extends  frTitledLabel { // jshint ignore:line
+
+    constructor(report, parent, options={}) {
+        super(report, parent, options);
+        this.elementTitle = "Band Line";
+        this.label = "----(line auto-sized to prior printed band)----";
+        this._deleteProperties(["top", "left", "width", "height"]);
+        super.width = "100px";
+    }
+
+    _saveProperties(props) {
+        super._saveProperties(props);
+        props.type = "bandLine";
+    }
+
+    _parseElement(/* data */) {
+        // Do Nothing.
+    }
+}
+
 
 class frImage extends frTitledElement { // jshint ignore:line
     constructor(report, parent, options={}) {
@@ -3343,7 +3369,7 @@ class frPrintDynamic extends frPrint { // jshint ignore:line
             case 'total':
                 dataSets = 16; break;
         }
-        return this.createDataSelect(this._report, this._other, dataSets);
+        return this.UIBuilder.createDataSelect(this._report, this._other, dataSets);
     }
 
     _dblClickHandler() {
