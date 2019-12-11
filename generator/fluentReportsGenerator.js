@@ -32,6 +32,7 @@ class FluentReportsGenerator {
     get reportFunctions() { return this._functions; }
     // noinspection JSUnusedGlobalSymbols
     get sectionIn() { return this._sectionIn; }
+    get additionalFonts() { return this._registeredFonts; }
 
     get currentSelected() { return this._currentSelected; }
     set currentSelected(val) { this._currentSelected = val; }
@@ -74,13 +75,13 @@ class FluentReportsGenerator {
      * @returns {*}
      */
     get marginLeft() { return this._marginLeft; }
-    set marginLeft(val) { this._marginLeft = val; }
+    set marginLeft(val) { this._marginLeft = parseInt(val, 10); }
     get marginRight() { return this._marginRight; }
-    set marginRight(val) { this._marginRight = val; }
+    set marginRight(val) { this._marginRight = parseInt(val, 10); }
     get marginTop() { return this._marginTop; }
-    set marginTop(val) { this._marginTop = val; }
+    set marginTop(val) { this._marginTop = parseInt(val, 10); }
     get marginBottom() { return this._marginBottom; }
-    set marginBottom(val) { this._marginBottom = val; }
+    set marginBottom(val) { this._marginBottom = parseInt(val, 10); }
 
     /**
      * Set/get the file name of the report
@@ -195,6 +196,7 @@ class FluentReportsGenerator {
         this._scale = 1.5;
         this._frElements = [];
         this._frSections = [];
+        this._registeredFonts = [];
 
         // Internal Data for UI
         this._calculations = [];
@@ -232,7 +234,8 @@ class FluentReportsGenerator {
             {type: 'selection', title: 'Paper Size', field: 'paperSize', values: ['letter', 'legal'], default: 'letter'},
             {type: 'selection', title: 'Orientation', field:'paperOrientation', values: ['portrait', 'landscape'], default: 'portrait'},
             {type: 'button', title: 'Variables', click: this._setVariables.bind(this)},
-            {type: 'button', title: 'Totals', click: this._setTotals.bind(this)}
+            {type: 'button', title: 'Totals', click: this._setTotals.bind(this)},
+            {type: 'button', title: 'Fonts', click: this._setFonts.bind(this)}
         ];
 
 
@@ -481,6 +484,10 @@ class FluentReportsGenerator {
         // TODO: Add any missing properties
         this._copyProperties(report, this, ["name", "fontSize", "autoPrint", "paperSize", "paperOrientation"]);
 
+        if (Array.isArray(report.fonts) && report.fonts.length) {
+            this._registeredFonts = report.fonts;
+        }
+
         // Add Margins
         if (typeof report.margins !== 'undefined') {
             this._marginBottom = report.margins.bottom || 72;
@@ -508,8 +515,10 @@ class FluentReportsGenerator {
         if (this._marginBottom !== 72 || this._marginTop !== 72 || this._marginLeft !== 72 || this._marginRight !== 72) {
             results.margins = {left: this._marginLeft, top: this._marginTop, right: this._marginRight, bottom: this._marginBottom};
         }
+
         this._saveTemporaryData.reports.push(results);
 
+        results.fonts = this.additionalFonts;
         results.variables = shallowClone(this.reportVariables);
         
         // Save the Sections
@@ -625,6 +634,17 @@ class FluentReportsGenerator {
     }
 
     /**
+     * Edit the Fonts variables
+     * @private
+     */
+    _setFonts() {
+        this.UIBuilder.fontsBrowse(this.additionalFonts, (value) => {
+            this._registeredFonts = value;
+        });
+    }
+
+
+    /**
      * Simple shallow clone of properties to another object
      * Used to copy properties from/to save structure
      * @param src
@@ -684,6 +704,7 @@ class FluentReportsGenerator {
         this._functions = [];
         this._groupBys = [];
         this._subReports = {};
+        this._registeredFonts = [];
 
        this.UIBuilder.clearArea(this._reportLayout);
         // Read-add our Section Constrainer
@@ -949,7 +970,7 @@ class FluentReportsGenerator {
         }));
 
 
-        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue826", "Drawing", () => {
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue826", "Shape", () => {
             let options = this._getSectionOptions(this._sectionIn);
             new frSVGElement(this, this._getSection(this._sectionIn), options); // jshint ignore:line
         }));
@@ -961,6 +982,11 @@ class FluentReportsGenerator {
             let options = this._getSectionOptions(this._sectionIn);
             new frBandElement(this, this._getSection(this._sectionIn), options); // jshint ignore:line
         }));
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue814", "Band Line", () => {
+            let options = this._getSectionOptions(this._sectionIn);
+            new frBandLine(this, this._getSection(this._sectionIn), options); // jshint ignore:line
+        }));
+
 
         this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
 
@@ -2765,12 +2791,22 @@ class frNewLine extends  frTitledLabel { // jshint ignore:line
 
 class frBandLine extends  frTitledLabel { // jshint ignore:line
 
+    get thickness() { return this._thickness; }
+    set thickness(val) {
+        this._thickness = parseFloat(val);
+        this.label = "----(auto-sized to prior printed band, thickness: "+this._thickness+"px)----";
+    }
+
+
     constructor(report, parent, options={}) {
         super(report, parent, options);
+        this._thickness = 1.0;
         this.elementTitle = "Band Line";
-        this.label = "----(line auto-sized to prior printed band)----";
+        this.label = "----(auto-width to prior printed band, thickness: 1.0px)----";
         this._deleteProperties(["top", "left", "width", "height"]);
-        super.width = "100px";
+        this._addProperties({type: 'number', field: "thickness", default: 0});
+
+        super.width = "120px";
     }
 
     _saveProperties(props) {
@@ -2778,8 +2814,8 @@ class frBandLine extends  frTitledLabel { // jshint ignore:line
         props.type = "bandLine";
     }
 
-    _parseElement(/* data */) {
-        // Do Nothing.
+    _parseElement(data) {
+        if (data.thickness > 0) { this.thickness = data.thickness; }
     }
 }
 
@@ -2904,7 +2940,7 @@ class frImage extends frTitledElement { // jshint ignore:line
 
 
     _dblClickHandler() {
-        this.UIBuilder.fileEditor(this._image, [".jpg",".jpeg",".png"], (val) => {
+        this.UIBuilder.fileEditor(this._image, [".jpg",".jpeg",".png"], false,(val) => {
             this.image = val;
         });
     }
@@ -2947,17 +2983,19 @@ class frImage extends frTitledElement { // jshint ignore:line
     }
 }
 
-class frPrint extends  frTitledLabel {
+class frPrint extends frTitledLabel {
     constructor(report, parent, options={}) {
         super(report, parent, options);
-        this._addX = 0;
-        this._addY = 0;
+        this._x = 0;
+        this._y = 0;
         this._fontBold = false;
+        this._fontItalic = false;
         this._fill = '';
         this._textColor = '';
         this._link = "";
         this._rotate = 0;
         this._align = 0;
+        this._font = "times";
         this._text.style.overflow = "hidden";
 //        this._text.style.wordBreak = "keep-all";
         this._text.style.whiteSpace = "nowrap";
@@ -2969,12 +3007,15 @@ class frPrint extends  frTitledLabel {
         this._deleteProperties(["top", "left", "width", "height"]);
 
         this._addProperties(
-            [{type: 'number', field: "x", default: 0, destination: "settings"},
+            [
+                {type: 'number', field: "x", default: 0, destination: "settings"},
                 {type: 'number', field: "y", default: 0, destination: "settings"},
                 {type: 'number', field: "addX", default: 0, destination: "settings"},
                 {type: 'number', field: "addY", default: 0, destination: "settings"},
-                {type: 'boolean', field: "fontBold", default: false, destination: "settings"}, 
-                {type: 'string', field: "fill", functionable: true, default: "", destination: "settings"}, 
+                {type: 'select', field: "font", default: "times", display: this._createFontSelect.bind(this), destination: 'settings'},
+                {type: 'boolean', field: "fontBold", default: false, destination: "settings"},
+                {type: 'boolean', field: "fontItalic", default: false, destination: "settings"},
+                {type: 'string', field: "fill", functionable: true, default: "", destination: "settings"},
                 {type: 'string', field: "textColor", functionable: true, default: "", destination: "settings"},
                 {type: 'string', field: "link", functionable: true, default: "", destination: "settings"}, 
                 {type: 'number', field: "border", default: 0, destination: "settings"},
@@ -2984,46 +3025,68 @@ class frPrint extends  frTitledLabel {
                 ]);
     }
 
+    _createFontSelect() {
+        return this.UIBuilder.createFontSelect(this.font);
+    }
+
     _createAlignSelect() {
         const curAlign = this._align;
         let selectGroup = document.createElement('select');
 
         let item = new Option("Left", "left");
-        if (curAlign === "left") { item.selected = true; }
+        if (curAlign === "left" || curAlign === "0" || curAlign === 0) { item.selected = true; }
         selectGroup.appendChild(item);
 
         item = new Option("Right", "right");
-        if (curAlign === "right") { item.selected = true; }
+        if (curAlign === "right" || curAlign === "1" || curAlign === 1) { item.selected = true; }
         selectGroup.appendChild(item);
 
         item = new Option("Center", "center");
-        if (curAlign === "center") { item.selected = true; }
+        if (curAlign === "center" || curAlign === "2" || curAlign === 2) { item.selected = true; }
         selectGroup.appendChild(item);
 
         return selectGroup;
     }
 
 
-    get x() { return this.left; }
-    set x(val) { this.left = val; }
-    get y() { return this.top; }
-    set y(val) { this.top = val; }
+    get x() { return this._x; }
+    set x(val) { this._x = parseInt(val, 10); }
+
+    get y() { return this._y; }
+    set y(val) { this._y = parseInt(val, 10); }
 
 
-    get addX() { return this._addX; }
-    set addX(val) { this._addX = parseInt(val, 10); }
-    get addY() { return this._addY; }
-    set addY(val) { this._addY = parseInt(val, 10); }
+    get addX() { return this.left; }
+    set addX(val) { this.left = val; }
+
+    get addY() { return this.top; }
+    set addY(val) { this.top = val; }
+
+
+    //get addX() { return this._addX; }
+    //set addX(val) { this._addX = parseInt(val, 10); }
+
+    //get addY() { return this._addY; }
+    //set addY(val) { this._addY = parseInt(val, 10); }
+
     get fontBold() { return this._fontBold; }
     set fontBold(val) { this._fontBold = !!val; }
+
+    get fontItalic() { return this._fontItalic; }
+    set fontItalic(val) { this._fontItalic = !!val; }
+
     get fill() { return this._fill; }
     set fill(val) { this._fill = val; }
+
     get textColor() { return this._textColor; }
     set textColor(val) { this._textColor = val; }
+
     get link() { return this._link; }
     set link(val) { this._link = val; }
+
     get border() { return this._border; }
     set border(val) { this._border = parseInt(val, 10); }
+
     get wrap() { return this._wrap; }
     set wrap(val) {
         this._wrap = !!val;
@@ -3031,12 +3094,35 @@ class frPrint extends  frTitledLabel {
            this._text.style.whiteSpace = this._wrap ? "normal" : "nowrap";
         }
     }
+
     get rotate() { return this._rotate; }
     set rotate(val) { this._rotate = !!val;}
 
+    get align() { return this._align; }
+    set align(val) {
+        switch (val) {
+            case 0:
+            case "left":
+                this._align = "left";
+                break;
+
+            case 1:
+            case 'right':
+                this._align = "right";
+                break;
+
+            case 2:
+            case "center":
+                this._align = "center";
+                break;
+
+            default:
+                console.error("fluentReports: Unknown alignment", val);
+        }
+    }
 
     _parseElement(data) {
-        this._copyProperties(data, this, ["x", "y", "addX", "addY", "fontBold", "fill", "textColor",
+        this._copyProperties(data, this, ["x", "y", "addX", "addY", "fontBold", "fontItalic", "fill", "textColor",
             "link", "border", "wrap", "rotate", "align"]);
     }
 
@@ -3519,7 +3605,7 @@ class frBandElement extends frPrint { // jshint ignore:line
         for (let i=0;i<len;i++) {
             this._handleBandCell(data.fields[i]);
         }
-        this._copyProperties(data.settings, this, ["x", "y", "addX", "addY", "fontBold", "fill", "textColor", "link", "border", "wrap"]);
+        this._copyProperties(data.settings, this, ["x", "y", "addX", "addY", "fontBold", "fontItalic", "fill", "textColor", "link", "border", "wrap"]);
     }
 
     _getCell(id) {
@@ -3992,6 +4078,7 @@ class UI { // jshint ignore:line
         return spacer;
     }
 
+    // TODO: Strip out "report" should now point to this._parent
     sectionBrowse(report, reportData, ok, cancel) {
         const body = document.createElement('div');
         const span = document.createElement('span');
@@ -4839,17 +4926,19 @@ class UI { // jshint ignore:line
 
     }
 
-    _processFile(file, callback) {
-        if ( /\.(jpe?g|png|gif)$/i.test(file.name) ) {
+    _processFile(file, regEx, callback) {
+        if ( regEx == null || regEx.test(file.name) ) {
             const reader = new FileReader();
             reader.addEventListener("load", function () {
                 callback(reader.result);
             }, false);
             reader.readAsDataURL(file);
+        } else {
+            callback(null);
         }
     }
 
-    fileEditor(value, acceptable=[], ok=null, cancel=null) {
+    fileEditor(value, acceptable=[], autoClose=false, ok=null, cancel=null) {
         const body = document.createElement('div');
         const title = document.createElement("span");
         title.style.marginLeft = "5px";
@@ -4869,7 +4958,7 @@ class UI { // jshint ignore:line
 
         let accept = "";
         for (let i=0;i<acceptable.length;i++) {
-            if (i>1) { accept += ","; }
+            if (i>0) { accept += ","; }
             accept+= acceptable[i];
         }
         if (accept.length) {
@@ -4879,9 +4968,20 @@ class UI { // jshint ignore:line
         let buttons =this.createButtons(["Ok", "Cancel"]);
         buttons[0].disabled = true;
         let newValue = value;
+        let fileName = '';
 
+
+        let btnContainer = document.createElement('div');
+        btnContainer.appendChild(buttons[0]);
+        btnContainer.appendChild(buttons[1]);
+        body.appendChild(btnContainer);
+
+        let d = new Dialog("Choose", body, this.hostElement);
+
+        // choose file button
         file.addEventListener("change", () => {
             let found = true;
+            let acceptableRegEx = null;
             if (file.files.length) {
                 if (acceptable.length) {
                     found = false;
@@ -4891,6 +4991,7 @@ class UI { // jshint ignore:line
                             break;
                         }
                     }
+                    acceptableRegEx = new RegExp('(\\'+acceptable.join("|\\")+')$', "i");
                 }
                 if (!found) {
                     error.innerText = "Please choose a valid file!";
@@ -4901,28 +5002,31 @@ class UI { // jshint ignore:line
 
                 file.disabled = true;
                 buttons[1].disabled = true;
-                this._processFile(file.files[0], (val) => {
-                    buttons[0].disabled = false;
+                fileName = file.files[0].name;
+                this._processFile(file.files[0],  acceptableRegEx, (val) => {
                     buttons[1].disabled = false;
-                    newValue = val;
+                    if (val !== null) {
+                        buttons[0].disabled = false;
+                        newValue = val;
+                    }
+                    if (autoClose) {
+                        d.hide();
+                        if (typeof ok === 'function') {
+                            ok(newValue, fileName);
+                        }
+                    }
                 });
             } else {
                 newValue = null;
             }
         });
 
-        let btnContainer = document.createElement('div');
-        btnContainer.appendChild(buttons[0]);
-        btnContainer.appendChild(buttons[1]);
-        body.appendChild(btnContainer);
-
-        let d = new Dialog("Upload", body, this.hostElement);
 
         // Ok Button
         buttons[0].addEventListener('click', () => {
             d.hide();
             if (typeof ok === 'function') {
-                ok(newValue);
+                ok(newValue, fileName);
             }
         });
         // Cancel Button
@@ -4934,7 +5038,6 @@ class UI { // jshint ignore:line
         });
 
     }
-
 
     functionBrowse(functions, ok, cancel) {
         const body = document.createElement('div');
@@ -5151,6 +5254,165 @@ class UI { // jshint ignore:line
             }
         });
     }
+
+    fontsBrowse(fonts, ok, cancel) {
+        const body = document.createElement('div');
+        const span = document.createElement('span');
+        span.innerText = "Fonts:";
+        body.appendChild(span);
+        body.appendChild(document.createElement('br'));
+        const selectDiv = document.createElement('div');
+
+        const select = document.createElement('select');
+        select.style.border = "solid black 1px";
+        select.style.margin = "5px";
+        select.style.left = "5px";
+        select.style.right = "5px";
+        select.style.height = "200px";
+        select.style.width = "200px";
+        select.size = 10;
+        const resultFonts = [];
+
+        for (let i=0;i<fonts.length;i++) {
+            let temp = shallowClone(fonts[i]);
+            resultFonts.push(temp);
+            const option = new Option(fonts[i].name, i.toString());
+            select.appendChild(option);
+        }
+
+        selectDiv.appendChild(select);
+        selectDiv.style.display = 'inline-block';
+        body.appendChild(selectDiv);
+
+        let addButtons =this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
+        let addBtnContainer = document.createElement('div');
+        addBtnContainer.style.padding = "5px";
+        addBtnContainer.style.display = 'inline-block';
+        addBtnContainer.style.verticalAlign = "top";
+        addBtnContainer.appendChild(addButtons[0]);
+        addBtnContainer.appendChild(document.createElement('br'));
+        addBtnContainer.appendChild(addButtons[1]);
+        addBtnContainer.appendChild(document.createElement('br'));
+        addBtnContainer.appendChild(addButtons[2]);
+        body.appendChild(addBtnContainer);
+
+        // Add
+        addButtons[0].addEventListener("click", () => {
+            this.fontsEditor("New Font", '', (name, data) => {
+                let obj = {};
+                obj.name = name;
+                obj.data = data;
+                select.appendChild(new Option(name, resultFonts.length.toString()));
+                resultFonts.push(obj);
+            });
+        });
+
+        // Edit
+        addButtons[1].addEventListener("click", () => {
+            let obj = resultFonts[select.value];
+            this.fontsEditor(obj.name, obj.data, (name /*, data */) => {
+                if (name !== obj.name) {
+                    select.options[select.selectedIndex].text = name;
+                }
+                obj.name = name;
+            });
+        });
+
+        // Delete
+        addButtons[2].addEventListener("click", () => {
+            if (select.selectedIndex >= 0) {
+                let key = select.value;
+                resultFonts[key] = null;
+                select.options[select.selectedIndex] = null;
+            }
+        });
+
+        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let btnContainer = document.createElement('div');
+        btnContainer.appendChild(buttons[0]);
+        btnContainer.appendChild(buttons[1]);
+        body.appendChild(btnContainer);
+
+        let d = new Dialog("Fonts", body, this.hostElement);
+
+        buttons[0].addEventListener('click', () => {
+            d.hide();
+            for (let i=0;i<resultFonts.length;i++) {
+                if (resultFonts[i] === null) {
+                    resultFonts.splice(i, 1);
+                    i--;
+                }
+            }
+
+            if (typeof ok === 'function') {
+                ok(resultFonts);
+            }
+        });
+        buttons[1].addEventListener('click', () => {
+            d.hide();
+            if (typeof cancel === 'function') {
+                cancel();
+            }
+        });
+    }
+
+    fontsEditor(name, data, ok, cancel) {
+        let newData = data;
+        const body = document.createElement('div');
+
+        const nameDiv = document.createElement('div');
+        const name1 = document.createElement('span');
+        name1.innerText = "Name:";
+
+        const variableName = document.createElement('input');
+        variableName.value = name;
+        nameDiv.appendChild(name1);
+        nameDiv.appendChild(variableName);
+
+        const valueDiv = document.createElement('div');
+
+        let uploadButton = this.createButtons(["Choose font"]);
+        uploadButton[0].addEventListener('click', () => {
+            this.fileEditor(data, [".ttf", ".otf"], true, (data, fileName) => {
+                const idx = data.indexOf("base64,");  // strip data:font/ttf;base64,
+                if (idx > 0) {
+                    newData = data.substring(idx+7);
+                } else {
+                    newData = data;
+                }
+                if (fileName && fileName.length) {
+                    variableName.value = fileName.replace(".ttf", "").replace(".otf","");
+                }
+            });
+        });
+
+        valueDiv.appendChild(uploadButton[0]);
+
+        body.appendChild(valueDiv);
+        body.appendChild(nameDiv);
+
+        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let btnContainer = document.createElement('div');
+        btnContainer.appendChild(buttons[0]);
+        btnContainer.appendChild(buttons[1]);
+        body.appendChild(btnContainer);
+
+        let d = new Dialog("Value Editor", body, this.hostElement);
+
+        buttons[0].addEventListener('click', () => {
+            d.hide();
+            if (typeof ok === 'function') {
+                ok(variableName.value, newData);
+            }
+        });
+        buttons[1].addEventListener('click', () => {
+            d.hide();
+            if (typeof cancel === 'function') {
+                cancel();
+            }
+        });
+    }
+
 
     calculationBrowse(calculations, ok, cancel) {
         const body = document.createElement('div');
@@ -5447,6 +5709,35 @@ class UI { // jshint ignore:line
                 cancel();
             }
         });
+    }
+
+    /**
+     * Creates a select list of all the fonts the report has access too
+     * @param selected
+     * @returns {HTMLSelectElement}
+     */
+    createFontSelect(selected) {
+        let builtInFonts=['Times','Helvetica','Courier','Symbol','Dingbats'];
+        const selectList = document.createElement('select');
+        selectList.className = "frSelect";
+        for (let i=0;i<builtInFonts.length;i++) {
+            let option = new Option(builtInFonts[i]);
+            if (builtInFonts[i] === selected) { option.selected = true; }
+            selectList.appendChild(option);
+        }
+        let additionalFonts = this._parent.additionalFonts;
+        for (let i=0;i<additionalFonts.length;i++) {
+            // Only add fonts that have data associated with them...
+            if (additionalFonts[i].data && additionalFonts[i].data.length) {
+                let option = new Option(this._fixShowPropertyTitle(additionalFonts[i].name), additionalFonts[i].name);
+                if (additionalFonts[i].name === selected) {
+                    option.selected = true;
+                }
+                selectList.appendChild(option);
+            }
+        }
+
+        return selectList;
     }
 
     createDataSelect(report, field=null, dataSets=31, isTotal = false) {
