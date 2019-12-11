@@ -2819,7 +2819,6 @@ class frBandLine extends  frTitledLabel { // jshint ignore:line
     }
 }
 
-
 class frImage extends frTitledElement { // jshint ignore:line
     constructor(report, parent, options={}) {
         super(report, parent, options);
@@ -3143,13 +3142,19 @@ class frPrintLabel extends frPrint  { // jshint ignore:line
         super(report, parent, options);
         this._text.contentEditable = options && typeof options.contentEditable === 'undefined' ? "true" : options.contentEditable || "true";
         this.label = (options && options.label) || "Label";
-        this._addProperties({type: "string", field: 'label'});
+        this._addProperties({type: "string", field: 'text', title: "label"});
+    }
+
+    get text() {
+        return this.label;
+    }
+    set text(val) {
+        this.label = val;
     }
 
     _saveProperties(props) {
         super._saveProperties(props);
     }
-
 
     _parseElement(data) {
         if (data.text) {
@@ -3627,6 +3632,7 @@ class frBandElement extends frPrint { // jshint ignore:line
         if (field.align != null) {
             switch(field.align) {
                 case 1: // LEFT
+                    td.style.textAlign = "left";
                     break;
                 case 2:
                     td.style.textAlign = "center";
@@ -4324,7 +4330,7 @@ class UI { // jshint ignore:line
 
         const properties = [
             {type: 'string', field: "width", functionable: true},
-            {type: 'select', field: "align", default: "left", display: createAlignSelect},
+            {type: 'select', field: "align", translate: (val) => { return parseInt(val, 10); }, default: "left", display: createAlignSelect},
             {type: 'string', field: "textColor", default: "", functionable: true}
         ];
 
@@ -6049,7 +6055,11 @@ class UI { // jshint ignore:line
                                 input.id = name + "_select";
                                 input.className = "frPropSelect";
                                 input.addEventListener("change", () => {
-                                    obj[prop.field] = input.value;
+                                    if (typeof prop.translate === 'function') {
+                                        obj[prop.field] = prop.translate(input.value);
+                                    } else {
+                                        obj[prop.field] = input.value;
+                                    }
                                     if (prop.onchange) { prop.onchange(input.value); }
                                 });
                                 td2.appendChild(input);
@@ -6060,7 +6070,11 @@ class UI { // jshint ignore:line
                                 input.id = name + "_select";
                                 input.className = "frPropSelect";
                                 input.addEventListener("change", () => {
-                                    obj[prop.field] = input.value;
+                                    if (typeof prop.translate === 'function') {
+                                        obj[prop.field] = prop.translate(input.value);
+                                    } else {
+                                        obj[prop.field] = input.value;
+                                    }
                                     if (prop.onchange) { prop.onchange(input.value); }
                                 });
                                 td2.appendChild(input);
@@ -6076,7 +6090,11 @@ class UI { // jshint ignore:line
                                 input.type = 'checkbox';
                                 input.className = "frPropCheck";
                                 input.addEventListener('change', () => {
-                                    obj[prop.field] = input.checked;
+                                    if (typeof prop.translate === 'function') {
+                                        obj[prop.field] = prop.translate(input.checked);
+                                    } else {
+                                        obj[prop.field] = input.checked;
+                                    }
                                 });
                                 td2.appendChild(input);
                                 input.checked = !!obj[prop.field];
@@ -6097,7 +6115,11 @@ class UI { // jshint ignore:line
                                 input.className = "frPropInput";
 
                                 input.addEventListener('input', () => {
-                                    obj[prop.field] = input.value;
+                                    if (typeof prop.translate === 'function') {
+                                        obj[prop.field] = prop.translate(input.value);
+                                    } else {
+                                        obj[prop.field] = input.value;
+                                    }
                                 });
 
                                 td2.appendChild(input);
@@ -6189,7 +6211,7 @@ class UI { // jshint ignore:line
                             case "select":
                                 input = layout.querySelector("#" + name + "_select");
                                 if (input) {
-                                    input.value = obj[prop.field];
+                                     input.value = obj[prop.field];
                                 } else {
                                     console.warn("fluentReports: unable to find ", name + "_select");
                                 }
