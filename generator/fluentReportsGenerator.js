@@ -197,6 +197,7 @@ class FluentReportsGenerator {
         this._frElements = [];
         this._frSections = [];
         this._registeredFonts = [];
+        this._includeData = false;
 
         // Internal Data for UI
         this._calculations = [];
@@ -235,7 +236,8 @@ class FluentReportsGenerator {
             {type: 'selection', title: 'Orientation', field:'paperOrientation', values: ['portrait', 'landscape'], default: 'portrait'},
             {type: 'button', title: 'Variables', click: this._setVariables.bind(this)},
             {type: 'button', title: 'Totals', click: this._setTotals.bind(this)},
-            {type: 'button', title: 'Fonts', click: this._setFonts.bind(this)}
+            {type: 'button', title: 'Fonts', click: this._setFonts.bind(this)},
+            {type: 'button', title: 'Data', click: this._setData.bind(this)}
         ];
 
 
@@ -259,6 +261,8 @@ class FluentReportsGenerator {
             // TODO - FUTURE: Maybe save & verify report based on parsed data to verify data layout being sent into
             //      - editor matches the report layout's last data, and so we have the field layout in the event no data is passed in.
             this._parseReport(options.report);
+        } else if (options.blankReport) {
+            this.newBlankReport();
         } else {
             this._createReportOnData();
         }
@@ -436,6 +440,17 @@ class FluentReportsGenerator {
      * Creates a dummy report based on the data, if you haven't passed in a report.
      * @private
      */
+    newBlankReport() {
+        const tempReport = {
+            type: "report",
+            header: [],
+            detail: [],
+            footer: []
+        };
+        this._data = [];
+        this._parseReport(tempReport);
+    }
+
     _createReportOnData() {
         let tempReport;
         if (this._data === null || this._data.length === 0) {
@@ -474,7 +489,6 @@ class FluentReportsGenerator {
      * @param report
      */
     _parseReport(report) {
-        console.log("Parse Report");
         this._reportData = report;
         if (this._builtUI) {
             this._clearReport();
@@ -484,6 +498,13 @@ class FluentReportsGenerator {
 
         // TODO: Add any missing properties
         this._copyProperties(report, this, ["name", "fontSize", "autoPrint", "paperSize", "paperOrientation"]);
+
+        // Does report come with its own data?
+        if (Array.isArray(report.data)) {
+            this.data = report.data;
+            delete report.data;
+            this._includeData = true;
+        }
 
         if (Array.isArray(report.fonts) && report.fonts.length) {
             this._registeredFonts = report.fonts;
@@ -570,6 +591,9 @@ class FluentReportsGenerator {
             }
         }
 
+        if (this._includeData) {
+            results.data = this._data;
+        }
 
 
         // Clear our temporary data storage
@@ -644,6 +668,13 @@ class FluentReportsGenerator {
         });
     }
 
+    _setData() {
+        this.UIBuilder.dataEditor(this._data, this._includeData, (data, include) => {
+            this._parseData(data);
+            this._includeData = include;
+        });
+    }
+
 
     /**
      * Simple shallow clone of properties to another object
@@ -698,6 +729,7 @@ class FluentReportsGenerator {
         console.log("Clear Report");
 
         // Reset Tracking Data
+        this._includeData = false;
         this._totals = {};
         this._sectionIn = 0;
         this._calculations = [];
@@ -4394,7 +4426,7 @@ class UI { // jshint ignore:line
         };
 
         const toInt = (val) => { return parseInt(val, 10); };
-        const toOpacity = (val) => { let x = parseFloat(val); if (isNaN(x)) { return 1.0; } if (x <  0.0) { return 0.0; } if (x > 1.0) { return 1.0; } return x;}
+        const toOpacity = (val) => { let x = parseFloat(val); if (isNaN(x)) { return 1.0; } if (x <  0.0) { return 0.0; } if (x > 1.0) { return 1.0; } return x;};
 
         const properties = [
             {type: 'string', field: "width", functionable: true},
@@ -5332,6 +5364,64 @@ class UI { // jshint ignore:line
         });
     }
 
+    dataEditor(data, include, ok, cancel) {
+        const body = document.createElement('div');
+        const textArea = document.createElement('textarea');
+        textArea.style.border = "solid black 1px";
+        textArea.style.margin = "5px";
+        textArea.style.marginLeft = "15px";
+        textArea.style.height = "200px";
+        textArea.style.width = "475px";
+        textArea.style.maxWidth = "475px";
+        textArea.value = JSON.stringify(data, null,2);
+        let includeCheckbox;
+        // Add Text Area
+        body.appendChild(textArea);
+        body.appendChild(document.createElement("br"));
+
+        if (include != null) {
+            const label = document.createElement('div');
+            const span = document.createElement('span');
+            span.innerText = "Embed Data in Report:";
+            label.appendChild(span);
+            includeCheckbox = document.createElement('input');
+            includeCheckbox.type = 'checkbox';
+            if (include) { includeCheckbox.checked = true; }
+            label.appendChild(includeCheckbox);
+            body.appendChild(label);
+        }
+
+        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let btnContainer = document.createElement('div');
+        btnContainer.appendChild(buttons[0]);
+        btnContainer.appendChild(buttons[1]);
+        body.appendChild(btnContainer);
+
+        let d = new Dialog("Data Editor", body, this.hostElement);
+
+        buttons[0].addEventListener('click', () => {
+            let data;
+            try {
+                data = JSON.parse(textArea.value);
+            }
+            catch (err) {
+                alert("Unable to parse the data, please fix!");
+                return;
+            }
+
+            d.hide();
+            if (typeof ok === 'function') {
+                ok(data, include == null ? null : includeCheckbox.checked );
+            }
+        });
+        buttons[1].addEventListener('click', () => {
+            d.hide();
+            if (typeof cancel === 'function') {
+                cancel();
+            }
+        });
+    }
+
     fontsBrowse(fonts, ok, cancel) {
         const body = document.createElement('div');
         const span = document.createElement('span');
@@ -5489,7 +5579,6 @@ class UI { // jshint ignore:line
             }
         });
     }
-
 
     calculationBrowse(calculations, ok, cancel) {
         const body = document.createElement('div');
