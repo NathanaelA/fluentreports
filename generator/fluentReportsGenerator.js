@@ -215,7 +215,7 @@ class FluentReportsGenerator {
         this._paperSize = "letter";
         this._paperOrientation = "portrait";
         this._paperDims = [612.00, 792.00];  // 72px per inch
-        this._fontSize = 10;
+        this._fontSize = 0;
         this._autoPrint = false;
         this._marginLeft = 72;
         this._marginRight= 72;
@@ -292,6 +292,7 @@ class FluentReportsGenerator {
         switch (option) {
             case 'scale':
                 this._scale = parseFloat(value);
+                if (isNaN(this._scale)) { this._scale = 1.5; }
                 break;
 
             case 'UIBuilder':
@@ -697,7 +698,6 @@ class FluentReportsGenerator {
         console.log("Clear Report");
 
         // Reset Tracking Data
-        this._groupBys = [];
         this._totals = {};
         this._sectionIn = 0;
         this._calculations = [];
@@ -1161,6 +1161,9 @@ class FluentReportsGenerator {
                 }
                 if (!found) {
                     this._groupBys.push({name: data.groupBy[i].groupOn, dataSet: dataSet});
+                    if (data.groupBy[i].calcs) {
+                        this._mergeTotals(data.groupBy[i].groupOn, data.groupBy[i].calcs);
+                    }
                 }
                 this._generateReportHeaderSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, dataSet);
             }
@@ -2794,6 +2797,7 @@ class frBandLine extends  frTitledLabel { // jshint ignore:line
     get thickness() { return this._thickness; }
     set thickness(val) {
         this._thickness = parseFloat(val);
+        if (isNaN(this._thickness)) { this._thickness = 1.0; }
         this.label = "----(auto-sized to prior printed band, thickness: "+this._thickness+"px)----";
     }
 
@@ -2995,6 +2999,15 @@ class frPrint extends frTitledLabel {
         this._rotate = 0;
         this._align = 0;
         this._font = "times";
+
+        this._fontSize = 0;
+        this._opacity = 1.0;
+        this._underline = false;
+        this._strike = false;
+
+        this._wordSpacing = 0;
+        this._characterSpacing = 0;
+
         this._text.style.overflow = "hidden";
 //        this._text.style.wordBreak = "keep-all";
         this._text.style.whiteSpace = "nowrap";
@@ -3003,7 +3016,7 @@ class frPrint extends frTitledLabel {
         this._wrap = false;
 
         // TODO: Do we need width, height?
-        this._deleteProperties(["top", "left", "width", "height"]);
+        this._deleteProperties(["top", "left", "height"]);
 
         this._addProperties(
             [
@@ -3012,13 +3025,20 @@ class frPrint extends frTitledLabel {
                 {type: 'number', field: "addX", default: 0, destination: "settings"},
                 {type: 'number', field: "addY", default: 0, destination: "settings"},
                 {type: 'select', field: "font", default: "times", display: this._createFontSelect.bind(this), destination: 'settings'},
+                {type: 'number', field: 'fontSize', default: 0, destination: 'settings'},
                 {type: 'boolean', field: "fontBold", default: false, destination: "settings"},
                 {type: 'boolean', field: "fontItalic", default: false, destination: "settings"},
+                {type: 'boolean', field: 'underline', title: "Underline", default: false, destination: 'settings'},
+                {type: 'boolean', field: 'strike', title: "Strikethrough", default: false, destination: 'settings'},
                 {type: 'string', field: "fill", functionable: true, default: "", destination: "settings"},
                 {type: 'string', field: "textColor", functionable: true, default: "", destination: "settings"},
                 {type: 'string', field: "link", functionable: true, default: "", destination: "settings"}, 
                 {type: 'number', field: "border", default: 0, destination: "settings"},
+                {type: 'number', field: 'characterSpacing', title: 'Char Spacing', default: 0, destination: "settings"},
+                {type: 'number', field: 'wordSpacing', default: 0, destination: "settings"},
                 {type: 'number', field: 'rotate', default: 0, destination: 'settings'},
+                {type: 'number', field: 'opacity', default: 1.0, destination: 'settings'},
+
                 {type: 'select', field: "align", default: "left", display: this._createAlignSelect.bind(this), destination: 'settings'},
                 {type: 'boolean', field: "wrap", default: false, destination: "settings"}
                 ]);
@@ -3047,6 +3067,32 @@ class frPrint extends frTitledLabel {
         return selectGroup;
     }
 
+    get opacity() {
+        return this._opacity;
+    }
+    set opacity(val) {
+        this._opacity = parseFloat(val);
+        if (isNaN(this._opacity)) { this._opacity = 1.0; }
+        if (this._opacity < 0) { this._opacity = 0.0; }
+        else if (this._opacity > 1.0) { this._opacity = 1.0; }
+    }
+
+    get wordSpacing() {
+        return this._wordSpacing;
+    }
+    set wordSpacing(val) {
+        this._wordSpacing = parseInt(val, 10);
+    }
+
+    get fontSize() { return this._fontSize; }
+    set fontSize(val) { this._fontSize = parseInt(val, 10); }
+
+    get characterSpacing() {
+        return this._characterSpacing;
+    }
+    set characterSpacing(val) {
+        this._characterSpacing = parseInt(val, 10);
+    }
 
     get x() { return this._x; }
     set x(val) { this._x = parseInt(val, 10); }
@@ -3067,6 +3113,11 @@ class frPrint extends frTitledLabel {
 
     //get addY() { return this._addY; }
     //set addY(val) { this._addY = parseInt(val, 10); }
+    get underline() { return this._underline; }
+    set underline(val) { this._underline = !!val; }
+
+    get strike() { return this._strike; }
+    set strike(val) { this._strike = !!val; }
 
     get fontBold() { return this._fontBold; }
     set fontBold(val) { this._fontBold = !!val; }
@@ -3513,6 +3564,16 @@ class frBandElement extends frPrint { // jshint ignore:line
         }
     }
 
+    get fillOpacity() {
+        return this._fillOpacity;
+    }
+    set fillOpacity(val) {
+        this._fillOpacity = parseFloat(val);
+        if (isNaN(this._fillOpacity)) { this._fillOpacity = 1.0; }
+        if (this._fillOpacity < 0.0) { this._fillOpacity = 0.0; }
+        if (this._fillOpacity > 1.0) { this._fillOpacity = 1.0; }
+    }
+
     get bands() {
         return this._bands;
     }
@@ -3531,6 +3592,8 @@ class frBandElement extends frPrint { // jshint ignore:line
         this._table.style.border = "1px solid black";
         this._table.style.borderCollapse = "collapse";
 
+        this._fillOpacity = 1.0;
+
 
         this._tr = document.createElement("tr");
         this._table.appendChild(this._tr);
@@ -3538,9 +3601,12 @@ class frBandElement extends frPrint { // jshint ignore:line
 
         this._html.appendChild(this._table);
 
-        this._deleteProperties(['rotate']);
+        this._deleteProperties(['rotate','width']);
         this._addProperties([{type: 'boolean', field: 'suppression', default: false},
-            {type: 'number', field: 'columns', destination: false}]);
+            {type: 'number', field: 'columns', destination: false},
+            {type: 'number', field: 'fillOpacity', destination: 'settings'}
+
+            ]);
         this._addProperties({type: 'button', title: 'Band Editor', click: () => { this._bandEditor(); }}, false);
     }
 
@@ -4327,11 +4393,16 @@ class UI { // jshint ignore:line
             return selectGroup;
         };
 
+        const toInt = (val) => { return parseInt(val, 10); };
+        const toOpacity = (val) => { let x = parseFloat(val); if (isNaN(x)) { return 1.0; } if (x <  0.0) { return 0.0; } if (x > 1.0) { return 1.0; } return x;}
 
         const properties = [
             {type: 'string', field: "width", functionable: true},
-            {type: 'select', field: "align", translate: (val) => { return parseInt(val, 10); }, default: "left", display: createAlignSelect},
-            {type: 'string', field: "textColor", default: "", functionable: true}
+            {type: 'select', field: "align", translate: toInt, default: "left", display: createAlignSelect},
+            {type: 'string', field: "textColor", default: "", functionable: true},
+            {type: 'number', field: "characterSpacing", title: 'Char Spacing', default: 0, translate: toInt },
+            {type: 'number', field: 'wordSpacing', default: 0, translate: toInt },
+            {type: 'number', field: 'opacity', default: 1.0, translate: toOpacity}
         ];
 
 

@@ -806,7 +806,8 @@ This is one of the primary methods to put any text of the page; you pass it your
   * addX - add this x to the x coord before printing
   * addY - add this y to the y coord before printing
   * align - alignment (left, center, or right)
-  * textWidth - the gap between characters
+  * wordSpacing - the gap between words
+  * characterSpacing - the gap between characters
   * width - the maximum size you want the string to be; it will wrap it after this.
   * textColor - the font color of the text
   * underline - make this text underlined
