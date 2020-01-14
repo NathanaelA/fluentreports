@@ -3610,6 +3610,8 @@ class frBandElement extends frPrint { // jshint ignore:line
         return this._bands;
     }
 
+    get gutter() {return this._gutter;}
+    set gutter(val){this._gutter = parseInt(val,10);};
     constructor(report, parent, options = {}) {
         options.elementTitle = "Band";
         super(report, parent, options);
@@ -3618,6 +3620,7 @@ class frBandElement extends frPrint { // jshint ignore:line
         this._gridColumns = [];
         this._bands = [];
         this._suppression = false;
+        this._gutter = 0;
 
         this._table = document.createElement("table");
         this._table.className = "frBand";
@@ -3639,7 +3642,8 @@ class frBandElement extends frPrint { // jshint ignore:line
             {type: 'number', field: 'fillOpacity', destination: 'settings'}
 
             ]);
-        this._addProperties({type: 'button', title: 'Band Editor', click: () => { this._bandEditor(); }}, false);
+        this._addProperties([{type: 'number', field: 'gutter', destination: 'settings',default:0},
+            {type: 'button', title: 'Band Editor', click: () => { this._bandEditor(); }}], false);
     }
 
     _dblClickHandler() {
