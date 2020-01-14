@@ -3654,7 +3654,7 @@ class frBandElement extends frPrint { // jshint ignore:line
        this.UIBuilder.bandBrowse(this._report, this._bands, (value) => {
             for (let i =0;i<value.length;i++){
                 if(value[i].text){
-                    if(value[i].text.includes("\n") || value[i].text.includes("\r")) super.wrap = true;
+                    if(value[i].text.includes("\n") || value[i].text.includes("\r")) { this.wrap = true; }
                 }
             }
             this._bands = value;
