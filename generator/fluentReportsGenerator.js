@@ -225,7 +225,7 @@ class FluentReportsGenerator {
 
         this._name = "report.pdf";
         this._properties = [
-            {type: 'string', field: 'name', functionable: true},
+            {type: 'string', field: 'name', functionable: true, lined:false},
             {type: 'boolean', field: 'autoPrint', default: false},
             {type: 'number', field: 'fontSize', default: 0},
             {type: 'number', title: 'margin.left', field: 'marginLeft', default: 72},
@@ -3225,7 +3225,7 @@ class frPrintLabel extends frPrint  { // jshint ignore:line
         super(report, parent, options);
         this._text.contentEditable = options && typeof options.contentEditable === 'undefined' ? "true" : options.contentEditable || "true";
         this.label = (options && options.label) || "Label";
-        this._addProperties({type: "string", field: 'text', title: "label"});
+        this._addProperties({type: "string", field: 'text', title: "label", lined:true});
     }
 
     get text() {
@@ -3652,6 +3652,11 @@ class frBandElement extends frPrint { // jshint ignore:line
 
     _bandEditor() {
        this.UIBuilder.bandBrowse(this._report, this._bands, (value) => {
+            for (let i =0;i<value.length;i++){
+                if(value[i].text){
+                    if(value[i].text.includes("\n") || value[i].text.includes("\r")) super.wrap = true;
+                }
+            }
             this._bands = value;
             this._columns = value.length;
             this._fixColumns();
@@ -4645,13 +4650,12 @@ class UI { // jshint ignore:line
         textSpan.style.display = "none";
         body.appendChild(textSpan);
 
-        const textInput = document.createElement('input');
-        textInput.type = "input";
-        textInput.style.display = "none";
-        textInput.addEventListener("change", () => {
-            newField.text = textInput.value;
+        const textArea = document.createElement('textarea');
+        textArea.style.display = "none";
+        textArea.addEventListener("change", () => {
+            newField.text = textArea.value;
         });
-        body.appendChild(textInput);
+        body.appendChild(textArea);
 
         const functionButton =this.createButtons(["Edit Function"])[0];
         functionButton.style.display = "none";
@@ -4680,22 +4684,22 @@ class UI { // jshint ignore:line
             let option = select.selectedOptions[0];
             if (select.selectedIndex === 0) {
                 textSpan.style.display = "";
-                textInput.style.display = "";
+                textArea.style.display = "";
                 functionButton.style.display = "none";
                 if (typeof newField.text === 'undefined') {
                     newField.text = "";
                 }
-                textInput.value = newField.text;
+                textArea.value = newField.text;
             } else if (select.selectedIndex === 1) {
                 textSpan.style.display = "none";
-                textInput.style.display = "none";
+                textArea.style.display = "none";
                 functionButton.style.display = "";
                 if (typeof newField.function === 'undefined') {
                     newField.function = {type: "function", async: false, function: "", name: "Band Function" };
                 }
             } else {
                 textSpan.style.display = "none";
-                textInput.style.display = "none";
+                textArea.style.display = "none";
                 functionButton.style.display = "none";
                 if (typeof option.dataSet !== 'undefined') {
                     // TODO - Future; check to see where the band is located; we could auto-set 'field' to 'parentData'
@@ -5353,9 +5357,9 @@ class UI { // jshint ignore:line
             let text = textArea.value;
             if (typeof ok === 'function') {
                 if (async !== null && asyncCheckbox.checked) {
-                      if (text.indexOf('done()') < 0) {
-                          text += "; done();";
-                      }
+                    if (text.indexOf('done()') < 0) {
+                        text += "; done();";
+                    }
                 }
                 ok(text, nameValue ? nameValue.value : null, async == null ? null : asyncCheckbox.checked, disabled == null ? null : skipCheckbox.checked );
             }
@@ -5416,6 +5420,41 @@ class UI { // jshint ignore:line
             d.hide();
             if (typeof ok === 'function') {
                 ok(data, include == null ? null : includeCheckbox.checked );
+            }
+        });
+        buttons[1].addEventListener('click', () => {
+            d.hide();
+            if (typeof cancel === 'function') {
+                cancel();
+            }
+        });
+    }
+
+    stringEditor(data, ok, cancel) {
+        const body = document.createElement('div');
+        const textArea = document.createElement('textarea');
+        textArea.style.border = "solid black 1px";
+        textArea.style.margin = "5px";
+        textArea.style.marginLeft = "15px";
+        textArea.style.height = "200px";
+        textArea.style.width = "475px";
+        textArea.style.maxWidth = "475px";
+        textArea.value = data;
+        // Add Text Area
+        body.appendChild(textArea);
+        body.appendChild(document.createElement("br"));
+
+        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let btnContainer = document.createElement('div');
+        btnContainer.appendChild(buttons[0]);
+        btnContainer.appendChild(buttons[1]);
+        body.appendChild(btnContainer);
+
+        let d = new Dialog("String Editor", body, this.hostElement);
+        buttons[0].addEventListener('click', () => {
+            d.hide();
+            if (typeof ok === 'function') {
+                ok(textArea.value);
             }
         });
         buttons[1].addEventListener('click', () => {
@@ -6271,9 +6310,9 @@ class UI { // jshint ignore:line
                             case 'string':
                             case 'number':
                                 input = document.createElement('input');
-                                input.type = typeof value === 'number' ? 'number' : 'input';
+                                input.type = propType === 'number' ? 'number' : 'text';
                                 input.style.margin = "1px";
-                                if (prop.functionable === true) {
+                                if (prop.functionable === true || prop.lined) {
                                     input.style.width = "calc(100% - 20px)";
                                 }
                                 input.className = "frPropInput";
@@ -6289,6 +6328,9 @@ class UI { // jshint ignore:line
                                 td2.appendChild(input);
                                 if (prop.functionable === true) {
                                     td2.appendChild(this._createFunctionSpan(obj, prop, layout));
+                                }
+                                else if (prop.lined === true){
+                                    td2.appendChild(this._createTextEditorSpan(obj, prop, layout));
                                 }
                                 input.value = obj[prop.field] || "";
                                 break;
@@ -6424,6 +6466,22 @@ class UI { // jshint ignore:line
             });
         });
         return functionSpan;
+    }
+    _createTextEditorSpan(obj, prop, layout) {
+        const EditorSpan = document.createElement('span');
+        EditorSpan.style.position = "absolute";
+        EditorSpan.style.right = "4px";
+        EditorSpan.style.marginTop = "4px";
+        EditorSpan.className = "frIcon frIconClickable";
+        EditorSpan.innerText = "Tt";
+        EditorSpan.style.border = "solid black 1px";
+        EditorSpan.addEventListener("click", () => {
+            this.stringEditor(obj[prop.field],  (result) => {
+                if (obj[prop.field] !== result) obj[prop.field] = result;
+                this.showProperties(layout.trackProperties, layout, true);
+            });
+        });
+        return EditorSpan;
     }
 
     createButtons(buttons, styles) {
