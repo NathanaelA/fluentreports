@@ -3205,7 +3205,7 @@ class frPrint extends frTitledLabel {
 
     _parseElement(data) {
         this._copyProperties(data, this, ["x", "y", "addX", "addY", "fontBold", "fontItalic", "fill", "textColor",
-            "link", "border", "wrap", "rotate", "align"]);
+            "link", "border", "wrap", "rotate", "align","fontSize"]);
     }
 
     _saveProperties(props) {
