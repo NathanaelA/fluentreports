@@ -169,6 +169,8 @@ class FluentReportsGenerator {
         this._resetPaperSizeLocation();
     }
 
+    get formatterFunctions(){ return this._formatterFunctions;};
+    set formatterFunctions(val){ this._formatterFunctions = val;}
     /**
      * The Constructor
      * @param options
@@ -178,6 +180,43 @@ class FluentReportsGenerator {
         this._UIBuilder = UI;
 
         // Tracking Information
+        this._formatterFunctions =  [];
+        //JSON style functions.
+        if(options.report.formatterFunctions){
+            for (let i = 0; i < options.report.formatterFunctions.length; i++) {
+                let func = options.report.formatterFunctions[i];
+                this._formatterFunctions.push({
+                    name: func.name,
+                    function: func.function,
+                    type: func.type || "function",
+                    class: "string",
+                    async: true
+                })
+            }
+        }
+        //Actual functions.
+        if(options.formatterFunctions){
+            for(let i in options.formatterFunctions){
+                let found = false;
+                let functionData = {
+                    name: i,
+                    function: options.formatterFunctions[i],
+                    type: "function",
+                    class: "function",
+                    async: true
+                };
+                for(let j =0;j<this._formatterFunctions.length;j++){
+                    if(this._formatterFunctions[j].name === i){
+                        this._formatterFunctions[j] = functionData;
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found) {
+                    this._formatterFunctions.push(functionData);
+                }
+            }
+        }
         this._parentElement = null;
         this._includeCSS = options.css !== false;
         this._includeJS = options.js !== false;
@@ -599,6 +638,7 @@ class FluentReportsGenerator {
         // Clear our temporary data storage
         this._saveTemporaryData = null;
 
+        results.formatterFunctions = this._formatterFunctions;
         return results;
     }
 
@@ -3037,6 +3077,7 @@ class frPrint extends frTitledLabel {
         this._rotate = 0;
         this._align = 0;
         this._font = "times";
+        this._formatFunction = "none";
 
         this._fontSize = 0;
         this._opacity = 1.0;
@@ -3080,6 +3121,44 @@ class frPrint extends frTitledLabel {
                 {type: 'select', field: "align", default: "left", display: this._createAlignSelect.bind(this), destination: 'settings'},
                 {type: 'boolean', field: "wrap", default: false, destination: "settings"}
                 ]);
+
+        // Generates the data formatter select
+        if(report.formatterFunctions !== undefined) {
+            if (report.formatterFunctions.length > 0) {
+                const createFormatterSelect = () => {
+                    const curFormatter = this.formatFunction;
+                    let selectGroup = document.createElement('select');
+                    let formatterFunctions = report._formatterFunctions;
+                    let index = 1;
+                    let item = new Option("none", "" + index);
+                    if (curFormatter === "" + index || curFormatter === index) {
+                        item.selected = true;
+                    }
+                    selectGroup.appendChild(item);
+                    index++;
+                    for (let i = 0; i < formatterFunctions.length; i++) {
+                        if (typeof formatterFunctions[i].name !== "string" || formatterFunctions.length === 0) {
+                            continue;
+                        }
+                        let item = new Option(formatterFunctions[i].name, '' + (index));
+
+                        if (curFormatter === formatterFunctions[i].name || curFormatter === index) {
+                            item.selected = true;
+                        }
+                        selectGroup.appendChild(item);
+                        index++;
+                    }
+                    return selectGroup;
+                };
+                this._addProperties({
+                    type: 'select',
+                    field: "formatFunction",
+                    default: "none",
+                    display: createFormatterSelect,
+                    destination: 'settings'
+                });
+            }
+        }
     }
 
     _createFontSelect() {
@@ -3209,9 +3288,37 @@ class frPrint extends frTitledLabel {
         }
     }
 
+    get formatFunction() { return this._formatFunction; }
+    set formatFunction(val) {
+        let num =  parseInt(val,10);
+        let formatterFunctions = this._report.formatterFunctions;
+        if(""+val !== ""+num){
+            this._formatFunction = "none";
+            if(typeof formatterFunctions!=="undefined") {
+                for (let i = 0; i < formatterFunctions.length;i++) {
+                    if(formatterFunctions[i].name.toLowerCase() === val.toString().toLowerCase()){
+                        this._formatFunction = val;
+                    }
+                }
+            }
+        }
+        else {
+            num--;
+            this._formatFunction = "none";
+            if (num !== 0) {
+                let item = formatterFunctions[num - 1];
+                if (!item) {
+                    console.error("fluentReports: Unknown formatFunction", val);
+                } else {
+                    this._formatFunction = item.name || "FunctionHasNoName";
+                }
+            }
+        }
+    }
+
     _parseElement(data) {
         this._copyProperties(data, this, ["x", "y", "addX", "addY", "font", "fontSize", "fontBold", "fontItalic", "underline",
-            "strike", "fill", "textColor", "link", "border", "characterSpacing", "wordSpacing", "rotate", "align", "wrap", "width"]);
+            "strike", "fill", "textColor", "link", "border", "characterSpacing", "wordSpacing", "rotate", "align", "wrap", "width", "formatFunction"]);
     }
 
     _saveProperties(props) {
@@ -3289,6 +3396,7 @@ class frPrintFunction extends frPrint { // jshint ignore:line
         this.name = '';
         this._async = false;
         this.function = options && options.function || '';
+        this._deleteProperties(["formatFunction"]);
         this._addProperties(
             [{type: 'boolean', field: "async", default: false}, {type: 'string', field: "name"}]
         );
@@ -4439,11 +4547,50 @@ class UI { // jshint ignore:line
 
             return selectGroup;
         };
+        // Generates the data formatter select
+        const createFormatterSelect = () => {
+            const curFormatter = resultVariables[select.selectedIndex].formatFunction;
+            let selectGroup = document.createElement('select');
+            let formatterFunctions = report.formatterFunctions;
+            let index = 1;
+            let item = new Option("none", ""+index);
+            if (curFormatter === ""+index || curFormatter === index || curFormatter === "none") { item.selected = true; }
+            selectGroup.appendChild(item);
+            index++;
+            for(let i =0;i<formatterFunctions.length;i++){
+                if(typeof formatterFunctions[i].name !== "string" || formatterFunctions.length === 0){
+                    continue;
+                }
+                let item = new Option(formatterFunctions[i].name, ''+(index));
+                if (curFormatter === ""+index || curFormatter === index || curFormatter === formatterFunctions[i].name) { item.selected = true; }
+                selectGroup.appendChild(item);
+                index++;
+            }
+            return selectGroup;
+        };
 
         const toInt = (val) => { return parseInt(val, 10); };
         const toOpacity = (val) => { let x = parseFloat(val); if (isNaN(x)) { return 1.0; } if (x <  0.0) { return 0.0; } if (x > 1.0) { return 1.0; } return x;};
 
-        const properties = [
+        let properties = [];
+        if(report.formatterFunctions !== undefined) {
+            if (report.formatterFunctions.length > 0) {
+                properties.push({
+                    type: 'select',
+                    field: "formatFunction",
+                    translate:(val)=>{
+                        let num = toInt(val);
+                        if(report.formatterFunctions[num-2]){
+                            return report.formatterFunctions[num-2].name;
+                        }
+                        return "none";
+                    },
+                    default: "none",
+                    display: createFormatterSelect
+                });
+            }
+        }
+         properties = properties.concat([
             {type: 'number', field: "width", functionable: true},
             {type: 'select', field: "align", translate: toInt, default: "left", display: createAlignSelect},
             {type: 'string', field: "textColor", default: "", functionable: true},
@@ -4454,7 +4601,7 @@ class UI { // jshint ignore:line
             {type: 'number', field: "characterSpacing", title: 'Char Spacing', default: 0, translate: toInt },
             {type: 'number', field: 'wordSpacing', default: 0, translate: toInt },
             {type: 'number', field: 'opacity', default: 1.0, translate: toOpacity}
-        ];
+        ]);
 
 
         selectDiv.appendChild(select);
@@ -5367,9 +5514,9 @@ class UI { // jshint ignore:line
             let text = textArea.value;
             if (typeof ok === 'function') {
                 if (async !== null && asyncCheckbox.checked) {
-                    if (text.indexOf('done()') < 0) {
-                        text += "; done();";
-                    }
+                      if (text.indexOf('done(') < 0) {
+                          text += "; done();";
+                      }
                 }
                 ok(text, nameValue ? nameValue.value : null, async == null ? null : asyncCheckbox.checked, disabled == null ? null : skipCheckbox.checked );
             }
@@ -6196,8 +6343,19 @@ class UI { // jshint ignore:line
     }
 
     _handleShowProperties(props, obj, table, layout) {
+        let propertyToSkip = -1;
+        if(obj.text !== undefined || obj.function !== undefined){
+            let newObj = shallowClone(obj);
+            delete newObj.formatFunction;
+            for(let i=0;i<newObj.properties.length;i++){
+                if(newObj.properties[i].field === "formatFunction"){
+                    propertyToSkip = i;
+                }
+            }
+        }
         for (let i = 0; i < props.length; i++) {
             if (props[i] && props[i].skip === true) { continue; }
+            if(propertyToSkip === i) continue;
             let name =this._getShowPropertyId(props[i],obj);
             let tr = layout.querySelector("#"+name);
             if (!tr) {
