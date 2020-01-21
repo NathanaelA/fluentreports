@@ -2081,7 +2081,7 @@ class frElement { // jshint ignore:line
         this._properties = [
             {type: 'number', field: 'top', default: 0, destination: "settings"},
             {type: 'number', field: 'left', default: 0, destination: "settings"},
-            {type: 'string', field: 'width', default: 0, destination: "settings"},
+            {type: 'number', field: 'width', default: 0, destination: "settings"},
             {type: 'number', field: 'height', default: 0, destination: "settings"}
             ];
         this.frElements.push(this);
@@ -3063,11 +3063,11 @@ class frPrint extends frTitledLabel {
                 {type: 'number', field: "addX", default: 0, destination: "settings"},
                 {type: 'number', field: "addY", default: 0, destination: "settings"},
                 {type: 'select', field: "font", default: "times", display: this._createFontSelect.bind(this), destination: 'settings'},
-                {type: 'number', field: 'fontSize', default: 0, destination: 'settings'},
-                {type: 'boolean', field: "fontBold", default: false, destination: "settings"},
-                {type: 'boolean', field: "fontItalic", default: false, destination: "settings"},
-                {type: 'boolean', field: 'underline', title: "Underline", default: false, destination: 'settings'},
-                {type: 'boolean', field: 'strike', title: "Strikethrough", default: false, destination: 'settings'},
+                {type: 'number', field: 'fontSize', functionable: true, default: 0, destination: 'settings'},
+                {type: 'boolean', field: "fontBold", functionable: true, default: false, destination: "settings"},
+                {type: 'boolean', field: "fontItalic", functionable: true, default: false, destination: "settings"},
+                {type: 'boolean', field: 'underline', functionable: true, title: "Underline", default: false, destination: 'settings'},
+                {type: 'boolean', field: 'strike', functionable: true, title: "Strikethrough", default: false, destination: 'settings'},
                 {type: 'string', field: "fill", functionable: true, default: "", destination: "settings"},
                 {type: 'string', field: "textColor", functionable: true, default: "", destination: "settings"},
                 {type: 'string', field: "link", functionable: true, default: "", destination: "settings"}, 
@@ -4444,9 +4444,13 @@ class UI { // jshint ignore:line
         const toOpacity = (val) => { let x = parseFloat(val); if (isNaN(x)) { return 1.0; } if (x <  0.0) { return 0.0; } if (x > 1.0) { return 1.0; } return x;};
 
         const properties = [
-            {type: 'string', field: "width", functionable: true},
+            {type: 'number', field: "width", functionable: true},
             {type: 'select', field: "align", translate: toInt, default: "left", display: createAlignSelect},
             {type: 'string', field: "textColor", default: "", functionable: true},
+            {type: 'boolean', field: "fontBold", title:"bold", default: false, functionable: true},
+            {type: 'boolean', field: "fontItalic", title:"italic", default: false, functionable: true},
+            {type: 'boolean', field: "underline", default: false, functionable: true},
+            {type: 'boolean', field: "strike", title:"strikethrough", default: false, functionable: true},
             {type: 'number', field: "characterSpacing", title: 'Char Spacing', default: 0, translate: toInt },
             {type: 'number', field: 'wordSpacing', default: 0, translate: toInt },
             {type: 'number', field: 'opacity', default: 1.0, translate: toOpacity}
@@ -6466,9 +6470,19 @@ class UI { // jshint ignore:line
         functionSpan.innerText = "\ue81f";
         functionSpan.style.border = "solid black 1px";
         functionSpan.addEventListener("click", () => {
-           this.functionEditor("return '"+obj[prop.field]+"';", null,null, null, (result) => {
+            let defaultSource = 'return ';
+            switch (prop.type){
+                case 'boolean':
+                case 'number':
+                    defaultSource += obj[prop.field] || prop.default;
+                    break;
+                default:
+                    defaultSource += "'"+(obj[prop.field] || prop.default || null)+"'";
+                    break;
+            }
+            this.functionEditor(defaultSource + ";", null, null, null, (result) => {
                 obj[prop.field] = {type: 'function', name: 'Function', function: result, async: false};
-               this.showProperties(layout.trackProperties, layout, true);
+                this.showProperties(layout.trackProperties, layout, true);
             });
         });
         return functionSpan;
