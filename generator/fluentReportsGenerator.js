@@ -2833,14 +2833,20 @@ class frBandLine extends  frTitledLabel { // jshint ignore:line
         this.label = "----(auto-sized to prior printed band, thickness: "+this._thickness+"px)----";
     }
 
+    get gap() { return this._verticalGap; }
+    set gap(val) {
+        this._verticalGap = parseInt(val,10);
+    }
+
 
     constructor(report, parent, options={}) {
         super(report, parent, options);
         this._thickness = 1.0;
+        this._verticalGap = 0;
         this.elementTitle = "Band Line";
         this.label = "----(auto-width to prior printed band, thickness: 1.0px)----";
         this._deleteProperties(["top", "left", "width", "height"]);
-        this._addProperties({type: 'number', field: "thickness", default: 0});
+        this._addProperties([{type: 'number', field: "thickness", default: 0},{type: 'number', field: "gap", default: 0}]);
 
         super.width = "120px";
     }
