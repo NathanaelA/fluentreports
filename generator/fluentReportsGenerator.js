@@ -181,42 +181,6 @@ class FluentReportsGenerator {
 
         // Tracking Information
         this._formatterFunctions =  [];
-        //JSON style functions.
-        if(options.report.formatterFunctions){
-            for (let i = 0; i < options.report.formatterFunctions.length; i++) {
-                let func = options.report.formatterFunctions[i];
-                this._formatterFunctions.push({
-                    name: func.name,
-                    function: func.function,
-                    type: func.type || "function",
-                    class: "string",
-                    async: true
-                })
-            }
-        }
-        //Actual functions.
-        if(options.formatterFunctions){
-            for(let i in options.formatterFunctions){
-                let found = false;
-                let functionData = {
-                    name: i,
-                    function: options.formatterFunctions[i],
-                    type: "function",
-                    class: "function",
-                    async: true
-                };
-                for(let j =0;j<this._formatterFunctions.length;j++){
-                    if(this._formatterFunctions[j].name === i){
-                        this._formatterFunctions[j] = functionData;
-                        found = true;
-                        break;
-                    }
-                }
-                if(!found) {
-                    this._formatterFunctions.push(functionData);
-                }
-            }
-        }
         this._parentElement = null;
         this._includeCSS = options.css !== false;
         this._includeJS = options.js !== false;
@@ -279,6 +243,9 @@ class FluentReportsGenerator {
             {type: 'button', title: 'Data', click: this._setData.bind(this)}
         ];
 
+        if(options.formatterFunctions){
+            this.setConfig('formatterFunctions',options.formatterFunctions);
+        }
 
         if (options.scale) {
             this.setConfig('scale', options.scale);
@@ -333,6 +300,27 @@ class FluentReportsGenerator {
     setConfig(option, value) {
         if (value == null) { return; }
         switch (option) {
+            case 'formatterFunctions':
+                for(let i in value){
+                    let found = false;
+                    let functionData = {
+                        name: i,
+                        function: value[i],
+                        class: "function",
+                    };
+                    //Pure functions take priority over JSON functions and override any existing functions.
+                    for(let j =0;j<this._formatterFunctions.length;j++){
+                        if(this._formatterFunctions[j].name === i){
+                            this._formatterFunctions[j] = functionData;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if(!found) {
+                        this._formatterFunctions.push(functionData);
+                    }
+                }
+                break;
             case 'scale':
                 this._scale = parseFloat(value);
                 if (isNaN(this._scale)) { this._scale = 1.5; }
@@ -496,7 +484,7 @@ class FluentReportsGenerator {
             tempReport = {
                 type: "report",
                 header: {type: "raw", values: ["Sample Header"]},
-                detail: {type: "text", text: "Welcome to fluentReports"},
+                detail: {type: "print", text: "Welcome to fluentReports"},
                 footer: {type: "raw", values: ["Sample Footer"]}
             };
             this._data = [];
@@ -507,13 +495,13 @@ class FluentReportsGenerator {
                 footer: {type: "raw", values: ["Sample Footer"]}
             };
             if (this.reportFields.titles.length === 1) {
-                tempReport.detail = {type: "text", text: "Welcome to fluentReports"};
+                tempReport.detail = {type: "print", text: "Welcome to fluentReports"};
             } else {
                 let src = tempReport;
                 for (let i=1;i<this.reportFields.titles.length;i++) {
                     src.subReport = {type: 'report', dataType: 'parent', data: this.reportFields.titles[i]};
                     if (i === this.reportFields.titles.length-1) {
-                        src.subReport.detail = {type: "text", text: "Welcome to fluentReports"};
+                        src.subReport.detail = {type: "print", text: "Welcome to fluentReports"};
                     }
                     src = src.subReport;
                 }
@@ -537,6 +525,39 @@ class FluentReportsGenerator {
 
         // TODO: Add any missing properties
         this._copyProperties(report, this, ["name", "fontSize", "autoPrint", "paperSize", "paperOrientation"]);
+
+        //Does it include formmatterFunctions?
+        if (report.formatterFunctions) {
+            for (let i = 0; i < report.formatterFunctions.length; i++) {
+                let func = report.formatterFunctions[i];
+                if(func.function) {
+                    let found = false;
+                    for (let j = 0; j < this._formatterFunctions.length; j++) {
+                        if (this._formatterFunctions[j].name === func.name) {
+                            //Update the function if it's a JSON style function.
+                            if (this._formatterFunctions[j].class === "string") {
+                                this._formatterFunctions[j] = {
+                                    name: func.name,
+                                    function: func.function,
+                                    type: func.type || "function",
+                                    class: "string",
+                                };
+                            }
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        this._formatterFunctions.push({
+                            name: func.name,
+                            function: func.function,
+                            class: "string",
+                        })
+                    }
+                }
+            }
+        }
+
 
         // Does report come with its own data?
         if (Array.isArray(report.data)) {
@@ -638,7 +659,13 @@ class FluentReportsGenerator {
         // Clear our temporary data storage
         this._saveTemporaryData = null;
 
-        results.formatterFunctions = this._formatterFunctions;
+        let jsonOnlyFunctions = [...this._formatterFunctions];
+        for(let i =0;i<jsonOnlyFunctions.length;i++){
+            if(jsonOnlyFunctions[i].class === "function"){
+                jsonOnlyFunctions.splice(i,1);
+            }
+        }
+        results.formatterFunctions = jsonOnlyFunctions;
         return results;
     }
 
@@ -1181,6 +1208,7 @@ class FluentReportsGenerator {
         topLayer.appendChild(close);
 
         const reportData =  options.report || this._generateSave();
+        reportData.formatterFunctions = this._formatterFunctions;
         const data = options.data || this._data;
 
         let pipeStream = new window.fluentReports.BlobStream();
@@ -6345,10 +6373,8 @@ class UI { // jshint ignore:line
     _handleShowProperties(props, obj, table, layout) {
         let propertyToSkip = -1;
         if(obj.text !== undefined || obj.function !== undefined){
-            let newObj = shallowClone(obj);
-            delete newObj.formatFunction;
-            for(let i=0;i<newObj.properties.length;i++){
-                if(newObj.properties[i].field === "formatFunction"){
+            for (let i = 0; i < props.length; i++) {
+                if (props[i].field === "formatFunction") {
                     propertyToSkip = i;
                 }
             }

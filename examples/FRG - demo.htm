@@ -1,0 +1,289 @@
+<head>
+    <meta charset="utf-8">
+    <title>fluentReports</title>
+    <meta name="description" content="Node and Browser based Reporting engine">
+    <meta name="keywords" content="fluentReports pdf report development data driven javascript engine node node.js io.js browser chrome firefox safari">
+    <meta name="author" content="Nathanael Anderson">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="./fluentReportsGenerator.js"></script>
+    <style type="text/css" media="screen">
+        body {
+            background-color: #c9c9c9;
+        }
+        #fluentReportsEditor {
+            border: solid black 1px;
+            height: 500px;
+            zwidth: 1136px;
+        }
+    </style>
+</head>
+<body>
+  <div>Report Generator</div>
+  <div id="fluentReportsEditor"></div>
+  <pre id="results"></pre>
+  <!-- div><a href="#">Display &#9166; &#8661; &#8597; </a></div-->
+</body>
+<script>
+    const data = [
+        {id: 1, name: "John Doe", emphours: [
+                {week: 20, day: "Monday", hours: 4},
+                {week: 20, day: "Tuesday", hours: 8},
+                {week: 20, day: "Wednesday", hours: 8},
+                {week: 21, day: "Thursday", hours: -2},
+                {week: 21, day: "Friday", hours: 8},
+
+                {week: 22, day: "Monday", hours: 4},
+                {week: 22, day: "Tuesday", hours: 8},
+                {week: 22, day: "Wednesday", hours: 8},
+                {week: 23, day: "Thursday", hours: 2},
+                {week: 23, day: "Friday", hours: 8},
+
+                {week: 25, day: "Monday", hours: 4},
+                {week: 25, day: "Tuesday", hours: 8},
+                {week: 25, day: "Wednesday", hours: 8},
+                {week: 26, day: "Thursday", hours: 2},
+                {week: 26, day: "Friday", hours: 8}
+            ]},
+        {id: 3, name: "Sarah Williams", emphours: [
+                {week:20, day: "Monday", hours: 8}
+            ]},
+        {id: 5, name: "Jane Doe", emphours: [
+                {week: 20, day: "Monday", hours: 5},
+                {week: 20, day: "Tuesday", hours: 8},
+                {week: 21, day: "Wednesday", hours: 7},
+                {week: 21, day: "Thursday", hours: 8},
+                {week: 21, day: "Friday", hours: 8},
+
+                {week: 22, day: "Monday", hours: 5},
+                {week: 22, day: "Tuesday", hours: 8},
+                {week: 23, day: "Wednesday", hours: 7},
+                {week: 23, day: "Thursday", hours: 8},
+                {week: 23, day: "Friday", hours: 8},
+
+                {week: 25, day: "Monday", hours: 5},
+                {week: 25, day: "Tuesday", hours: 8},
+                {week: 26, day: "Wednesday", hours: 7},
+                {week: 26, day: "Thursday", hours: 8},
+                {week: 26, day: "Friday", hours: 8}
+            ]}
+    ];
+    let dayNumber = function(data){
+        return "Day Number: "+data.day;
+    };
+    let reportData = {
+        "type": "report",
+        "dataSet": 0,
+        "fontSize": 8,
+        "autoPrint": false,
+        "name": "demo19.pdf",
+        "paperSize": "letter",
+        "paperOrientation": "portrait",
+        "fonts": [],
+        "variables": {
+            "counter": 0
+        },
+        "pageHeader": [
+            {
+                "type": "raw",
+                "values": [
+                    "Employee Hours"
+                ]
+            }
+        ],
+        "groupBy": [
+            {
+                "type": "group",
+                "groupOn": "name",
+                "header": [
+                    {
+                        "field": "name",
+                        "settings": {
+                            "formatFunction": "NameDisplay",
+                            "fontBold": true,
+                            "fill": "#6f6f6f",
+                            "textColor": "#ffffff",
+                            "link": "http://www.fluentReports.com/"
+                        },
+                        "type": "print"
+                    }
+                ],
+                "detail": [],
+                "footer": [
+                    {
+                        "type": "calculation",
+                        "op": "concat",
+                        "name": "totals",
+                        "fields": [
+                            {
+                                "text": "Totals for "
+                            },
+                            {
+                                "field": "name"
+                            }
+                        ]
+                    },
+                    {
+                        "settings": {
+                            "fillOpacity": 1,
+                            "align": 0
+                        },
+                        "type": "band",
+                        "fields": [
+                            {
+                                "function": {
+                                    "type": "function",
+                                    "name": "Totals for data.name",
+                                    "function": "return `Totals for ${data.name}`",
+                                    "async": false
+                                },
+                                "width": 180
+                            },
+                            {
+                                "total": "hours",
+                                "width": 100,
+                                "align": 3
+                            }
+                        ]
+                    },
+                    {
+                        "type": "newLine"
+                    }
+                ]
+            }
+        ],
+        "subReport": {
+            "dataSet": 1,
+            "groupBy": [
+                {
+                    "type": "group",
+                    "groupOn": "week",
+                    "header": [
+                        {
+                            "skip": true,
+                            "type": "function",
+                            "function": "vars.counter=0;",
+                            "async": false,
+                            "name": "counter reset"
+                        },
+                        {
+                            "async": true,
+                            "name": "Print Function",
+                            "settings": {
+                                "x": 100
+                            },
+                            "function": {
+                                "function": "done(`Week Number: ${data.week}`);",
+                                "type": "function",
+                                "async": true,
+                                "name": "Print Function"
+                            },
+                            "type": "print"
+                        }
+                    ],
+                    "detail": [],
+                    "footer": [
+                        {
+                            "type": "newLine"
+                        }
+                    ]
+                }
+            ],
+            "type": "report",
+            "detail": [
+                {
+                    "type": "function",
+                    "function": "vars.counter++;",
+                    "name": "increase counter"
+                },
+                {
+                    "settings": {
+                        "fillOpacity": 1,
+                        "fill": {
+                            "type": "function",
+                            "function": "return (vars.counter % 2 === 0 ? '#f0f0f0' : '#e0e0e0');",
+                            "name": "fill"
+                        },
+                        "textColor": "#0000ff",
+                        "align": 0,
+                        "wrap": true
+                    },
+                    "type": "band",
+                    "fields": [
+                        {
+                            "text": "",
+                            "width": 80
+                        },
+                        {
+                            "field": "day",
+                            "width": 100
+                        },
+                        {
+                            "field": "hours",
+                            "width": 100,
+                            "align": 3,
+                            "textColor": {
+                                "type": "function",
+                                "function": "return data.hours < 0 ? '#FF0000' : '#000000';",
+                                "name": "textColor"
+                            },
+                            "formatFunction": "NumberFunction"
+                        }
+                    ]
+                }
+            ],
+            "dataType": "parent",
+            "data": "emphours",
+            "calcs": {
+                "sum": [
+                    "hours"
+                ]
+            }
+        },
+        "finalSummary": [
+            {
+                "type": "raw",
+                "values": [
+                    "Total Hours:",
+                    "hours",
+                    3
+                ]
+            }
+        ],
+        "formatterFunctions": [
+            {
+                "name": "NameDisplay",
+                "function": "callback('Name: ' + row.name)",
+            },
+            {
+                "name": "HoursDisplay",
+                "function": "callback('Hours: ' + input)",
+            }
+        ]
+    };
+
+
+        const frg = new FluentReportsGenerator({
+            id: "fluentReportsEditor",
+            data: data,
+            report: reportData,
+            debug: true,
+            formatterFunctions: {
+                'NumberFunction': function(input, data, callback) {
+                    if(input !== Math.round(input)){
+                        callback(input);
+                    }
+                    callback (input + '.0');
+                }
+            },
+            save: (value, done) => {
+                console.log("Saving");
+                const results = document.getElementById("results");
+                results.innerText = JSON.stringify(value, null, 4);
+                done();
+            }
+        });
+</script>
+
+
+
+
