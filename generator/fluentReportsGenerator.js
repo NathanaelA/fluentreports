@@ -20,7 +20,7 @@ class FluentReportsGenerator {
     get sectionConstrainer() { return this._sectionConstrainer; }
     // noinspection JSUnusedGlobalSymbols
     get reportData() { return this._reportData; }
-    get reportFields() { return this._fields; }
+    get reportFields() { return this._parsedData; }
     get reportCalculations() { return this._calculations; }
     get reportVariables() { return this._reportData.variables;}
     get reportTotals() { return this._totals; }
@@ -141,7 +141,7 @@ class FluentReportsGenerator {
 
     /**
      * Set/Get report
-     * @returns {{type: string, dataSet: number}}
+     * @returns {{type: string}}
      */
     get report() {
         return this._generateSave();
@@ -182,9 +182,8 @@ class FluentReportsGenerator {
         this._includeCSS = options.css !== false;
         this._includeJS = options.js !== false;
         this._builtUI = false;
-        this._fields = {primary: [], levels: 0, titles: []};
+
         this._reportData = {header: [], footer: [], detail: [], variables: {}};
-        this._data = null;
         this._reportScroller = null;
         this._reportLayout = null;
         this._toolBarLayout = null;
@@ -196,15 +195,19 @@ class FluentReportsGenerator {
         this._scale = 1.5;
         this._frElements = [];
         this._frSections = [];
+
         this._registeredFonts = [];
         this._includeData = false;
+        this._data = [];
+        this._parsedData = new frReportData([], null, "primary");
+
 
         // Internal Data for UI
         this._calculations = [];
         this._totals = {};
         this._functions = [];
         this._groupBys = [];
-        this._subReports = {};
+        this._subReports = [];
 
         this._saveFunction = (value, done) => { done(); };
         this._previewFunction = null;
@@ -261,8 +264,8 @@ class FluentReportsGenerator {
             // TODO - FUTURE: Maybe save & verify report based on parsed data to verify data layout being sent into
             //      - editor matches the report layout's last data, and so we have the field layout in the event no data is passed in.
             this._parseReport(options.report);
-        } else if (options.blankReport) {
-            this.newBlankReport();
+        } else if (options.blankReport === 2) {
+            this.newBlankReport(typeof options.data === 'undefined');
         } else {
             this._createReportOnData();
         }
@@ -427,61 +430,71 @@ class FluentReportsGenerator {
         if (data.length < 1) {
             throw new Error("fluentReports: Invalid dataset, should have at least one record");
         }
-        // Reset to No Data Dictionary
-        this._fields = {primary: [], levels: 0, titles: []};
 
         this._data = data;
 
-        // Lets create the data Dictionary
-        this._parseDataLevel(data[0], 'primary','primary', 0);
+        this._parsedData = new frReportData(data, null, "primary");
     }
 
     /**
      * Creates a dummy report based on the data, if you haven't passed in a report.
      * @private
      */
-    newBlankReport() {
+    newBlankReport(clearData= true) {
         const tempReport = {
             type: "report",
             header: [],
             detail: [],
             footer: []
         };
-        this._data = [];
+        if (clearData) {
+            this.data = [];
+        }
         this._parseReport(tempReport);
     }
 
     _createReportOnData() {
         let tempReport;
-        if (this._data === null || this._data.length === 0) {
+
+        if (this._data.length === 0) {
             tempReport = {
                 type: "report",
                 header: {type: "raw", values: ["Sample Header"]},
                 detail: {type: "text", text: "Welcome to fluentReports"},
                 footer: {type: "raw", values: ["Sample Footer"]}
             };
-            this._data = [];
         } else {
             tempReport = {
                 type: "report",
                 header: {type: "raw", values: ["Sample Header"]},
                 footer: {type: "raw", values: ["Sample Footer"]}
             };
-            if (this.reportFields.titles.length === 1) {
+            if (this.reportFields.childrenIndexed.length === 0) {
                 tempReport.detail = {type: "text", text: "Welcome to fluentReports"};
             } else {
-                let src = tempReport;
-                for (let i=1;i<this.reportFields.titles.length;i++) {
-                    src.subReport = {type: 'report', dataType: 'parent', data: this.reportFields.titles[i]};
-                    if (i === this.reportFields.titles.length-1) {
-                        src.subReport.detail = {type: "text", text: "Welcome to fluentReports"};
-                    }
-                    src = src.subReport;
-                }
+                this._createReportOnChildData(tempReport, this.reportFields.childrenIndexed);
             }
 
         }
         this._parseReport(tempReport);
+    }
+
+    _createReportOnChildData(src, children) {
+        if (!Array.isArray(src.subReport)) {
+            src.subReport = [];
+        }
+        for (let i=0;i<children.length;i++) {
+            let curReport = {type: 'report', dataType: 'parent', data: children[i].name};
+            src.subReport.push(curReport);
+
+            // Check for sub-children
+            let newChildren = children[i].childrenIndexed;
+            if (newChildren.length) {
+                this._createReportOnChildData(curReport, newChildren);
+            } else {
+                curReport.detail = {type: "text", text: "Welcome to fluentReports"};
+            }
+        }
     }
 
     /**
@@ -492,12 +505,10 @@ class FluentReportsGenerator {
         this._reportData = report;
         if (this._builtUI) {
             this._clearReport();
-            // Create the Sections
-            this._generateReportLayout(this._reportData, 57, "", 0);
-        }
 
-        // TODO: Add any missing properties
-        this._copyProperties(report, this, ["name", "fontSize", "autoPrint", "paperSize", "paperOrientation"]);
+            // Create the Sections
+            this._generateReportLayout(this._reportData, 57, "", this._parsedData.dataUUID);
+        }
 
         // Does report come with its own data?
         if (Array.isArray(report.data)) {
@@ -518,46 +529,80 @@ class FluentReportsGenerator {
             this._marginLeft = report.margins.left || 72;
         }
 
+        // TODO: Add any missing properties
+        this._copyProperties(report, this, ["name", "fontSize", "autoPrint", "paperSize", "paperOrientation"]);
+
         if (this._builtUI) {
             this._reportSettings();
         }
     }
 
+
+    _generateChildSave(dataSet, results) {
+        let groupSections=[];
+        for (let i=0;i<this._frSections.length;i++) {
+            if (this._frSections.dataUUID !== dataSet.dataUUID) { continue; }
+            if (this._frSections[i].isSubReport) {
+                if (!Array.isArray(results.subReport)) { results.subReport = []; }
+                this._frSections[i]._generateSave(results);
+            } else {
+                groupSections.push(this._frSections[i]);
+            }
+        }
+
+        // Handle Groups
+        for (let i=0;i<groupSections.length;i++) {
+
+        }
+
+    }
+
+
     /**
      * Starts generating the save data
-     * @returns {{type: string, dataSet: number}}
+     * @returns {{type: string, dataUUID: number}}
      * @private
      */
     _generateSave() {
         // Setup our temporary data storage
-        this._saveTemporaryData = {reports: []};
+        this._saveTemporaryData = {reports: {}};
 
-        const results = {type: 'report', dataSet: 0};
+        const results = {type: 'report', dataUUID: this._parsedData.dataUUID};
         this._copyProperties(this, results, ["fontSize", "autoPrint", "name", "paperSize", "paperOrientation"]);
         if (this._marginBottom !== 72 || this._marginTop !== 72 || this._marginLeft !== 72 || this._marginRight !== 72) {
             results.margins = {left: this._marginLeft, top: this._marginTop, right: this._marginRight, bottom: this._marginBottom};
         }
 
-        this._saveTemporaryData.reports.push(results);
+        this._saveTemporaryData.reports[this._parsedData.dataUUID] = results;
 
         results.fonts = this.additionalFonts;
         results.variables = shallowClone(this.reportVariables);
-        
+
+        this._generateChildSave(this._parsedData, results);
+
         // Save the Sections
+        // This actually generates a subreport/group info key
         for (let i=0;i<this._frSections.length;i++) {
                 this._frSections[i]._generateSave(results);
         }
         
-        // Save the Totals..
-        for (let i=0;i<this._saveTemporaryData.reports.length;i++) {
-            this._saveTotals(this._saveTemporaryData.reports[i], this._saveTemporaryData.reports[i].dataSet);
+        // Save the Totals..{type: 'report', detail: [], dataUUID: }
+        for (let key in this._saveTemporaryData.reports) {
+            if (this._saveTemporaryData.reports.hasOwnProperty(key)) {
+                this._saveTotals(this._saveTemporaryData.reports[key], this._saveTemporaryData.reports[key].dataUUID);
+            }
         }
 
         // Update groups data with any Groups that have no actual sections
         for (let i=0;i<this._groupBys.length;i++) {
-            let curData = this._saveTemporaryData.reports[this._groupBys[i].dataSet];
             let found = false;
-            if (curData.groupBy) {
+            let curData = this._saveTemporaryData.reports[this._groupBys[i].dataUUID];
+            let dataSet = this._parsedData.findByUUID(this._groupBys[i].dataUUID);
+
+            if (!curData) {
+                curData = {type: 'report', dataUUID: this._groupBys[i].dataUUID, dataType: 'parent', data: dataSet.name, groupBy: []};
+                this._saveTemporaryData.reports[this._groupBys[i].dataUUID] = curData;
+            } else if (curData.groupBy) {
                 for (let j = 0; j < curData.groupBy.length; j++) {
                     if (curData.groupBy[j].groupOn === this._groupBys[i].name) {
                         found = true;
@@ -572,11 +617,15 @@ class FluentReportsGenerator {
             }
         }
 
+        // TODO: Is this needed????
         // Remove Groups in Report, that no longer exist in the groupby data
-        for (let i=0;i<this._saveTemporaryData.reports.length;i++) {
-            let curData = this._saveTemporaryData.reports[i];
+        for (let key in this._saveTemporaryData.reports) {
+            if (!this._saveTemporaryData.reports.hasOwnProperty(key)) { continue; }
+            let curData = this._saveTemporaryData.reports[key];
+
             // No Groups; proceed to the next one...
             if (!curData.groupBy) { continue; }
+
             for (let j=0;j<curData.groupBy.length;j++) {
                 let found = false;
                 for (let k=0;k<this._groupBys.length;k++) {
@@ -585,6 +634,7 @@ class FluentReportsGenerator {
                     }
                 }
                 if (!found) {
+                    console.log("Deleting from Save" , curData.groupBy[j]);
                     curData.groupBy.splice(j, 1);
                     j--;
                 }
@@ -605,18 +655,15 @@ class FluentReportsGenerator {
     /**
      * Saves any total information
      * @param dest
-     * @param dataSet
+     * @param dataUUID
      * @private
      */
-    _saveTotals(dest, dataSet) {
+    _saveTotals(dest, dataUUID) {
         const totals = this.reportTotals;
         let fields, calcs=null;
 
-        if (dataSet === 0) {
-            fields = this.reportFields.primary;
-        } else {
-            fields = this.reportFields["level"+dataSet];
-        }
+        const curData = this._parsedData.findByUUID(dataUUID);
+        fields = curData.fields;
 
         for (let key in totals) {
             if (!totals.hasOwnProperty(key)) { continue; }
@@ -694,34 +741,6 @@ class FluentReportsGenerator {
     }
 
     /**
-     * Parses a Dataset to figure out field names, recursively
-     * @param rowOfData - A Single record to parse
-     * @param title - DataSet title
-     * @param dataSet - Where to store the dataset  ('primary' | 'level')
-     * @param level - Level of dataset...
-     * @private
-     */
-    _parseDataLevel(rowOfData, title, dataSet, level) {
-        let newDataSet = dataSet + (level > 0 ? level : '');
-        this._fields.levels = level;
-        this._fields.titles.push(title);
-        this._fields[newDataSet] = [];
-        for (let key in rowOfData) {
-            if (!rowOfData.hasOwnProperty(key)) { continue; }
-            if (Array.isArray(rowOfData[key])) {
-                if (rowOfData[key].length > 0) {
-                    this._parseDataLevel(rowOfData[key][0], key, 'level', level+1);
-                } else {
-                    console.warn("fluentReports: DataSet is empty dataset", dataSet, key);
-                }
-            } else {
-                this._fields[newDataSet].push(key);
-            }
-        }
-
-    }
-
-    /**
      * Clears a Report
      * @private
      */
@@ -735,7 +754,7 @@ class FluentReportsGenerator {
         this._calculations = [];
         this._functions = [];
         this._groupBys = [];
-        this._subReports = {};
+        this._subReports = [];
         this._registeredFonts = [];
 
        this.UIBuilder.clearArea(this._reportLayout);
@@ -902,13 +921,13 @@ class FluentReportsGenerator {
     _generateInterface() {
         if (typeof window.PlainDraggable !== 'undefined') {
             this._generateToolBarLayout();
-            this._generateReportLayout(this._reportData, 57, "", 0);
+            this._generateReportLayout(this._reportData, 57, "", this._parsedData.dataUUID);
             this._reportSettings();
             this._resetPaperSizeLocation();
         } else {
             setTimeout(() => {
                 this._generateInterface();
-            }, 500);
+            }, 250);
         }
     }
     
@@ -918,7 +937,7 @@ class FluentReportsGenerator {
             let changed = 0;
             for (let i=0;i<this._groupBys.length;i++) {
                 for (let j=0;j<groups.length;j++) {
-                    if (this._groupBys[i].name === groups[j].name && this._groupBys[i].dataSet === groups[j].dataSet) {
+                    if (this._groupBys[i].name === groups[j].name && this._groupBys[i].dataUUID === groups[j].dataUUID) {
                         j=groups.length; changed++;
                     }
                 }
@@ -975,8 +994,9 @@ class FluentReportsGenerator {
         }));
           this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue828", "Print data field", () => {
               let options = this._getSectionOptions(this._sectionIn);
-              options.label = (this._fields.primary[0] || "????");
-              options.field = this._fields.primary[0];
+              const field0 = this._parsedData.fields[0] || "????";
+              options.label = field0;
+              options.field = field0;
              new frPrintField(this, this._getSection(this._sectionIn), options); // jshint ignore:line
           }));
         this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue818", "Print dynamic data", () => {
@@ -1173,91 +1193,140 @@ class FluentReportsGenerator {
         this.showProperties(this, true);
     }
 
-    _generateReportHeaderSectionLayout(data, height, groupName='', dataSet=0) {
+    /**
+     * Generate all the Header sections for a report
+     * @param data
+     * @param height
+     * @param groupName
+     * @param reportUUID
+     * @private
+     */
+    _generateReportHeaderSectionLayout(data, height, groupName, reportUUID) {
         if (typeof data.titleHeader !== 'undefined') {
-            this._generateSection("Title Header", height, 1, groupName, dataSet, data.titleHeader);
+            this._generateSection("Title Header", height, 1, groupName, data.titleHeader, reportUUID);
         }
         if (typeof data.pageHeader !== 'undefined') {
-            this._generateSection("Page Header", height, 1, groupName, dataSet, data.pageHeader);
+            this._generateSection("Page Header", height, 1, groupName, data.pageHeader, reportUUID);
         }
         if (typeof data.header !== 'undefined') {
-            this._generateSection("Header", height, 1, groupName, dataSet, data.header);
+            this._generateSection("Header", height, 1, groupName, data.header, reportUUID);
         }
         if (typeof data.groupBy !== 'undefined') {
             for (let i = 0; i < data.groupBy.length; i++) {
                 let found = false;
                 for (let j=0;j<this._groupBys.length;j++) {
-                    if (this._groupBys[j].dataSet === dataSet && this._groupBys[j].name === groupName) {
+                    if (this._groupBys[j].dataUUID === reportUUID && this._groupBys[j].name === groupName) {
                         found=true;
                     }
                 }
                 if (!found) {
-                    this._groupBys.push({name: data.groupBy[i].groupOn, dataSet: dataSet});
+                    this._groupBys.push({name: data.groupBy[i].groupOn, dataUUID: reportUUID});
                     if (data.groupBy[i].calcs) {
-                        this._mergeTotals(data.groupBy[i].groupOn, data.groupBy[i].calcs);
+                        this._mergeTotals(data.groupBy[i].calcs);
                     }
                 }
-                this._generateReportHeaderSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, dataSet);
+                this._generateReportHeaderSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, reportUUID);
             }
         }
     }
 
-    _generateReportDetailSectionLayout(data, height, groupName='', dataSet=0, isGroup=false) {
+    /**
+     * Used to Generate a Detail Section, and any Sub-Reports follow detail.
+     * @param data
+     * @param height
+     * @param groupName
+     * @param isGroup
+     * @param reportUUID
+     * @private
+     */
+    _generateReportDetailSectionLayout(data, height, groupName, isGroup, reportUUID) {
+        // TODO: We might want to consider letting Detail happen after sub-reports....
         if (typeof data.detail !== 'undefined') {
-            this._generateSection("Detail", height, 3, groupName, dataSet, data.detail, isGroup);
+            this._generateSection("Detail", height, 3, groupName, data.detail, reportUUID, isGroup);
         }
+
         if (typeof data.subReport !== 'undefined') {
-            this._generateReportLayout(data.subReport, height, data.subReport.data, dataSet+1);
+            // Find our Parent Report; so that we can limit the data to children of it...
+            let parent = this._parsedData.findByUUID(reportUUID);
+            if (Array.isArray(data.subReport)) {
+                for (let i = 0; i < data.subReport.length; i++) {
+                    const child = parent.findExactChildDataSet(data.subReport[i].data);
+                    if (child !== null) {
+                        this._generateReportLayout(data.subReport[i], height, data.subReport[i].data,  child.dataUUID);
+                    } else {
+                        // TODO: Do we need to modify the data to add a new fake Data Section to line this up?
+                        console.log("Subreport: ", data.subReport[i].data, "-- no data set matches.");
+                    }
+                }
+            } else {
+                // TODO: remove this path in a later version -- This is to Handle original report type, where it didn't support an array of subreports
+                const child = parent.findExactChildDataSet(data.subReport.data);
+                if (child !== null) {
+                    this._generateReportLayout(data.subReport, height, data.subReport.data, child.dataUUID);
+                } else {
+                    console.log("Subreport: ", data.subReport.data, "-- no data set matches.");
+                }
+            }
         }
 
         if (typeof data.groupBy !== 'undefined') {
             for (let i = 0; i < data.groupBy.length; i++) {
-                this._generateReportDetailSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, dataSet, true);
+                this._generateReportDetailSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, true, reportUUID);
             }
         }
     }
 
-    _generateReportFooterSectionLayout(data, height, groupName='', dataSet=0) {
+    /**
+     * Generate the Footer Sections
+     * @param data
+     * @param height
+     * @param groupName
+     * @param reportUUID
+     * @private
+     */
+    _generateReportFooterSectionLayout(data, height, groupName, reportUUID) {
         if (typeof data.groupBy !== 'undefined') {
             for (let i = 0; i < data.groupBy.length; i++) {
-                this._generateReportFooterSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, dataSet);
+                this._generateReportFooterSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, reportUUID);
             }
         }
         if (typeof data.footer !== 'undefined') {
-            this._generateSection("Footer", height, 2, groupName, dataSet, data.footer);
+            this._generateSection("Footer", height, 2, groupName, data.footer, reportUUID);
         }
         if (typeof data.pageFooter !== 'undefined') {
-            this._generateSection("Page Footer", height, 2, groupName, dataSet, data.pageFooter);
+            this._generateSection("Page Footer", height, 2, groupName, data.pageFooter, reportUUID);
         }
         if (typeof data.finalSummary !== 'undefined') {
-            this._generateSection("Final Summary", height, 2, groupName, dataSet, data.finalSummary);
+            this._generateSection("Final Summary", height, 2, groupName, data.finalSummary, reportUUID);
         }
     }
 
-    _generateReportLayout(data, height, groupName, dataSet=0) {
+    _generateReportLayout(data, height, groupName, dataUUID) {
 
         console.log("GenerateReportLayout", groupName);
-        if (dataSet > 0) {
-            this._subReports[groupName] = {dataSet: dataSet};
-            // TODO: Might need more sub-report properties?
-            this._copyProperties(data, this._subReports[groupName], ["type", "dataType", "data", "calcs", "fontSize"]);
-            if (this._subReports[groupName].calcs) {
-                this._mergeTotals(groupName, this._subReports[groupName].calcs);
-            }
+
+        let report = this._parsedData.findByUUID(dataUUID);
+        if (report === null) {
+            console.log("Report DATA does not match report layout!");
+            Dialog.notice("Report DATA does not match report layout, ignoring section: "+groupName, "#FF0000", this._frame);
+            return;
         }
-        this._generateReportHeaderSectionLayout(data, height, groupName, dataSet);
-        this._generateReportDetailSectionLayout(data, height, groupName, dataSet, false);
-        this._generateReportFooterSectionLayout(data, height, groupName, dataSet);
+
+        report.parseData(data);
+
+        // Top most report
+        if (report.parent === null && report.calcs) {
+                this._mergeTotals(report.calcs);
+        }
+        this._generateReportHeaderSectionLayout(data, height, groupName, report.dataUUID);
+        this._generateReportDetailSectionLayout(data, height, groupName,false, report.dataUUID);
+        this._generateReportFooterSectionLayout(data, height, groupName, report.dataUUID);
     }
 
-    _mergeTotals(groupName, totals) {
+    _mergeTotals(totals) {
         const totalsTypes = ['sum', 'min', 'max', 'average', 'count'];
         for (let i=0;i<totalsTypes.length;i++) {
             if (totals[totalsTypes[i]]) {
-                // Fix Names to be TABLE.field
-                //for (let j=0;j<totals[totalsTypes[i]].length;j++) {
-                //    totals[totalsTypes[i]][j] = groupName + "." + totals[totalsTypes[i]][j];
-                //}
 
                 if (!this._totals[totalsTypes[i]]) {
                     this._totals[totalsTypes[i]] = totals[totalsTypes[i]];
@@ -1268,8 +1337,17 @@ class FluentReportsGenerator {
         }
     }
 
-    _generateSection(title, height, type, groupName, dataSet, sectionData, fromGroup=false) {
-        const section = new frSection(this, {title: title, height: height, type: type, group: groupName, dataSet: dataSet, fromGroup: fromGroup});
+    _generateSection(title, height, type, groupName, sectionData, reportUUID, fromGroup=false) {
+        let section;
+            section = new frSection(this, {
+                title: title,
+                height: height,
+                type: type,
+                group: groupName,
+                dataUUID: reportUUID,
+                fromGroup: fromGroup
+            });
+
         if (sectionData == null) { return; }
         if (Array.isArray(sectionData)) {
             for (let i=0;i<sectionData.length;i++) {
@@ -1282,6 +1360,179 @@ class FluentReportsGenerator {
 
     showProperties(obj, refresh=false) {
        this.UIBuilder.showProperties(obj, this._propertiesLayout, refresh);
+    }
+
+}
+
+// ----------------------------------------- [ Data Tracking ] ----------------------------------------------
+
+class frReportData { // jshint ignore:line
+
+    constructor(rowOfData, parent, name) {
+        this._name = name;
+
+        // noinspection RedundantConditionalExpressionJS
+        this._linkedToReport = (parent == null ? true : false);
+        this._parent = parent;
+        this._fields = [];
+        this._children = {};
+        this._uuid = _frItemUUID++;
+        if (Array.isArray(rowOfData)) {
+            this.parseArray(rowOfData);
+        } else {
+            this.parseRow(rowOfData);
+        }
+    }
+
+    get dataUUID() {
+        return this._uuid;
+    }
+
+    get parent() {
+        return this._parent;
+    }
+
+    get children() {
+        return this._children;
+    }
+
+    get childrenIndexed() {
+        let idx = [];
+        for (let key in this._children) {
+            if (this._children.hasOwnProperty(key)) {
+                idx.push(this._children[key]);
+            }
+        }
+        return idx;
+    }
+
+    get name() {
+        return this._name;
+    }
+
+    get fields() {
+        return this._fields;
+    }
+
+    get path() {
+        let results = [this._name];
+        let current = this;
+        while (current.parent) {
+            current = current.parent;
+            results.unshift(current._name);
+        }
+        return results;
+    }
+
+    get primary() {
+        let current = this;
+        // Go up to the top
+        while (current.parent != null) { current = current.parent; }
+        return current;
+    }
+
+    get linkedToReport() {
+        return this._linkedToReport;
+    }
+    set linkedToReport(val) {
+        this._linkedToReport = !!val;
+    }
+
+    parseData(data) {
+        this._copyProperties(data, this, ["type", "dataType", "data", "calcs"]);
+        this._linkedToReport = true;
+    }
+
+    _findDataSet(name) {
+        if (this._name === name) { return this; }
+
+        let result = null;
+        for (let i=0;i<this._children.length;i++) {
+            result = this._children._findDataSet(name);
+            if (result != null) { return result; }
+        }
+        return result;
+    }
+
+    findDataSet(name) {
+        let current = this.primary;
+        return current._findDataSet(name);
+    }
+
+    /**
+     * Searches only the direct children of this dataset
+     * @param name
+     * @returns {null|*}
+     */
+    findExactChildDataSet(name) {
+        for (let i=0;i<this._children.length;i++) {
+            if (this._children[i].name === name) { return this._children[i]; }
+        }
+        return null;
+    }
+
+    /**
+     * Searches all children and sub-children for a match
+     * @param name
+     * @returns {null}
+     */
+    findChildDataSet(name) {
+        let result = null;
+        for (let i=0;i<this._children.length;i++) {
+            result = this._child._findDataSet(name);
+            if (result != null) { return result; }
+        }
+        return result;
+    }
+
+    findByUUID(uuid) {
+        let current = this.primary;
+        return current._findByUUID(uuid);
+    }
+
+    _findByUUID(uuid) {
+        if (this._uuid === uuid) { return this; }
+
+        let result = null;
+        for (let i=0;i<this._children.length;i++) {
+            result = this._children[i]._findByUUID(uuid);
+            if (result != null) { return result; }
+        }
+        return result;
+    }
+
+
+
+    parseArray(rows) {
+        for (let i=0;i<rows.length;i++) {
+            this.parseRow(rows[i]);
+        }
+    }
+
+    parseRow(rowOfData) {
+        for (let key in rowOfData) {
+            if (!rowOfData.hasOwnProperty(key)) { continue; }
+            if (Array.isArray(rowOfData[key])) {
+                if (!this._children[key]) {
+                    this._children[key] = new frReportData(rowOfData[key], this, key);
+                } else {
+                    this._children[key].parseArray(rowOfData[key]);
+                }
+            } else {
+                if (this._fields.indexOf(key) < 0) {
+                    this._fields.push(key);
+                }
+            }
+        }
+    }
+
+    _copyProperties(src, dest, props) {
+        if (src == null) { return; }
+        for (let i=0;i<props.length;i++) {
+            if (typeof src[props[i]] !== 'undefined') {
+                dest[props[i]] = src[props[i]];
+            }
+        }
     }
 
 }
@@ -1428,56 +1679,33 @@ class frSection { // jshint ignore:line
         if (this._groupName !== '') {
             let group;
 
-            // Is this a subReport or Detail?
+            // Is this a sub-report or Group?
             if (this._type === 3 && this._fromGroup === false) {
-                let foundReport;
-                for (let i = 0; i < this._report._saveTemporaryData.reports.length; i++) {
-                    if (this._dataSet === this._report._saveTemporaryData.reports[i].dataSet ) {
-                        foundReport = this._report._saveTemporaryData.reports[i];
-                        break;
-                    }
+                // Sub-report
+                if (!results.subReport) {
+                    results.subReport = [];
                 }
 
-                if (foundReport) {
-                    results.subReport = foundReport;
-                    foundReport.type = 'report';
-                    if (!Array.isArray(foundReport.detail)) {
-                        foundReport.detail = [];
-                    }
-                } else {
-                    results.subReport = {type: 'report', detail: []};
-                    this._report._saveTemporaryData.reports.push(results.subReport);
-                }
-
-                this._report._copyProperties(this._report._subReports[this._groupName], results.subReport, ["type", "dataType", "data", "fontSize", "dataSet"]);
+                let newReport = {type: 'report', detail: [], dataUUID: this._dataUUID };
+                this._report._copyProperties(this._report._subReports[this._groupName], results.subReport, ["type", "dataType", "data"]);
+                results.subReport.push( newReport );
 
                 // Switch to the subReport
-                results = results.subReport;
+                results = newReport;
             } else {
-                let found = false;
-                for (let i=0;i<this._report._saveTemporaryData.reports.length;i++) {
-                    if (this._dataSet === this._report._saveTemporaryData.reports[i].dataSet) {
-                        results = this._report._saveTemporaryData.reports[i];
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    results = {dataSet: this._dataSet};
-                    this._report._saveTemporaryData.reports.push(results);
-                }
-
                 // This is a group
                 if (!results.groupBy) {
                     results.groupBy = [];
                 }
+
+                // Since we have a Header, Detail, Footer, this could be 
                 for (let i = 0; i < results.groupBy.length; i++) {
                     if (results.groupBy[i].groupOn === this._groupName) {
                         group = results.groupBy[i];
                         break;
                     }
                 }
+
                 if (!group) {
                     group = {type: 'group', groupOn: this._groupName};
                     results.groupBy.push(group);
@@ -1521,7 +1749,6 @@ class frSection { // jshint ignore:line
         }
         let group = results[type];
         this._saveSectionInfo(group);
-
     }
 
     _saveSectionInfo(results) {
@@ -1696,6 +1923,7 @@ class frSection { // jshint ignore:line
         this._calculations = [];
         this._hasCalculations = false;
         this._fromGroup = options && options.fromGroup || false;
+        this._dataUUID = options && options.dataUUID || null;
 
         this._children = [];
 
@@ -1724,7 +1952,6 @@ class frSection { // jshint ignore:line
             {type: 'display', field: 'hasFunctions', title: 'Functions', display: () => { return this._createSpan(this._hasFunctions, "\ue81f", this.clickFunctions.bind(this)); }},
             {type: 'display', field: 'hasCalculations', title: 'Calculations', display: () => { return this._createSpan(this._hasCalculations, "\uE824", this.clickCalcs.bind(this)); }}
         ];
-        this._dataSet = options && options.dataSet || 0;
         if (this._type === 1 || this._type === 2) {
             this._properties.push({
                 type: 'display',
@@ -1830,6 +2057,10 @@ class frSection { // jshint ignore:line
         };
     }
 
+    get isSubReport() {
+        return this._type === 3 && this._fromGroup === false;
+    }
+
     _createSpan(value, code, func) {
         const span = document.createElement('span');
         if (value === true) {
@@ -1887,76 +2118,6 @@ class frSection { // jshint ignore:line
         span.innerText = this._groupName;
         span.style.fontWeight = "bolder";
         return span;
-    }
-
-    // noinspection JSUnusedGlobalSymbols
-    _generateDataSetSelection() {
-        const selectList = document.createElement("select");
-        selectList.className = "frSelect";
-        const fields = this._report.reportFields;
-        let group;
-
-        if (this._dataSet === 0) {
-            group = document.createElement("optgroup");
-            group.label = "Primary Data";
-            selectList.appendChild(group);
-            for (let i = 0; i < fields.primary.length; i++) {
-                const option = new Option(fields.primary[i]);
-                if (this._field === fields.primary[i]) {
-                    option.selected = true;
-                }
-                group.appendChild(option);
-            }
-        } else {
-            if (fields['level' + this._dataSet].length > 0) {
-                group = document.createElement("optgroup");
-                group.label = fields.titles[this._dataSet];
-                for (let j = 0; j < fields['level' + this._dataSet].length; j++) {
-                    const option = new Option(fields['level' + this._dataSet][j]);
-                    if (this._field === fields['level' + this._dataSet][j]) {
-                        option.selected = true;
-                    }
-                    group.appendChild(option);
-                }
-                selectList.appendChild(group);
-            }
-        }
-
-        const variables = this._report.reportVariables;
-        if (variables != null) {
-            group = document.createElement("optgroup");
-            group.label = "- Variables -";
-            let count=0;
-            for (let key in variables) {
-                if (!variables.hasOwnProperty(key)) { continue; }
-                count++;
-                const option = new Option(key);
-                if (this._field === key) {
-                    option.selected = true;
-                }
-
-                group.appendChild(option);
-            }
-            if (count) {
-                selectList.appendChild(group);
-            }
-        }
-
-        const calculations = this._report.reportCalculations;
-        if (calculations.length) {
-            group = document.createElement("optgroup");
-            group.label = "- Calculations -";
-            for (let i=0;i<calculations.length;i++) {
-                const option = new Option(calculations[i]);
-                if (this._field === calculations[i]) {
-                    option.selected = true;
-                }
-                group.appendChild(option);
-            }
-            selectList.appendChild(group);
-        }
-
-        return selectList;
     }
 
     _generateStockCheck() {
@@ -2055,7 +2216,6 @@ class frSection { // jshint ignore:line
 
 
 }
-
 
 
 // ----------------------------------------- [ Elements ] ----------------------------------------------
