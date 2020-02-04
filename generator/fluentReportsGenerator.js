@@ -169,8 +169,9 @@ class FluentReportsGenerator {
         this._resetPaperSizeLocation();
     }
 
-    get formatterFunctions(){ return this._formatterFunctions;};
-    set formatterFunctions(val){ this._formatterFunctions = val;}
+    get formatterFunctions() { return this._formatterFunctions; }
+    set formatterFunctions(val) { this._formatterFunctions = val; }
+
     /**
      * The Constructor
      * @param options
@@ -180,7 +181,7 @@ class FluentReportsGenerator {
         this._UIBuilder = UI;
 
         // Tracking Information
-        this._formatterFunctions =  [];
+        this._formatterFunctions =  {};
         this._parentElement = null;
         this._includeCSS = options.css !== false;
         this._includeJS = options.js !== false;
@@ -243,10 +244,6 @@ class FluentReportsGenerator {
             {type: 'button', title: 'Data', click: this._setData.bind(this)}
         ];
 
-        if(options.formatterFunctions){
-            this.setConfig('formatterFunctions',options.formatterFunctions);
-        }
-
         if (options.scale) {
             this.setConfig('scale', options.scale);
         } else {
@@ -277,10 +274,8 @@ class FluentReportsGenerator {
         }
         if (typeof options.element !== 'undefined') {
             this.setConfig('element', options.element);
-        } else {
-            if (options.id) {
-                this.setConfig('id', options.id);
-            }
+        } else if (options.id) {
+            this.setConfig('id', options.id);
         }
         if (options.debug) {
             this.setConfig('debug', options.debug);
@@ -288,6 +283,12 @@ class FluentReportsGenerator {
         if (typeof options.preview === 'function') {
             this.setConfig('preview', options.preview);
         }
+
+        if(options.formatterFunctions){
+            this.setConfig('formatterFunctions',options.formatterFunctions);
+        }
+
+
 
         this.buildUI(this._parentElement);
     }
@@ -301,23 +302,12 @@ class FluentReportsGenerator {
         if (value == null) { return; }
         switch (option) {
             case 'formatterFunctions':
-                for(let i in value){
-                    let found = false;
-                    let functionData = {
-                        name: i,
-                        function: value[i],
-                        class: "function",
-                    };
-                    //Pure functions take priority over JSON functions and override any existing functions.
-                    for(let j =0;j<this._formatterFunctions.length;j++){
-                        if(this._formatterFunctions[j].name === i){
-                            this._formatterFunctions[j] = functionData;
-                            found = true;
-                            break;
-                        }
-                    }
-                    if(!found) {
-                        this._formatterFunctions.push(functionData);
+                for (let key in value) {
+                    if (!value.hasOwnProperty(key)) { continue; }
+                    if (typeof value[key] === 'function') {
+                        this._formatterFunctions[key] = value[key];
+                    } else {
+                        this._formatterFunctions[key] = new Function('value', 'row', 'callback', value[key]); // jshint ignore:line
                     }
                 }
                 break;
@@ -424,6 +414,19 @@ class FluentReportsGenerator {
     }
 
     /**
+     * Detect if we have any formatter functions
+     * @returns {boolean}
+     * @private
+     */
+    _hasFormatterFunctions() {
+        for (let key in this._formatterFunctions) {
+            if (this._formatterFunctions.hasOwnProperty(key)) { return true; }
+        }
+        return false;
+    }
+
+
+    /**
      * Handles dealing with switching the paper orientations
      * @private
      */
@@ -526,38 +529,9 @@ class FluentReportsGenerator {
         // TODO: Add any missing properties
         this._copyProperties(report, this, ["name", "fontSize", "autoPrint", "paperSize", "paperOrientation"]);
 
-        //Does it include formmatterFunctions?
         if (report.formatterFunctions) {
-            for (let i = 0; i < report.formatterFunctions.length; i++) {
-                let func = report.formatterFunctions[i];
-                if(func.function) {
-                    let found = false;
-                    for (let j = 0; j < this._formatterFunctions.length; j++) {
-                        if (this._formatterFunctions[j].name === func.name) {
-                            //Update the function if it's a JSON style function.
-                            if (this._formatterFunctions[j].class === "string") {
-                                this._formatterFunctions[j] = {
-                                    name: func.name,
-                                    function: func.function,
-                                    type: func.type || "function",
-                                    class: "string",
-                                };
-                            }
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) {
-                        this._formatterFunctions.push({
-                            name: func.name,
-                            function: func.function,
-                            class: "string",
-                        })
-                    }
-                }
-            }
+            this.setConfig('formatterFunctions', report.formatterFunctions);
         }
-
 
         // Does report come with its own data?
         if (Array.isArray(report.data)) {
@@ -655,17 +629,14 @@ class FluentReportsGenerator {
             results.data = this._data;
         }
 
+        // Copy any json based formatters over to the new report
+        if (this._reportData.formatterFunctions) {
+            results.formatterFunctions = this._reportData.formatterFunctions;
+        }
 
         // Clear our temporary data storage
         this._saveTemporaryData = null;
 
-        let jsonOnlyFunctions = [...this._formatterFunctions];
-        for(let i =0;i<jsonOnlyFunctions.length;i++){
-            if(jsonOnlyFunctions[i].class === "function"){
-                jsonOnlyFunctions.splice(i,1);
-            }
-        }
-        results.formatterFunctions = jsonOnlyFunctions;
         return results;
     }
 
@@ -3093,6 +3064,7 @@ class frImage extends frTitledElement { // jshint ignore:line
 }
 
 class frPrint extends frTitledLabel {
+
     constructor(report, parent, options={}) {
         super(report, parent, options);
         this._x = 0;
@@ -3131,66 +3103,87 @@ class frPrint extends frTitledLabel {
                 {type: 'number', field: "y", default: 0, destination: "settings"},
                 {type: 'number', field: "addX", default: 0, destination: "settings"},
                 {type: 'number', field: "addY", default: 0, destination: "settings"},
-                {type: 'select', field: "font", default: "times", display: this._createFontSelect.bind(this), destination: 'settings'},
+                {
+                    type: 'select',
+                    field: "font",
+                    default: "times",
+                    display: this._createFontSelect.bind(this),
+                    destination: 'settings'
+                },
                 {type: 'number', field: 'fontSize', functionable: true, default: 0, destination: 'settings'},
                 {type: 'boolean', field: "fontBold", functionable: true, default: false, destination: "settings"},
                 {type: 'boolean', field: "fontItalic", functionable: true, default: false, destination: "settings"},
-                {type: 'boolean', field: 'underline', functionable: true, title: "Underline", default: false, destination: 'settings'},
-                {type: 'boolean', field: 'strike', functionable: true, title: "Strikethrough", default: false, destination: 'settings'},
+                {
+                    type: 'boolean',
+                    field: 'underline',
+                    functionable: true,
+                    title: "Underline",
+                    default: false,
+                    destination: 'settings'
+                },
+                {
+                    type: 'boolean',
+                    field: 'strike',
+                    functionable: true,
+                    title: "Strikethrough",
+                    default: false,
+                    destination: 'settings'
+                },
                 {type: 'string', field: "fill", functionable: true, default: "", destination: "settings"},
                 {type: 'string', field: "textColor", functionable: true, default: "", destination: "settings"},
-                {type: 'string', field: "link", functionable: true, default: "", destination: "settings"}, 
+                {type: 'string', field: "link", functionable: true, default: "", destination: "settings"},
                 {type: 'number', field: "border", default: 0, destination: "settings"},
                 {type: 'number', field: 'characterSpacing', title: 'Char Spacing', default: 0, destination: "settings"},
                 {type: 'number', field: 'wordSpacing', default: 0, destination: "settings"},
                 {type: 'number', field: 'rotate', default: 0, destination: 'settings'},
                 {type: 'number', field: 'opacity', default: 1.0, destination: 'settings'},
 
-                {type: 'select', field: "align", default: "left", display: this._createAlignSelect.bind(this), destination: 'settings'},
-                {type: 'boolean', field: "wrap", default: false, destination: "settings"}
-                ]);
+                {
+                    type: 'select',
+                    field: "align",
+                    default: "left",
+                    display: this._createAlignSelect.bind(this),
+                    destination: 'settings'
+                },
+                {type: 'boolean', field: "wrap", default: false, destination: "settings"}]);
 
-        // Generates the data formatter select
-        if(report.formatterFunctions !== undefined) {
-            if (report.formatterFunctions.length > 0) {
-                const createFormatterSelect = () => {
-                    const curFormatter = this.formatFunction;
-                    let selectGroup = document.createElement('select');
-                    let formatterFunctions = report._formatterFunctions;
-                    let index = 1;
-                    let item = new Option("none", "" + index);
-                    if (curFormatter === "" + index || curFormatter === index) {
-                        item.selected = true;
-                    }
-                    selectGroup.appendChild(item);
-                    index++;
-                    for (let i = 0; i < formatterFunctions.length; i++) {
-                        if (typeof formatterFunctions[i].name !== "string" || formatterFunctions.length === 0) {
-                            continue;
-                        }
-                        let item = new Option(formatterFunctions[i].name, '' + (index));
-
-                        if (curFormatter === formatterFunctions[i].name || curFormatter === index) {
-                            item.selected = true;
-                        }
-                        selectGroup.appendChild(item);
-                        index++;
-                    }
-                    return selectGroup;
-                };
-                this._addProperties({
+        // Only add formatter functions, if we pass some in...
+        if (this._report._hasFormatterFunctions()) {
+            this._addProperties(
+                {
                     type: 'select',
                     field: "formatFunction",
                     default: "none",
-                    display: createFormatterSelect,
+                    display: this._createFormattersSelect.bind(this),
                     destination: 'settings'
-                });
-            }
+                }
+            );
         }
+
     }
 
     _createFontSelect() {
         return this.UIBuilder.createFontSelect(this.font);
+    }
+
+    _createFormattersSelect() {
+        const formatFunction = this.formatFunction;
+        let selectGroup = document.createElement('select');
+        let item = new Option("None", "none");
+        selectGroup.appendChild(item);
+
+        let formatters = this._report.formatterFunctions;
+
+        for (let key in formatters) {
+            if (!formatters.hasOwnProperty(key)) { continue; }
+            item = new Option(key, key);
+            if (key === formatFunction) {
+                item.selected = true;
+            }
+            selectGroup.appendChild(item);
+        }
+
+        return selectGroup;
     }
 
     _createAlignSelect() {
@@ -3318,30 +3311,7 @@ class frPrint extends frTitledLabel {
 
     get formatFunction() { return this._formatFunction; }
     set formatFunction(val) {
-        let num =  parseInt(val,10);
-        let formatterFunctions = this._report.formatterFunctions;
-        if(""+val !== ""+num){
-            this._formatFunction = "none";
-            if(typeof formatterFunctions!=="undefined") {
-                for (let i = 0; i < formatterFunctions.length;i++) {
-                    if(formatterFunctions[i].name.toLowerCase() === val.toString().toLowerCase()){
-                        this._formatFunction = val;
-                    }
-                }
-            }
-        }
-        else {
-            num--;
-            this._formatFunction = "none";
-            if (num !== 0) {
-                let item = formatterFunctions[num - 1];
-                if (!item) {
-                    console.error("fluentReports: Unknown formatFunction", val);
-                } else {
-                    this._formatFunction = item.name || "FunctionHasNoName";
-                }
-            }
-        }
+        this._formatFunction = val;
     }
 
     _parseElement(data) {
@@ -4575,49 +4545,41 @@ class UI { // jshint ignore:line
 
             return selectGroup;
         };
-        // Generates the data formatter select
-        const createFormatterSelect = () => {
-            const curFormatter = resultVariables[select.selectedIndex].formatFunction;
+
+        const createFormattersSelect = () => {
+            const formatFunction = this.formatFunction;
             let selectGroup = document.createElement('select');
-            let formatterFunctions = report.formatterFunctions;
-            let index = 1;
-            let item = new Option("none", ""+index);
-            if (curFormatter === ""+index || curFormatter === index || curFormatter === "none") { item.selected = true; }
+            let item = new Option("None", "none");
             selectGroup.appendChild(item);
-            index++;
-            for(let i =0;i<formatterFunctions.length;i++){
-                if(typeof formatterFunctions[i].name !== "string" || formatterFunctions.length === 0){
-                    continue;
+
+            let formatters = report.formatterFunctions;
+
+            for (let key in formatters) {
+                if (!formatters.hasOwnProperty(key)) { continue; }
+                item = new Option(key, key);
+                if (key === formatFunction) {
+                    item.selected = true;
                 }
-                let item = new Option(formatterFunctions[i].name, ''+(index));
-                if (curFormatter === ""+index || curFormatter === index || curFormatter === formatterFunctions[i].name) { item.selected = true; }
                 selectGroup.appendChild(item);
-                index++;
             }
+
             return selectGroup;
         };
+
 
         const toInt = (val) => { return parseInt(val, 10); };
         const toOpacity = (val) => { let x = parseFloat(val); if (isNaN(x)) { return 1.0; } if (x <  0.0) { return 0.0; } if (x > 1.0) { return 1.0; } return x;};
 
         let properties = [];
-        if(report.formatterFunctions !== undefined) {
-            if (report.formatterFunctions.length > 0) {
+        if(report._hasFormatterFunctions()) {
                 properties.push({
                     type: 'select',
                     field: "formatFunction",
-                    translate:(val)=>{
-                        let num = toInt(val);
-                        if(report.formatterFunctions[num-2]){
-                            return report.formatterFunctions[num-2].name;
-                        }
-                        return "none";
-                    },
                     default: "none",
-                    display: createFormatterSelect
+                    display: createFormattersSelect
                 });
-            }
         }
+
          properties = properties.concat([
             {type: 'number', field: "width", functionable: true},
             {type: 'select', field: "align", translate: toInt, default: "left", display: createAlignSelect},

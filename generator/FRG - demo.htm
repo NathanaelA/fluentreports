@@ -249,16 +249,11 @@
                 ]
             }
         ],
-        "formatterFunctions": [
-            {
-                "name": "NameDisplay",
-                "function": "callback('Name: ' + row.name)",
-            },
-            {
-                "name": "HoursDisplay",
-                "function": "callback('Hours: ' + input)",
-            }
-        ]
+        "formatterFunctions": {
+            "NameDisplay": "callback('Name: ' + row.name)",
+            "HoursDisplay": "callback('Hours: ' + input)",
+        }
+
     };
 
 
@@ -271,6 +266,7 @@
                 'NumberFunction': function(input, data, callback) {
                     if(input !== Math.round(input)){
                         callback(input);
+                        return;
                     }
                     callback (input + '.0');
                 }
