@@ -20,7 +20,7 @@ class FluentReportsGenerator {
     get sectionConstrainer() { return this._sectionConstrainer; }
     // noinspection JSUnusedGlobalSymbols
     get reportData() { return this._reportData; }
-    get reportFields() { return this._fields; }
+    get reportFields() { return this._parsedData; }
     get reportCalculations() { return this._calculations; }
     get reportVariables() { return this._reportData.variables;}
     get reportTotals() { return this._totals; }
@@ -141,7 +141,7 @@ class FluentReportsGenerator {
 
     /**
      * Set/Get report
-     * @returns {{type: string, dataSet: number}}
+     * @returns {{type: string}}
      */
     get report() {
         return this._generateSave();
@@ -186,9 +186,8 @@ class FluentReportsGenerator {
         this._includeCSS = options.css !== false;
         this._includeJS = options.js !== false;
         this._builtUI = false;
-        this._fields = {primary: [], levels: 0, titles: []};
+
         this._reportData = {header: [], footer: [], detail: [], variables: {}};
-        this._data = null;
         this._reportScroller = null;
         this._reportLayout = null;
         this._toolBarLayout = null;
@@ -198,17 +197,32 @@ class FluentReportsGenerator {
         this._sectionIn = 0;
         this._debugging = false;
         this._scale = 1.5;
+
+        /**
+         * This tracks all the Elements on the Screen
+         * @type {*[]}
+         * @private
+         */
         this._frElements = [];
+
+        /**
+         * This tracks all the visible sections on the screen, this has NOTHING to do with actual report sections.
+         * @type {*[]}
+         * @private
+         */
         this._frSections = [];
+
         this._registeredFonts = [];
         this._includeData = false;
+        this._data = [];
+        this._parsedData = new frReportData([], null, "primary");
 
         // Internal Data for UI
         this._calculations = [];
         this._totals = {};
         this._functions = [];
         this._groupBys = [];
-        this._subReports = {};
+        this._subReports = [];
 
         this._saveFunction = (value, done) => { done(); };
         this._previewFunction = null;
@@ -264,8 +278,8 @@ class FluentReportsGenerator {
             // TODO - FUTURE: Maybe save & verify report based on parsed data to verify data layout being sent into
             //      - editor matches the report layout's last data, and so we have the field layout in the event no data is passed in.
             this._parseReport(options.report);
-        } else if (options.blankReport) {
-            this.newBlankReport();
+        } else if (options.blankReport === 2) {
+            this.newBlankReport(typeof options.data === 'undefined');
         } else {
             this._createReportOnData();
         }
@@ -457,61 +471,79 @@ class FluentReportsGenerator {
         if (data.length < 1) {
             throw new Error("fluentReports: Invalid dataset, should have at least one record");
         }
-        // Reset to No Data Dictionary
-        this._fields = {primary: [], levels: 0, titles: []};
 
         this._data = data;
 
-        // Lets create the data Dictionary
-        this._parseDataLevel(data[0], 'primary','primary', 0);
+        this._parsedData = new frReportData(data, null, "primary");
     }
 
     /**
      * Creates a dummy report based on the data, if you haven't passed in a report.
      * @private
      */
-    newBlankReport() {
+    newBlankReport(clearData= true) {
         const tempReport = {
             type: "report",
             header: [],
             detail: [],
             footer: []
         };
-        this._data = [];
+        if (clearData) {
+            this.data = [];
+        }
         this._parseReport(tempReport);
     }
 
     _createReportOnData() {
         let tempReport;
-        if (this._data === null || this._data.length === 0) {
+
+        if (this._data.length === 0) {
             tempReport = {
                 type: "report",
                 header: {type: "raw", values: ["Sample Header"]},
                 detail: {type: "print", text: "Welcome to fluentReports"},
                 footer: {type: "raw", values: ["Sample Footer"]}
             };
-            this._data = [];
         } else {
             tempReport = {
                 type: "report",
                 header: {type: "raw", values: ["Sample Header"]},
                 footer: {type: "raw", values: ["Sample Footer"]}
             };
-            if (this.reportFields.titles.length === 1) {
+
+            if (this.reportFields.childrenIndexed.length === 0) {
                 tempReport.detail = {type: "print", text: "Welcome to fluentReports"};
             } else {
-                let src = tempReport;
-                for (let i=1;i<this.reportFields.titles.length;i++) {
-                    src.subReport = {type: 'report', dataType: 'parent', data: this.reportFields.titles[i]};
-                    if (i === this.reportFields.titles.length-1) {
-                        src.subReport.detail = {type: "print", text: "Welcome to fluentReports"};
-                    }
-                    src = src.subReport;
-                }
+                this._createReportOnChildData(tempReport, this.reportFields.childrenIndexed);
             }
 
         }
         this._parseReport(tempReport);
+    }
+
+    _createReportOnChildData(src, children) {
+        if (!Array.isArray(src.subReports)) {
+            src.subReports = [];
+        }
+        for (let i=0;i<children.length;i++) {
+            const curReport = {type: 'report', dataType: 'parent', data: children[i].name};
+            src.subReports.push(curReport);
+
+            // Check for sub-children
+            let newChildren = children[i].childrenIndexed;
+            if (newChildren.length) {
+                this._createReportOnChildData(curReport, newChildren);
+            } else {
+                const parent = children[i].parent;
+
+                let name = children[i].name;
+                if (parent.parent) {
+                    name = parent.name + "/" + name;
+                }
+
+                curReport.detail = {type: "print", text: "Subreport "+name+" Data"};
+            }
+        }
     }
 
     /**
@@ -522,9 +554,11 @@ class FluentReportsGenerator {
         this._reportData = report;
         if (this._builtUI) {
             this._clearReport();
+
             // Create the Sections
-            this._generateReportLayout(this._reportData, 57, "", 0);
+            this._generateReportLayout(this._reportData, 57, "", this._parsedData.dataUUID);
         }
+
 
         // TODO: Add any missing properties
         this._copyProperties(report, this, ["name", "fontSize", "autoPrint", "paperSize", "paperOrientation"]);
@@ -552,46 +586,88 @@ class FluentReportsGenerator {
             this._marginLeft = report.margins.left || 72;
         }
 
+        // TODO: Add any missing properties
+        this._copyProperties(report, this, ["name", "fontSize", "autoPrint", "paperSize", "paperOrientation"]);
+
         if (this._builtUI) {
             this._reportSettings();
         }
     }
 
+
+    /**
+     * Generate the Data for each of the child reports
+     * @param dataSet
+     * @param results
+     * @private
+     */
+    _generateChildSave(dataSet, results) {
+
+        let newResult = {dataUUID: dataSet.dataUUID, dataType: dataSet.dataType, data: dataSet.data};
+        if (!Array.isArray(results.subReports)) {
+            results.subReports = [];
+        }
+        results.subReports.push(newResult);
+        this._saveTemporaryData.reports[dataSet.dataUUID] = newResult;
+
+        // Loop thru the children of this child
+        let children = dataSet.childrenIndexed;
+        for (let i=0;i<children.length;i++) {
+            this._generateChildSave(children[i], newResult);
+        }
+    }
+
+
     /**
      * Starts generating the save data
-     * @returns {{type: string, dataSet: number}}
+     * @returns {{type: string, dataUUID: number}}
      * @private
      */
     _generateSave() {
         // Setup our temporary data storage
-        this._saveTemporaryData = {reports: []};
+        this._saveTemporaryData = {reports: {}};
 
-        const results = {type: 'report', dataSet: 0};
+        const results = {type: 'report', dataUUID: this._parsedData.dataUUID};
         this._copyProperties(this, results, ["fontSize", "autoPrint", "name", "paperSize", "paperOrientation"]);
         if (this._marginBottom !== 72 || this._marginTop !== 72 || this._marginLeft !== 72 || this._marginRight !== 72) {
             results.margins = {left: this._marginLeft, top: this._marginTop, right: this._marginRight, bottom: this._marginBottom};
         }
 
-        this._saveTemporaryData.reports.push(results);
+        // Add our first level report
+        this._saveTemporaryData.reports[this._parsedData.dataUUID] = results;
 
         results.fonts = this.additionalFonts;
         results.variables = shallowClone(this.reportVariables);
-        
-        // Save the Sections
-        for (let i=0;i<this._frSections.length;i++) {
-                this._frSections[i]._generateSave(results);
-        }
-        
-        // Save the Totals..
-        for (let i=0;i<this._saveTemporaryData.reports.length;i++) {
-            this._saveTotals(this._saveTemporaryData.reports[i], this._saveTemporaryData.reports[i].dataSet);
+
+        // This actually generates a subreport info keys
+        let children = this._parsedData.childrenIndexed;
+        for (let i=0;i<children.length;i++) {
+            this._generateChildSave(children[i], results);
         }
 
+        // Save the Sections
+        for (let i=0;i<this._frSections.length;i++) {
+                this._frSections[i]._generateSave(results, this._saveTemporaryData.reports);
+        }
+        
+        // Save the Totals..{type: 'report', detail: [], dataUUID: }
+        for (let key in this._saveTemporaryData.reports) {
+            if (this._saveTemporaryData.reports.hasOwnProperty(key)) {
+                this._saveTotals(this._saveTemporaryData.reports[key], this._saveTemporaryData.reports[key].dataUUID);
+            }
+        }
+
+        // TODO: See if this is needed anymore?   Seems all data is found
         // Update groups data with any Groups that have no actual sections
         for (let i=0;i<this._groupBys.length;i++) {
-            let curData = this._saveTemporaryData.reports[this._groupBys[i].dataSet];
             let found = false;
-            if (curData.groupBy) {
+            let curData = this._saveTemporaryData.reports[this._groupBys[i].dataUUID];
+            let dataSet = this._parsedData.findByUUID(this._groupBys[i].dataUUID);
+
+            if (!curData) {
+                curData = {type: 'report', dataUUID: this._groupBys[i].dataUUID, dataType: 'parent', data: dataSet.name, groupBy: []};
+                this._saveTemporaryData.reports[this._groupBys[i].dataUUID] = curData;
+            } else if (curData.groupBy) {
                 for (let j = 0; j < curData.groupBy.length; j++) {
                     if (curData.groupBy[j].groupOn === this._groupBys[i].name) {
                         found = true;
@@ -602,23 +678,30 @@ class FluentReportsGenerator {
                 curData.groupBy = [];
             }
             if (!found) {
+                console.warn("Save; found missing group", this._groupBys[i].name);
                 curData.groupBy.push({type: "group", groupOn: this._groupBys[i].name});
             }
         }
 
+        // TODO: Is this needed????
         // Remove Groups in Report, that no longer exist in the groupby data
-        for (let i=0;i<this._saveTemporaryData.reports.length;i++) {
-            let curData = this._saveTemporaryData.reports[i];
+        for (let key in this._saveTemporaryData.reports) {
+            if (!this._saveTemporaryData.reports.hasOwnProperty(key)) { continue; }
+            let curData = this._saveTemporaryData.reports[key];
+
             // No Groups; proceed to the next one...
             if (!curData.groupBy) { continue; }
+
             for (let j=0;j<curData.groupBy.length;j++) {
                 let found = false;
                 for (let k=0;k<this._groupBys.length;k++) {
+                    // TODO: Now - Need to check to see about DATAUUID match?
                     if (curData.groupBy[j].groupOn === this._groupBys[k].name) {
                         found = true;
                     }
                 }
                 if (!found) {
+                    console.log("Deleting from Save" , curData.groupBy[j]);
                     curData.groupBy.splice(j, 1);
                     j--;
                 }
@@ -629,7 +712,7 @@ class FluentReportsGenerator {
             results.data = this._data;
         }
 
-        // Copy any json based formatters over to the new report
+      // Copy any json based formatters over to the new report
         if (this._reportData.formatterFunctions) {
             results.formatterFunctions = this._reportData.formatterFunctions;
         }
@@ -637,24 +720,34 @@ class FluentReportsGenerator {
         // Clear our temporary data storage
         this._saveTemporaryData = null;
 
+        // Strip out all dataUUID from a non-debugged report
+        if (!this._debugging) {
+            const cleanSubReport = (subReport) => {
+                delete subReport.dataUUID;
+                if (subReport.subReports) {
+                    for (let i = 0; i < subReport.subReports.length; i++) {
+                        cleanSubReport(subReport.subReports[i]);
+                    }
+                }
+            };
+            cleanSubReport(results);
+        }
+
         return results;
     }
 
     /**
      * Saves any total information
      * @param dest
-     * @param dataSet
+     * @param dataUUID
      * @private
      */
-    _saveTotals(dest, dataSet) {
+    _saveTotals(dest, dataUUID) {
         const totals = this.reportTotals;
         let fields, calcs=null;
 
-        if (dataSet === 0) {
-            fields = this.reportFields.primary;
-        } else {
-            fields = this.reportFields["level"+dataSet];
-        }
+        const curData = this._parsedData.findByUUID(dataUUID);
+        fields = curData.fields;
 
         for (let key in totals) {
             if (!totals.hasOwnProperty(key)) { continue; }
@@ -732,34 +825,6 @@ class FluentReportsGenerator {
     }
 
     /**
-     * Parses a Dataset to figure out field names, recursively
-     * @param rowOfData - A Single record to parse
-     * @param title - DataSet title
-     * @param dataSet - Where to store the dataset  ('primary' | 'level')
-     * @param level - Level of dataset...
-     * @private
-     */
-    _parseDataLevel(rowOfData, title, dataSet, level) {
-        let newDataSet = dataSet + (level > 0 ? level : '');
-        this._fields.levels = level;
-        this._fields.titles.push(title);
-        this._fields[newDataSet] = [];
-        for (let key in rowOfData) {
-            if (!rowOfData.hasOwnProperty(key)) { continue; }
-            if (Array.isArray(rowOfData[key])) {
-                if (rowOfData[key].length > 0) {
-                    this._parseDataLevel(rowOfData[key][0], key, 'level', level+1);
-                } else {
-                    console.warn("fluentReports: DataSet is empty dataset", dataSet, key);
-                }
-            } else {
-                this._fields[newDataSet].push(key);
-            }
-        }
-
-    }
-
-    /**
      * Clears a Report
      * @private
      */
@@ -773,7 +838,7 @@ class FluentReportsGenerator {
         this._calculations = [];
         this._functions = [];
         this._groupBys = [];
-        this._subReports = {};
+        this._subReports = [];
         this._registeredFonts = [];
 
        this.UIBuilder.clearArea(this._reportLayout);
@@ -940,34 +1005,35 @@ class FluentReportsGenerator {
     _generateInterface() {
         if (typeof window.PlainDraggable !== 'undefined') {
             this._generateToolBarLayout();
-            this._generateReportLayout(this._reportData, 57, "", 0);
+            this._generateReportLayout(this._reportData, 57, "", this._parsedData.dataUUID);
             this._reportSettings();
             this._resetPaperSizeLocation();
         } else {
             setTimeout(() => {
                 this._generateInterface();
-            }, 500);
+            }, 250);
         }
     }
     
     _openGroupings() {
         //groupBy
        this.UIBuilder.groupsBrowse(this._groupBys,  this,    (groups) => {
-            let changed = 0;
-            for (let i=0;i<this._groupBys.length;i++) {
-                for (let j=0;j<groups.length;j++) {
-                    if (this._groupBys[i].name === groups[j].name && this._groupBys[i].dataSet === groups[j].dataSet) {
-                        j=groups.length; changed++;
+            let changed = false;
+            if (this._groupBys.length === groups.length) {
+                for (let i = 0; i < this._groupBys.length; i++) {
+                    if (this._groupBys[i].dataUUID !== groups[i].dataUUID) {
+                        changed = true;
+                        break;
                     }
                 }
+            } else {
+                changed = true;
             }
 
-            if (this._groupBys.length !== changed) {
+            if (changed) {
                 this._groupBys = groups;
                 const newReport = this._generateSave();
                 this._parseReport(newReport);
-            } else {
-                this._groupBys = groups;
             }
         });
     }
@@ -1013,8 +1079,9 @@ class FluentReportsGenerator {
         }));
           this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue828", "Print data field", () => {
               let options = this._getSectionOptions(this._sectionIn);
-              options.label = (this._fields.primary[0] || "????");
-              options.field = this._fields.primary[0];
+              const field0 = this._parsedData.fields[0] || "????";
+              options.label = field0;
+              options.field = field0;
              new frPrintField(this, this._getSection(this._sectionIn), options); // jshint ignore:line
           }));
         this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue818", "Print dynamic data", () => {
@@ -1212,91 +1279,140 @@ class FluentReportsGenerator {
         this.showProperties(this, true);
     }
 
-    _generateReportHeaderSectionLayout(data, height, groupName='', dataSet=0) {
+    /**
+     * Generate all the Header sections for a report
+     * @param data
+     * @param height
+     * @param groupName
+     * @param reportUUID
+     * @private
+     */
+    _generateReportHeaderSectionLayout(data, height, groupName, isGroup, reportUUID) {
         if (typeof data.titleHeader !== 'undefined') {
-            this._generateSection("Title Header", height, 1, groupName, dataSet, data.titleHeader);
+            this._generateSection("Title Header", height, 1, groupName, data.titleHeader, reportUUID, null, isGroup);
         }
         if (typeof data.pageHeader !== 'undefined') {
-            this._generateSection("Page Header", height, 1, groupName, dataSet, data.pageHeader);
+            this._generateSection("Page Header", height, 1, groupName, data.pageHeader, reportUUID, null, isGroup);
         }
         if (typeof data.header !== 'undefined') {
-            this._generateSection("Header", height, 1, groupName, dataSet, data.header);
+            this._generateSection("Header", height, 1, groupName, data.header, reportUUID, null, isGroup);
         }
+        // Handle Group By for The report/sub-report
         if (typeof data.groupBy !== 'undefined') {
             for (let i = 0; i < data.groupBy.length; i++) {
                 let found = false;
                 for (let j=0;j<this._groupBys.length;j++) {
-                    if (this._groupBys[j].dataSet === dataSet && this._groupBys[j].name === groupName) {
+                    if (this._groupBys[j].dataUUID === reportUUID && this._groupBys[j].name === groupName) {
                         found=true;
                     }
                 }
                 if (!found) {
-                    this._groupBys.push({name: data.groupBy[i].groupOn, dataSet: dataSet});
+                    this._groupBys.push({name: data.groupBy[i].groupOn, dataUUID: reportUUID});
                     if (data.groupBy[i].calcs) {
-                        this._mergeTotals(data.groupBy[i].groupOn, data.groupBy[i].calcs);
+                        this._mergeTotals(data.groupBy[i].calcs);
                     }
                 }
-                this._generateReportHeaderSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, dataSet);
+                this._generateReportHeaderSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, true, reportUUID);
             }
         }
     }
 
-    _generateReportDetailSectionLayout(data, height, groupName='', dataSet=0, isGroup=false) {
+    /**
+     * Used to Generate a Detail Section, and any Sub-Reports follow detail.
+     * @param data
+     * @param height
+     * @param groupName
+     * @param isGroup
+     * @param reportUUID
+     * @private
+     */
+    _generateReportDetailSectionLayout(data, height, groupName, isGroup, reportUUID) {
+        // TODO: We might want to consider letting Detail happen after sub-reports....
         if (typeof data.detail !== 'undefined') {
-            this._generateSection("Detail", height, 3, groupName, dataSet, data.detail, isGroup);
+            this._generateSection("Detail", height, 3, groupName, data.detail, reportUUID, data, isGroup);
         }
+
+
+        // Transition old subReport to subReports
         if (typeof data.subReport !== 'undefined') {
-            this._generateReportLayout(data.subReport, height, data.subReport.data, dataSet+1);
+            data.subReports = [data.subReport];
+            delete data.subReport;
+        }
+
+        if (typeof data.subReports !== 'undefined') {
+            // Find our Parent Report; so that we can limit the data to children of it...
+            let parent = this._parsedData.findByUUID(reportUUID);
+            if (Array.isArray(data.subReports)) {
+                for (let i = 0; i < data.subReports.length; i++) {
+                    const child = parent.findExactChildDataSet(data.subReports[i].data);
+                    if (child !== null) {
+                        this._generateReportLayout(data.subReports[i], height, data.subReports[i].data, child.dataUUID);
+                    } else {
+                        // TODO: Do we need to modify the data to add a new fake Data Section to line this up?
+                        console.log("Subreport: ", data.subReports[i].data, "-- no data set matches.");
+                    }
+                }
+            }
         }
 
         if (typeof data.groupBy !== 'undefined') {
             for (let i = 0; i < data.groupBy.length; i++) {
-                this._generateReportDetailSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, dataSet, true);
+                this._generateReportDetailSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, true, reportUUID);
             }
         }
     }
 
-    _generateReportFooterSectionLayout(data, height, groupName='', dataSet=0) {
+    /**
+     * Generate the Footer Sections
+     * @param data
+     * @param height
+     * @param groupName
+     * @param reportUUID
+     * @private
+     */
+    _generateReportFooterSectionLayout(data, height, groupName, isGroup, reportUUID) {
         if (typeof data.groupBy !== 'undefined') {
             for (let i = 0; i < data.groupBy.length; i++) {
-                this._generateReportFooterSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, dataSet);
+                this._generateReportFooterSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, true, reportUUID);
             }
         }
         if (typeof data.footer !== 'undefined') {
-            this._generateSection("Footer", height, 2, groupName, dataSet, data.footer);
+            this._generateSection("Footer", height, 2, groupName, data.footer, reportUUID, null, isGroup);
         }
         if (typeof data.pageFooter !== 'undefined') {
-            this._generateSection("Page Footer", height, 2, groupName, dataSet, data.pageFooter);
+            this._generateSection("Page Footer", height, 2, groupName, data.pageFooter, reportUUID, null, isGroup);
         }
         if (typeof data.finalSummary !== 'undefined') {
-            this._generateSection("Final Summary", height, 2, groupName, dataSet, data.finalSummary);
+            this._generateSection("Final Summary", height, 2, groupName, data.finalSummary, reportUUID, null, isGroup);
         }
     }
 
-    _generateReportLayout(data, height, groupName, dataSet=0) {
+    _generateReportLayout(data, height, groupName, dataUUID) {
 
         console.log("GenerateReportLayout", groupName);
-        if (dataSet > 0) {
-            this._subReports[groupName] = {dataSet: dataSet};
-            // TODO: Might need more sub-report properties?
-            this._copyProperties(data, this._subReports[groupName], ["type", "dataType", "data", "calcs", "fontSize"]);
-            if (this._subReports[groupName].calcs) {
-                this._mergeTotals(groupName, this._subReports[groupName].calcs);
-            }
+
+        let report = this._parsedData.findByUUID(dataUUID);
+        if (report === null) {
+            console.log("Report DATA does not match report layout!");
+            Dialog.notice("Report DATA does not match report layout, ignoring section: "+groupName, "#FF0000", this._frame);
+            return;
         }
-        this._generateReportHeaderSectionLayout(data, height, groupName, dataSet);
-        this._generateReportDetailSectionLayout(data, height, groupName, dataSet, false);
-        this._generateReportFooterSectionLayout(data, height, groupName, dataSet);
+
+        report.parseData(data);
+
+        // Top most report
+        if (/* report.parent === null && */ report.calcs) {
+                this._mergeTotals(report.calcs);
+        }
+        this._generateReportHeaderSectionLayout(data, height, groupName, false, report.dataUUID);
+        this._generateReportDetailSectionLayout(data, height, groupName,false, report.dataUUID);
+        this._generateReportFooterSectionLayout(data, height, groupName, false, report.dataUUID);
     }
 
-    _mergeTotals(groupName, totals) {
+    _mergeTotals(totals) {
         const totalsTypes = ['sum', 'min', 'max', 'average', 'count'];
         for (let i=0;i<totalsTypes.length;i++) {
             if (totals[totalsTypes[i]]) {
-                // Fix Names to be TABLE.field
-                //for (let j=0;j<totals[totalsTypes[i]].length;j++) {
-                //    totals[totalsTypes[i]][j] = groupName + "." + totals[totalsTypes[i]][j];
-                //}
 
                 if (!this._totals[totalsTypes[i]]) {
                     this._totals[totalsTypes[i]] = totals[totalsTypes[i]];
@@ -1307,8 +1423,21 @@ class FluentReportsGenerator {
         }
     }
 
-    _generateSection(title, height, type, groupName, dataSet, sectionData, fromGroup=false) {
-        const section = new frSection(this, {title: title, height: height, type: type, group: groupName, dataSet: dataSet, fromGroup: fromGroup});
+    _generateSection(title, height, type, groupName, sectionData, reportUUID, data=null, fromGroup=false) {
+        let section;
+            section = new frSection(this, {
+                title: title,
+                height: height,
+                type: type,
+                group: groupName,
+                dataUUID: reportUUID,
+                fromGroup: fromGroup
+            });
+            if (data !== null && typeof data.dataType !== 'undefined') {
+                section.dataType = data.dataType;
+            }
+
+
         if (sectionData == null) { return; }
         if (Array.isArray(sectionData)) {
             for (let i=0;i<sectionData.length;i++) {
@@ -1321,6 +1450,190 @@ class FluentReportsGenerator {
 
     showProperties(obj, refresh=false) {
        this.UIBuilder.showProperties(obj, this._propertiesLayout, refresh);
+    }
+
+}
+
+// ----------------------------------------- [ Data Tracking ] ----------------------------------------------
+
+class frReportData { // jshint ignore:line
+
+    constructor(rowOfData, parent, name) {
+        this._data = name;
+
+        // noinspection RedundantConditionalExpressionJS
+        this._linkedToReport = (parent == null ? true : false);
+        this._parent = parent;
+        this._fields = [];
+        this._children = {};
+        this._uuid = _frItemUUID++;
+        if (Array.isArray(rowOfData)) {
+            this.parseArray(rowOfData);
+        } else {
+            this.parseRow(rowOfData);
+        }
+    }
+
+    get dataUUID() {
+        return this._uuid;
+    }
+
+    get parent() {
+        return this._parent;
+    }
+
+    get children() {
+        return this._children;
+    }
+
+    get childrenIndexed() {
+        let idx = [];
+        for (let key in this._children) {
+            if (this._children.hasOwnProperty(key)) {
+                idx.push(this._children[key]);
+            }
+        }
+        return idx;
+    }
+
+    get name() {
+        return this._data;
+    }
+
+    get data() {
+        return this._data;
+    }
+    set data(val) {
+        this._data = val;
+    }
+
+    get fields() {
+        return this._fields;
+    }
+
+    get path() {
+        let results = [this._name];
+        let current = this;
+        while (current.parent) {
+            current = current.parent;
+            results.unshift(current._name);
+        }
+        return results;
+    }
+
+    get primary() {
+        let current = this;
+        // Go up to the top
+        while (current.parent != null) { current = current.parent; }
+        return current;
+    }
+
+    get linkedToReport() {
+        return this._linkedToReport;
+    }
+    set linkedToReport(val) {
+        this._linkedToReport = !!val;
+    }
+
+    parseData(data) {
+        this._copyProperties(data, this, ["type", "dataType", "data", "calcs"]);
+        this._linkedToReport = true;
+    }
+
+    findMatchingLayoutInfo(layoutData, checkDataUUID=null) {
+        const curDataUUID = checkDataUUID || this.dataUUID;
+        if (layoutData.dataUUID === curDataUUID) { return layoutData; }
+        if (Array.isArray(layoutData.subReports)) {
+            for (let i = 0; i < layoutData.subReports.length; i++) {
+                const result = this.findMatchingLayoutInfo(layoutData.subReports[i], curDataUUID);
+                if (result) {
+                    return result;
+                }
+            }
+        }
+        return null;
+    }
+
+
+
+    /* _findDataSet(name) {
+        if (this._name === name) { return this; }
+
+        let result = null;
+        for (let i=0;i<this._children.length;i++) {
+            result = this._children._findDataSet(name);
+            if (result != null) { return result; }
+        }
+        return result;
+    } */
+
+/*    findDataSet(name) {
+        let current = this.primary;
+        return current._findDataSet(name);
+    } */
+
+    /**
+     * Searches only the direct children of this dataset
+     * @param name
+     * @returns {null|*}
+     */
+    findExactChildDataSet(name) {
+        if (this._children[name]) { return this._children[name]; }
+        return null;
+    }
+
+
+    findByUUID(uuid) {
+        let current = this.primary;
+        return current._findByUUID(uuid);
+    }
+
+    _findByUUID(uuid) {
+        if (this._uuid === uuid) { return this; }
+        let result = null;
+        for (let key in this._children) {
+            if (this._children.hasOwnProperty(key)) {
+                result = this._children[key]._findByUUID(uuid);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+        return result;
+    }
+
+
+
+    parseArray(rows) {
+        for (let i=0;i<rows.length;i++) {
+            this.parseRow(rows[i]);
+        }
+    }
+
+    parseRow(rowOfData) {
+        for (let key in rowOfData) {
+            if (!rowOfData.hasOwnProperty(key)) { continue; }
+            if (Array.isArray(rowOfData[key])) {
+                if (!this._children[key]) {
+                    this._children[key] = new frReportData(rowOfData[key], this, key);
+                } else {
+                    this._children[key].parseArray(rowOfData[key]);
+                }
+            } else {
+                if (this._fields.indexOf(key) < 0) {
+                    this._fields.push(key);
+                }
+            }
+        }
+    }
+
+    _copyProperties(src, dest, props) {
+        if (src == null) { return; }
+        for (let i=0;i<props.length;i++) {
+            if (typeof src[props[i]] !== 'undefined') {
+                dest[props[i]] = src[props[i]];
+            }
+        }
     }
 
 }
@@ -1463,64 +1776,51 @@ class frSection { // jshint ignore:line
         }
     }
 
-    _generateSave(results) {
+    _generateSave(results, reportSections) {
         if (this._groupName !== '') {
             let group;
 
-            // Is this a subReport or Detail?
-            if (this._type === 3 && this._fromGroup === false) {
-                let foundReport;
-                for (let i = 0; i < this._report._saveTemporaryData.reports.length; i++) {
-                    if (this._dataSet === this._report._saveTemporaryData.reports[i].dataSet ) {
-                        foundReport = this._report._saveTemporaryData.reports[i];
-                        break;
-                    }
+            // Is this a sub-report or Group?
+            if (/* this._type === 3 && */ this._fromGroup === false) {
+                // Sub-report
+                if (!results.subReports) {
+                    results.subReports = [];
                 }
 
-                if (foundReport) {
-                    results.subReport = foundReport;
-                    foundReport.type = 'report';
-                    if (!Array.isArray(foundReport.detail)) {
-                        foundReport.detail = [];
-                    }
-                } else {
-                    results.subReport = {type: 'report', detail: []};
-                    this._report._saveTemporaryData.reports.push(results.subReport);
-                }
+                const newReport = reportSections[this._dataUUID];
+                newReport.type = 'report';
+                //if (!Array.isArray(newReport.detail)) { newReport.detail = []; }
 
-                this._report._copyProperties(this._report._subReports[this._groupName], results.subReport, ["type", "dataType", "data", "fontSize", "dataSet"]);
+
+                //let newReport = {type: 'report', detail: [], dataUUID: this._dataUUID, dataType: ds.dataType };
+                //this._report._copyProperties(this._report._subReports[this._groupName], results.subReports, ["type", "dataType", "data"]);
+                //results.subReports.push( newReport );
 
                 // Switch to the subReport
-                results = results.subReport;
+                results = newReport;
             } else {
-                let found = false;
-                for (let i=0;i<this._report._saveTemporaryData.reports.length;i++) {
-                    if (this._dataSet === this._report._saveTemporaryData.reports[i].dataSet) {
-                        results = this._report._saveTemporaryData.reports[i];
-                        found = true;
+
+                // Grab the Section of the Report this group is for
+                let groupSection = reportSections[this._dataUUID];
+
+                // Setup the array to hold the groups if it doesn't exist
+                if (!groupSection.groupBy) {
+                    groupSection.groupBy = [];
+                }
+
+                // Since we have a Header, Detail, Footer, this could be
+                for (let i = 0; i < groupSection.groupBy.length; i++) {
+                    if (groupSection.groupBy[i].groupOn === this._groupName) {
+                        group = groupSection.groupBy[i];
                         break;
                     }
                 }
 
-                if (!found) {
-                    results = {dataSet: this._dataSet};
-                    this._report._saveTemporaryData.reports.push(results);
-                }
-
-                // This is a group
-                if (!results.groupBy) {
-                    results.groupBy = [];
-                }
-                for (let i = 0; i < results.groupBy.length; i++) {
-                    if (results.groupBy[i].groupOn === this._groupName) {
-                        group = results.groupBy[i];
-                        break;
-                    }
-                }
                 if (!group) {
                     group = {type: 'group', groupOn: this._groupName};
-                    results.groupBy.push(group);
+                    groupSection.groupBy.push(group);
                 }
+
                 // Switch to the group level, before we continue on below....
                 results = group;
             }
@@ -1560,7 +1860,6 @@ class frSection { // jshint ignore:line
         }
         let group = results[type];
         this._saveSectionInfo(group);
-
     }
 
     _saveSectionInfo(results) {
@@ -1601,6 +1900,9 @@ class frSection { // jshint ignore:line
                 }
                 break;
 
+            case 'text':
+                console.log("FluentReports: type=text, depreciated, proper type=print."); // jshint ignore:line
+
             case 'print':
                 let printElement;
                 if (data.field) {
@@ -1630,7 +1932,6 @@ class frSection { // jshint ignore:line
                 let bandLineElement = new frBandLine(this._report, this, {});
                 bandLineElement._parseElement(data);
                 break;
-
 
             case 'image':
                 let imageElement = new frImage(this._report, this, {});
@@ -1735,6 +2036,7 @@ class frSection { // jshint ignore:line
         this._calculations = [];
         this._hasCalculations = false;
         this._fromGroup = options && options.fromGroup || false;
+        this._dataUUID = options && options.dataUUID || null;
 
         this._children = [];
 
@@ -1763,7 +2065,6 @@ class frSection { // jshint ignore:line
             {type: 'display', field: 'hasFunctions', title: 'Functions', display: () => { return this._createSpan(this._hasFunctions, "\ue81f", this.clickFunctions.bind(this)); }},
             {type: 'display', field: 'hasCalculations', title: 'Calculations', display: () => { return this._createSpan(this._hasCalculations, "\uE824", this.clickCalcs.bind(this)); }}
         ];
-        this._dataSet = options && options.dataSet || 0;
         if (this._type === 1 || this._type === 2) {
             this._properties.push({
                 type: 'display',
@@ -1869,6 +2170,10 @@ class frSection { // jshint ignore:line
         };
     }
 
+    get isSubReport() {
+        return this._type === 3 && this._fromGroup === false;
+    }
+
     _createSpan(value, code, func) {
         const span = document.createElement('span');
         if (value === true) {
@@ -1926,76 +2231,6 @@ class frSection { // jshint ignore:line
         span.innerText = this._groupName;
         span.style.fontWeight = "bolder";
         return span;
-    }
-
-    // noinspection JSUnusedGlobalSymbols
-    _generateDataSetSelection() {
-        const selectList = document.createElement("select");
-        selectList.className = "frSelect";
-        const fields = this._report.reportFields;
-        let group;
-
-        if (this._dataSet === 0) {
-            group = document.createElement("optgroup");
-            group.label = "Primary Data";
-            selectList.appendChild(group);
-            for (let i = 0; i < fields.primary.length; i++) {
-                const option = new Option(fields.primary[i]);
-                if (this._field === fields.primary[i]) {
-                    option.selected = true;
-                }
-                group.appendChild(option);
-            }
-        } else {
-            if (fields['level' + this._dataSet].length > 0) {
-                group = document.createElement("optgroup");
-                group.label = fields.titles[this._dataSet];
-                for (let j = 0; j < fields['level' + this._dataSet].length; j++) {
-                    const option = new Option(fields['level' + this._dataSet][j]);
-                    if (this._field === fields['level' + this._dataSet][j]) {
-                        option.selected = true;
-                    }
-                    group.appendChild(option);
-                }
-                selectList.appendChild(group);
-            }
-        }
-
-        const variables = this._report.reportVariables;
-        if (variables != null) {
-            group = document.createElement("optgroup");
-            group.label = "- Variables -";
-            let count=0;
-            for (let key in variables) {
-                if (!variables.hasOwnProperty(key)) { continue; }
-                count++;
-                const option = new Option(key);
-                if (this._field === key) {
-                    option.selected = true;
-                }
-
-                group.appendChild(option);
-            }
-            if (count) {
-                selectList.appendChild(group);
-            }
-        }
-
-        const calculations = this._report.reportCalculations;
-        if (calculations.length) {
-            group = document.createElement("optgroup");
-            group.label = "- Calculations -";
-            for (let i=0;i<calculations.length;i++) {
-                const option = new Option(calculations[i]);
-                if (this._field === calculations[i]) {
-                    option.selected = true;
-                }
-                group.appendChild(option);
-            }
-            selectList.appendChild(group);
-        }
-
-        return selectList;
     }
 
     _generateStockCheck() {
@@ -2094,7 +2329,6 @@ class frSection { // jshint ignore:line
 
 
 }
-
 
 
 // ----------------------------------------- [ Elements ] ----------------------------------------------
@@ -2481,7 +2715,7 @@ class frElement { // jshint ignore:line
             const curProp = this._properties[i];
             if (curProp.field) {
                 // Check to see if we passed in this field to be ignored by a descendant
-                if (ignore.indexOf(curProp.field) >= 0) { continue; }
+                if (ignore && ignore.indexOf(curProp.field) >= 0) { continue; }
 
                 // If the item is undefined, then we don't bother saving it.
                 if (typeof this[curProp.field] === 'undefined') { continue; }
@@ -2789,7 +3023,7 @@ class frStandardFooter extends frTitledLabel { // jshint ignore:line
         super(report, parent, options);
         this._title = "Report";
         this._totals = [];
-        this._addProperties([{type: 'text', field: 'title'}]);
+        this._addProperties([{type: 'string', field: 'title'}]);
         this._addProperties(  {type: 'button', field: 'totals', title: 'Totals', click: this._setTotals.bind(this), destination: false}, false);
         this._deleteProperties(['top', 'left', 'width', 'height']);
         this.locked = true;
@@ -2797,7 +3031,6 @@ class frStandardFooter extends frTitledLabel { // jshint ignore:line
     }
 
     _setTotals() {
-
         console.log("Set Totals");
     }
 
@@ -2814,7 +3047,11 @@ class frStandardFooter extends frTitledLabel { // jshint ignore:line
         if (this.title === "Band") {
             props.values = this.totals;
         } else {
-            props.values = [this.title, this.totals[0][0], this.totals[2]];
+            if (this.totals[0] === undefined || this.totals[0][0] === undefined) {
+                props.values = [this.title];
+            } else {
+                props.values = [this.title, this.totals[0][0], this.totals[2]];
+            }
         }
     }
 
@@ -3075,7 +3312,7 @@ class frPrint extends frTitledLabel {
         this._textColor = '';
         this._link = "";
         this._rotate = 0;
-        this._align = 0;
+        this._align = "left";
         this._font = "times";
         this._formatFunction = "none";
 
@@ -3319,8 +3556,8 @@ class frPrint extends frTitledLabel {
             "strike", "fill", "textColor", "link", "border", "characterSpacing", "wordSpacing", "rotate", "align", "wrap", "width", "formatFunction"]);
     }
 
-    _saveProperties(props) {
-        super._saveProperties(props);
+    _saveProperties(props, ignore) {
+        super._saveProperties(props, ignore);
         props.type = 'print';
 
     }
@@ -3437,6 +3674,7 @@ class frPrintFunction extends frPrint { // jshint ignore:line
             const func = new Function('report', 'data', 'state', 'vars', 'done', this._function);   // jshint ignore:line
             let data = {};
 
+            // TODO: We need to tie this to the proper datafields for this section...
             const fields = this._report.reportFields;
 
             for (let i=0;i<fields.primary.length;i++) {
@@ -3515,10 +3753,14 @@ class frPrintField extends frPrint { // jshint ignore:line
         options.elementTitle = "Data Field";
         super(report, parent, options);
         this.field = options && options.field || 'Unknown';
-        this._addProperties({type: 'select', title: 'field', field: 'field', display: this._generateDataFieldSelection.bind(this)});
+        this._dataUUID = options && options.dataUUID || null;
+        this._addProperties({type: 'select', title: 'field', field: 'field', field2: 'dataUUID', display: this._generateDataFieldSelection.bind(this)});
     }
 
     _generateDataFieldSelection() {
+        if (this._dataUUID) {
+            return this.UIBuilder.createDataSelect(this._report, {value: this._field, dataUUID: this._dataUUID}, 3);
+        }
         return this.UIBuilder.createDataSelect(this._report, this._field, 3);
     }
 
@@ -3528,11 +3770,19 @@ class frPrintField extends frPrint { // jshint ignore:line
         this.label = val;
     }
 
+    get dataUUID() {
+        return this._dataUUID;
+    }
+    set dataUUID(val) {
+        this._dataUUID = val;
+    }
+
 
     _dblClickHandler() {
-      this.UIBuilder.dataFieldEditor(this._generateDataFieldSelection(), (value) => {
-            if (this.field !== value) {
+      this.UIBuilder.dataFieldEditor(this._generateDataFieldSelection(), (value, idx, dataUUID) => {
+            if (this.field !== value || this.dataUUID !== dataUUID) {
                 this.field = value;
+                this.dataUUID = dataUUID;
                 this._report.showProperties(this, true);
             }
         });
@@ -3542,6 +3792,9 @@ class frPrintField extends frPrint { // jshint ignore:line
     _parseElement(data) {
         if (data.field) {
             this.field = data.field;
+        }
+        if (data.dataUUID) {
+            this.dataUUID = data.dataUUID;
         }
         super._parseElement(data);
     }
@@ -3613,7 +3866,7 @@ class frPrintDynamic extends frPrint { // jshint ignore:line
         this._elementTitle.innerText = val;
     }
 
-    get other() { return this._total; }
+    get other() { return this._other; }
     set other(val) {
         this._other = val;
         this.label = val;
@@ -3722,8 +3975,22 @@ class frBandElement extends frPrint { // jshint ignore:line
         return this._bands;
     }
 
+    get padding() {return this._padding;}
+    set padding(val) {this._padding = parseInt(val,10);}
+
     get gutter() {return this._gutter;}
-    set gutter(val){this._gutter = parseInt(val,10);};
+    set gutter(val) {
+        this._gutter = parseInt(val,10);
+        if (this._gutter > 0) {
+            this.collapse = false;
+        } else if (this._gutter <= 0) {
+            this.collapse = true;
+        }
+    }
+
+    get collapse() { return this._collapse; }
+    set collapse(val) { this._collapse = !!val; }
+
     constructor(report, parent, options = {}) {
         options.elementTitle = "Band";
         super(report, parent, options);
@@ -3733,6 +4000,8 @@ class frBandElement extends frPrint { // jshint ignore:line
         this._bands = [];
         this._suppression = false;
         this._gutter = 0;
+        this._padding = 1;
+        this._collapse = true;
 
         this._table = document.createElement("table");
         this._table.className = "frBand";
@@ -3752,9 +4021,11 @@ class frBandElement extends frPrint { // jshint ignore:line
         this._addProperties([{type: 'boolean', field: 'suppression', default: false},
             {type: 'number', field: 'columns', destination: false},
             {type: 'number', field: 'fillOpacity', destination: 'settings'}
-
             ]);
-        this._addProperties([{type: 'number', field: 'gutter', destination: 'settings',default:0},
+        this._addProperties([
+            {type: 'number', field: 'gutter', destination: 'settings',default:0},
+            {type: 'boolean', field: 'collapse', destination: 'settings', default: true},
+            {type: 'number', field: 'padding', destination: 'settings', default: 1},
             {type: 'button', title: 'Band Editor', click: () => { this._bandEditor(); }}], false);
     }
 
@@ -3829,7 +4100,11 @@ class frBandElement extends frPrint { // jshint ignore:line
         for (let i=0;i<len;i++) {
             this._handleBandCell(data.fields[i]);
         }
-        this._copyProperties(data.settings, this, ["x", "y", "addX", "addY", "fontBold", "fontItalic", "fill", "textColor", "link", "border", "wrap"]);
+        this._copyProperties(data, this, ["gutter", "fillOpacity", "suppression", "padding", "collapse"]);
+/*        this._copyProperties(data, this, ["x", "y", "addX", "addY", "font", "fontSize", "fontBold", "fontItalic", "underline",
+            "strike", "fill", "textColor", "link", "border", "characterSpacing", "wordSpacing", "rotate", "align", "wrap", "gutter", "fillOpacity"]);
+  */
+        super._parseElement(data);
     }
 
     _getCell(id) {
@@ -4063,21 +4338,54 @@ class UI { // jshint ignore:line
         let resultVariables = [];
 
         let tempFields = report.reportFields;
+        const tempOptGroups = {};
 
-        const tempOptGroups = [];
-        for (let i=0;i<tempFields.titles.length;i++) {
+        let group = document.createElement("optgroup");
+        group.label = "Primary";
+        tempOptGroups[tempFields.dataUUID] = group;
+        let tempOptUUIDS = [tempFields.dataUUID];
+        select.appendChild(group);
+
+        // TODO: Do we want to allow us to go more than two levels deep, this makes it a lot more confusing...
+        // We can change this to a recursive function, if we need more than two levels...
+        for (let key in tempFields.children) {
+            if (!tempFields.children.hasOwnProperty(key)) { continue; }
             const group = document.createElement("optgroup");
-            group.label = tempFields.titles[i];
-            tempOptGroups.push(group);
+            group.label = tempFields.children[key].name;
+            tempOptGroups[tempFields.children[key].dataUUID] = group;
+            tempOptUUIDS.push(tempFields.children[key].dataUUID);
             select.appendChild(group);
+            for (let key2 in tempFields.children[key].children) {
+                if (!tempFields.children[key].children.hasOwnProperty(key2)) { continue; }
+                const group2 = document.createElement("optgroup");
+                group2.label = group.label + ">" + tempFields.children[key].children[key2].name;
+                tempOptGroups[tempFields.children[key].children[key2].dataUUID] = group2;
+                tempOptUUIDS.push(tempFields.children[key].children[key2].dataUUID);
+                select.appendChild(group2);
+            }
         }
 
-        for (let i=0;i<groups.length;i++) {
-            const optGroup = tempOptGroups[groups[i].dataSet];
-            const option = new Option(groups[i].name);
-            optGroup.appendChild(option);
-            resultVariables.push(shallowClone(groups[i]));
-        }
+        const rebuildGroups = () => {
+            // Clear all Select->Options
+            for (let key in  tempOptGroups) {
+                 if (tempOptGroups.hasOwnProperty(key)) {
+                     while (tempOptGroups[key].children.length) {
+                         tempOptGroups[key].removeChild(tempOptGroups[key].children[0]);
+                     }
+                 }
+            }
+
+            // Recreate all Select Options
+            for (let i=0;i<resultVariables.length;i++) {
+                let dUUID = resultVariables[i].dataUUID;
+                const optGroup = tempOptGroups[dUUID];
+                const option = new Option(resultVariables[i].name);
+                option.dataUUID = dUUID;
+                optGroup.appendChild(option);
+            }
+        };
+
+        rebuildGroups();
 
         selectDiv.appendChild(select);
         selectDiv.style.display = 'inline-block';
@@ -4106,19 +4414,6 @@ class UI { // jshint ignore:line
 
         body.appendChild(addBtnContainer);
 
-        const rebuildGroups = () => {
-            // Clear all Select->Options
-           for (let i=0;i<tempOptGroups.length;i++) {
-               while (tempOptGroups[i].children.length) { tempOptGroups[i].removeChild(tempOptGroups[i].children[0]); }
-           }
-
-           // Recreate all Select Options
-           for (let i=0;i<resultVariables.length;i++) {
-                const optGroup = tempOptGroups[resultVariables[i].dataSet];
-                const option = new Option(resultVariables[i].name);
-                optGroup.appendChild(option);
-           }
-        };
 
         // Move Up
         addButtons[3].addEventListener("click", () => {
@@ -4126,7 +4421,7 @@ class UI { // jshint ignore:line
             let curIndex = select.selectedIndex;
             let curGroup = resultVariables[curIndex];
             let priorGroup = resultVariables[curIndex-1];
-            if (priorGroup.dataSet !== curGroup.dataSet) {
+            if (priorGroup.dataUUID !== curGroup.dataUUID) {
                 return;
             }
 
@@ -4148,7 +4443,7 @@ class UI { // jshint ignore:line
 
             let curGroup = resultVariables[curIndex];
             let nextGroup = resultVariables[curIndex+1];
-            if (nextGroup.dataSet !== curGroup.dataSet) {
+            if (nextGroup.dataUUID !== curGroup.dataUUID) {
                 return;
             }
 
@@ -4164,81 +4459,97 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-            const fields =this.createDataSelect(report, null , 3);
-           this.dataFieldEditor(fields,(name, idx, dataSet) => {
-                if (name != null && name !== '') {
-                    let optGroup = tempOptGroups[dataSet];
-                    let found = false;
-                    for (let i=0;i<resultVariables.length;i++) {
-                        if (resultVariables[i].dataSet === dataSet && resultVariables[i].name === name) {
-                            found = true;
-                            break;
-                        }
 
-                    }
-                    if (!found) {
-                        // Grab count before adding...
-                        let count = optGroup.children.length;
-                        optGroup.appendChild(new Option(name));
-                        if (count === 0) {
-                            // Move to very top
-                            resultVariables.unshift({name: name, dataSet: dataSet});
-                        } else if (dataSet === tempOptGroups.length-1) {
-                            // Move to Bottom
-                            resultVariables.push({name: name, dataSet: dataSet});
-                        } else {
-                            // Move somewhere inside array
-                            let temp = resultVariables.splice(0, count);
-                            temp.push({name: name, dataSet: dataSet});
-                            resultVariables = temp.concat(resultVariables);
-                        }
-                    }
-                }
-            });
+           const fields =this.createDataSelect(report, null , 3);
+           this.dataFieldEditor(fields,(name, idx, dataUUID) => {
+               if (name != null && name !== '') {
+
+                   for (let i = 0; i < resultVariables.length; i++) {
+                       if (resultVariables[i].dataUUID === dataUUID && resultVariables[i].name === name) {
+                           // Already exists, we don't have to re-add it!
+                           return;
+                       }
+                   }
+
+                   // If this value wasn't found; we need to add it
+                   const opt = new Option(name);
+                   opt.dataUUID = dataUUID;
+                   let data = {name: name, dataUUID: dataUUID};
+
+                   // Grab the length before adding.
+                   let count = resultVariables.length;
+                   // Either no records, or this matches the last UUID group
+                   if (count === 0 || tempOptUUIDS[tempOptUUIDS.length - 1] === dataUUID) {
+                       resultVariables.push(data);
+                   } else {
+
+                       // No match for other groups from the same dataset...
+                       let offset = 0;
+                       for (let i = 0; i < tempOptUUIDS.length; i++) {
+                           const group = tempOptGroups[tempOptUUIDS[i]];
+                           offset += group.children.length;
+                           if (tempOptUUIDS[i] === dataUUID) {
+                               break;
+                           }
+                       }
+
+                       // Now that we know where it belongs, lets add it where it goes in the resultVariables
+                       if (offset === 0) {
+                           resultVariables.unshift(data);
+                       } else if (offset === resultVariables.length) {
+                           resultVariables.push(data);
+                       } else {
+                           let temp = resultVariables.splice(0, offset);
+                           temp.push(data);
+                           resultVariables = temp.concat(resultVariables);
+                       }
+
+                   }
+                   tempOptGroups[dataUUID].appendChild(opt);
+               }
+           });
         });
 
         // Edit
         addButtons[1].addEventListener("click", () => {
             if (select.selectedIndex < 0) { return; }
-            const fields =this.createDataSelect(report, select.value , 3);
+            const curIndex = select.selectedIndex;
+            const fields = this.createDataSelect(report, {value: select.value, dataUUID: select.options[curIndex].dataUUID} , 3);
 
-           this.dataFieldEditor(fields, (name, idx, dataSet) => {
-                let curIndex = select.selectedIndex;
+           this.dataFieldEditor(fields, (name, idx, dataUUID) => {
                 let curGroup = resultVariables[curIndex];
 
                 // Check to see if already exists; if so -- we cancel the change...
                 for (let i=0;i<resultVariables.length;i++) {
-                    if (resultVariables[i].dataSet === dataSet && resultVariables[i].name === name) {
+                    if (resultVariables[i].dataUUID === dataUUID && resultVariables[i].name === name) {
                         return;
                     }
                 }
 
-                if (dataSet !== curGroup.dataSet) {
+                if (dataUUID !== curGroup.dataUUID) {
                     resultVariables.splice(curIndex, 1);
-                    curGroup.dataSet = dataSet;
+                    curGroup.dataUUID = dataUUID;
                     curGroup.name = name;
-                    let curOptGroup = tempOptGroups[dataSet];
-                    // Move to very top
-                    if (dataSet === 0 && curOptGroup.children === 0) {
-                        resultVariables.unshift(curGroup);
+
+                    // No match for other groups from the same dataset...
+                    let offset = 0;
+                    for (let i = 0; i < tempOptUUIDS.length; i++) {
+                        const group = tempOptGroups[tempOptUUIDS[i]];
+                        offset += group.children.length;
+                        if (tempOptUUIDS[i] === dataUUID) {
+                            break;
+                        }
                     }
-                    /// Move to Very bottom
-                    else if (dataSet === tempOptGroups.length-1) {
+
+                    // Now that we know where it belongs, lets add it where it goes in the resultVariables
+                    if (offset === 0) {
+                        resultVariables.unshift(curGroup);
+                    } else if (offset === resultVariables.length) {
                         resultVariables.push(curGroup);
                     } else {
-                        let offset = 0;
-                        for (let i=0;i<resultVariables.length;i++) {
-                            if (resultVariables[i].dataSet <= dataSet) { offset = i; }
-                        }
-                        if (offset === 0) {
-                            resultVariables.unshift(curGroup);
-                        } else if (offset === resultVariables.length-1) {
-                            resultVariables.push(curGroup);
-                        } else {
-                            let temp = resultVariables.splice(0, offset);
-                            temp.push(curGroup);
-                            resultVariables = temp.concat(resultVariables);
-                        }
+                        let temp = resultVariables.splice(0, offset);
+                        temp.push(curGroup);
+                        resultVariables = temp.concat(resultVariables);
                     }
                 } else {
                     resultVariables[curIndex].name = name;
@@ -4304,7 +4615,7 @@ class UI { // jshint ignore:line
     }
 
     // TODO: Strip out "report" should now point to this._parent
-    sectionBrowse(report, reportData, ok, cancel) {
+    sectionBrowse(report, reportLayout, ok, cancel) {
         const body = document.createElement('div');
         const span = document.createElement('span');
         span.innerText = "Sections:";
@@ -4345,10 +4656,10 @@ class UI { // jshint ignore:line
              return a;
         };
 
-        const createSection = (title, elementKey, parent, tracking, reportData) => {
+        const createSection = (title, elementKey, parent, tracking, reportLayout) => {
             tracking[elementKey] = LI(title, parent);
             A("(delete)", tracking[elementKey], elementKey, tracking);
-            if (reportData[elementKey]) {
+            if (reportLayout && reportLayout[elementKey]) {
                 tracking.Report[elementKey] = true;
                 tracking[elementKey].style.display = "";
                 tracking["add"+elementKey].style.display = "none";
@@ -4359,11 +4670,11 @@ class UI { // jshint ignore:line
             }
         };
 
-        const buildGroupings = (reportData, tracking, parent) => {
+        const buildGroupings = (reportLayout, tracking, parent) => {
             tracking.groupBy = [];
             const finish = [];
-            for (let i = 0; i < reportData.groupBy.length; i++) {
-                let gbk = {name: reportData.groupBy[i].groupOn, Report: {}};
+            for (let i = 0; i < reportLayout.groupBy.length; i++) {
+                let gbk = {name: reportLayout.groupBy[i].groupOn, Report: {}};
                 let pd = LI("Group on <b>" + gbk.name+"</b>", parent);
                 tracking.groupBy.push(gbk);
                 gbk.addheader = A("(Add Header)", pd, "header", gbk);
@@ -4371,9 +4682,9 @@ class UI { // jshint ignore:line
                 gbk.addfooter = A("(Add Footer)", pd, "footer", gbk);
                 let ndg = document.createElement("ul");
                 pd.appendChild(ndg);
-                createSection("Header", "header", ndg, gbk, reportData.groupBy[i]);
-                createSection("Detail: <b>"+gbk.name+"</b>", "detail", ndg, gbk, reportData.groupBy[i]);
-                finish.push({title: "Footer", key: "footer", parent: ndg, data: gbk, report: reportData.groupBy[i]});
+                createSection("Header", "header", ndg, gbk, reportLayout.groupBy[i]);
+                createSection("Detail: <b>"+gbk.name+"</b>", "detail", ndg, gbk, reportLayout.groupBy[i]);
+                finish.push({title: "Footer", key: "footer", parent: ndg, data: gbk, report: reportLayout.groupBy[i]});
 //                createSection("Footer", "footer", ndg, gbk, reportData.groupBy[i]);
             }
             return finish;
@@ -4387,29 +4698,40 @@ class UI { // jshint ignore:line
             }
         };
 
-        const buildSubReport = (reportData, tracking, parent) => {
-            let rbk = {name: reportData.data, Report: {}};
-            tracking.subReport = rbk;
+        const buildSubReport = (reportLayout, subLayout, tracking, parent) => {
+            let rbk = {name: reportLayout.data, Report: {}};
+            if (tracking.subReports.indexOf(rbk) < 0) {
+                tracking.subReports.push(rbk);
+            }
             let pd = LI("SubReport: <b>"+rbk.name+"</b>", parent);
             rbk.addheader = A("(Add Header)", pd, "header", rbk);
             rbk.adddetail = A("(Add Detail)", pd, "detail", rbk);
             rbk.addfooter = A("(Add Footer)", pd, "footer", rbk);
             let ndg = document.createElement("ul");
             pd.appendChild(ndg);
-            createSection("Header", "header", ndg, rbk, reportData);
+            createSection("Header", "header", ndg, rbk, subLayout);
 
             let finish;
-            if (reportData.groupBy) {
-                finish = buildGroupings(reportData, rbk, ndg);
+            if (reportLayout.groupBy) {
+                finish = buildGroupings(subLayout, rbk, ndg);
             }
-            createSection( "Detail: <b>"+rbk.name+"</b>", "detail", ndg, rbk, reportData);
-            finishFooters(finish);
+            createSection( "Detail: <b>"+rbk.name+"</b>", "detail", ndg, rbk, subLayout);
+            handleSubReports(reportLayout.childrenIndexed, rbk, ndg);
 
-            createSection( "Footer", "footer", ndg, rbk, reportData);
+            finishFooters(finish);
+            createSection( "Footer", "footer", ndg, rbk, subLayout);
         };
 
-
-
+        const handleSubReports = (subReports, tracking, parentElement) => { // jshint ignore:line
+            if (!subReports.length) { return; }
+            if (!Array.isArray(tracking.subReports)) {
+                tracking.subReports = [];
+            }
+            for (let i=0;i<subReports.length;i++) {
+                const subLayout = subReports[i].findMatchingLayoutInfo(reportLayout);
+                buildSubReport(subReports[i], subLayout, tracking, parentElement);
+            }
+        };
 
         let group = document.createElement("ul");
         let pd = LI("Primary Report/Data", group);
@@ -4422,21 +4744,20 @@ class UI { // jshint ignore:line
         let pdg = document.createElement("ul");
         pd.appendChild(pdg);
 
-        createSection("Title Header", "titleHeader", pdg, elements, reportData);
-        createSection( "Page Header", "pageHeader", pdg, elements, reportData);
+        createSection("Title Header", "titleHeader", pdg, elements, reportLayout);
+        createSection( "Page Header", "pageHeader", pdg, elements, reportLayout);
         let finish;
-        if (reportData.groupBy) {
-            finish = buildGroupings(reportData, elements, pdg);
+        if (reportLayout.groupBy) {
+            finish = buildGroupings(reportLayout, elements, pdg);
         }
-        createSection( "Page Details", "detail", pdg, elements, reportData);
+        createSection( "Page Details", "detail", pdg, elements, reportLayout);
 
-        if (reportData.subReport) {
-            buildSubReport(reportData.subReport, elements, pdg);
-        }
+        handleSubReports(report.reportFields.childrenIndexed, elements, pdg);
+
         finishFooters(finish);
 
-        createSection("Page Footer", "pageFooter", pdg, elements, reportData);
-        createSection( "Final Summary", "finalSummary", pdg, elements, reportData);
+        createSection("Page Footer", "pageFooter", pdg, elements, reportLayout);
+        createSection( "Final Summary", "finalSummary", pdg, elements, reportLayout);
 
         body.appendChild(group);
 
@@ -4479,18 +4800,20 @@ class UI { // jshint ignore:line
                     }
                 }
             }
-            if (tracking.subReport) {
-                rebuildReport(tracking.subReport, reportData.subReport);
+            if (tracking.subReports) {
+                for (let i=0;i<tracking.subReports.length;i++) {
+                    rebuildReport(tracking.subReports[i], reportData.subReports[i]);
+                }
             }
         };
 
 
         buttons[0].addEventListener('click', () => {
             d.hide();
-            rebuildReport(elements, reportData);
+            rebuildReport(elements, reportLayout);
 
             if (typeof ok === 'function') {
-                ok(reportData);
+                ok(reportLayout);
             }
         });
         buttons[1].addEventListener('click', () => {
@@ -4590,7 +4913,9 @@ class UI { // jshint ignore:line
             {type: 'boolean', field: "strike", title:"strikethrough", default: false, functionable: true},
             {type: 'number', field: "characterSpacing", title: 'Char Spacing', default: 0, translate: toInt },
             {type: 'number', field: 'wordSpacing', default: 0, translate: toInt },
-            {type: 'number', field: 'opacity', default: 1.0, translate: toOpacity}
+            {type: 'number', field: 'opacity', default: 1.0, translate: toOpacity},
+            {type: 'boolean', field: "fontBold", default: false},
+            {type: 'boolean', field: "fontItalic", default: false}
         ]);
 
 
@@ -4709,7 +5034,7 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-           this.bandValueEditor(report, {text: "", type:"text", width: 100}, (value) => {
+           this.bandValueEditor(report, {text: "", type:"print", width: 100}, (value) => {
                     resultVariables.push(value);
                     rebuildOptions();
             });
@@ -4764,11 +5089,15 @@ class UI { // jshint ignore:line
         // Figure out Band type...
         let field = null, isTotal = false;
         if (typeof fields.text !== "undefined") {
-            field = "text";
+            field = "print";
         } else if (fields.function) {
             field = "function";
         } else if (fields.field) {
-            field = fields.field;
+            if (fields.dataUUID) {
+                field = {value: fields.field, dataUUID: fields.dataUUID};
+            } else {
+                field = fields.field;
+            }
         } else if (fields.variable) {
             field = fields.variable;
         } else if (fields.calculation) {
@@ -4848,9 +5177,10 @@ class UI { // jshint ignore:line
                 textSpan.style.display = "none";
                 textArea.style.display = "none";
                 functionButton.style.display = "none";
-                if (typeof option.dataSet !== 'undefined') {
+                if (typeof option.dataUUID !== 'undefined') {
                     // TODO - Future; check to see where the band is located; we could auto-set 'field' to 'parentData'
                     newField.field = select.value;
+                    newField.dataUUID = option.dataUUID;
                  } else {
                     // Variables
                     if (option.tag === 4) {
@@ -4895,6 +5225,7 @@ class UI { // jshint ignore:line
                     break;
 
                 case 4: // Variables
+                    delete newField.dataUUID;
                     delete newField.function;
                     delete newField.calculation;
                     delete newField.text;
@@ -4903,6 +5234,7 @@ class UI { // jshint ignore:line
                     break;
 
                 case 8: // Calc
+                    delete newField.dataUUID;
                     delete newField.function;
                     delete newField.text;
                     delete newField.total;
@@ -4911,6 +5243,7 @@ class UI { // jshint ignore:line
                     break;
 
                 case 16:
+                    delete newField.dataUUID;
                     delete newField.function;
                     delete newField.text;
                     delete newField.field;
@@ -4919,6 +5252,7 @@ class UI { // jshint ignore:line
                     break;
 
                 case 32:
+                    delete newField.dataUUID;
                     delete newField.field;
                     delete newField.variable;
                     delete newField.calculation;
@@ -5177,7 +5511,7 @@ class UI { // jshint ignore:line
             d.hide();
             const option = select.selectedOptions[0];
             if (typeof ok === 'function') {
-                ok(select.value, option.tag, option.dataSet);
+                ok(select.value, option.tag, option.dataUUID);
             }
         });
         // Cancel Button
@@ -6096,11 +6430,20 @@ class UI { // jshint ignore:line
         return selectList;
     }
 
+    /**
+     * Create a select list based on values
+     * @param report
+     * @param field <object>
+     * @param dataSets <number>
+     * @param isTotal <boolean>
+     * @returns {HTMLSelectElement}
+     */
     createDataSelect(report, field=null, dataSets=31, isTotal = false) {
         const selectList = document.createElement("select");
         selectList.className = "frSelect";
         const fields = report.reportFields;
 
+        // Band information
         if ((dataSets & 32) === 32) { // jshint ignore:line
             let group = document.createElement("optgroup");
             group.label = "Bands";
@@ -6121,40 +6464,58 @@ class UI { // jshint ignore:line
             group.appendChild(option);
         }
 
+        // Primary Data
         if ((dataSets & 1) === 1) { // jshint ignore:line
             let group = document.createElement("optgroup");
             group.label = "Primary Data";
             selectList.appendChild(group);
-            for (let i = 0; i < fields.primary.length; i++) {
-                const option = new Option(fields.primary[i]);
+            let children = fields.primary.fields;
+            for (let i = 0; i < children.length; i++) {
+                const option = new Option(children[i]);
                 option.tag = 1;
-                option.dataSet = 0;
-                if (field === fields.primary[i] && isTotal !== true) {
-                    option.selected = true;
+                option.dataUUID = fields.primary.dataUUID;
+                if (isTotal !== true) {
+                    if (field && field.dataUUID === option.dataUUID) {
+                        if (field.value === children[i]) {
+                            option.selected = true;
+                        }
+                    } else if (field === children[i]) {
+                        option.selected = true;
+                    }
                 }
                 group.appendChild(option);
             }
-
+        }
 
             if ((dataSets & 2) === 2) { // jshint ignore:line
-                for (let i = 1; i <= fields.levels; i++) {
-                    if (fields['level' + i].length > 0) {
-                        group = document.createElement("optgroup");
-                        group.label = fields.titles[i];
-                        for (let j = 0; j < fields['level' + i].length; j++) {
-                            const option = new Option(fields['level' + i][j]);
+                const handleDataChildren = (childrenIndexed, parent) => {
+                    if (childrenIndexed == null) {
+                        return;
+                    }
+                    for (let i = 0; i < childrenIndexed.length; i++) {
+                        const group = document.createElement("optgroup");
+                        group.label = (parent ? parent + ">" : "") + childrenIndexed[i].name;
+                        for (let j = 0; j < childrenIndexed[i].fields.length; j++) {
+                            const option = new Option(childrenIndexed[i].fields[j]);
                             option.tag = 2;
-                            option.dataSet = i;
-                            if (field === fields['level' + i][j]  && isTotal !== true) {
-                                option.selected = true;
+                            option.dataUUID = childrenIndexed[i].dataUUID;
+                            if (isTotal !== true) {
+                                if (field && field.dataUUID === option.dataUUID) {
+                                   if (field.value === childrenIndexed[i].fields[j]) {
+                                       option.selected = true;
+                                   }
+                                } else if (field === childrenIndexed[i].fields[j]) {
+                                    option.selected = true;
+                                }
                             }
                             group.appendChild(option);
                         }
                         selectList.appendChild(group);
+                        handleDataChildren(childrenIndexed[i].childrenIndexed, childrenIndexed[i].name);
                     }
-                }
+                };
+                handleDataChildren(fields.primary.childrenIndexed, "");
             }
-        }
 
         if ((dataSets & 4) === 4) { // jshint ignore:line
             const variables = report.reportVariables;
@@ -6358,7 +6719,7 @@ class UI { // jshint ignore:line
     _handleShowProperty(prop, obj, name, tr, layout) {
         layout.trackCreated.push(name);
 
-        let td1, td2, created=true, value, input;
+        let td1, td2, created=true, input;
         if (tr.children.length) {
             if (tr.children.length === 1) {
                 td1 = td2 = tr.children[0];
@@ -6433,6 +6794,9 @@ class UI { // jshint ignore:line
                                         obj[prop.field] = prop.translate(input.value);
                                     } else {
                                         obj[prop.field] = input.value;
+                                    }
+                                    if (prop.field2) {
+                                        obj[prop.field2] = input.options[input.selectedIndex][prop.field2];
                                     }
                                     if (prop.onchange) { prop.onchange(input.value); }
                                 });
@@ -6643,7 +7007,7 @@ class UI { // jshint ignore:line
         EditorSpan.style.border = "solid black 1px";
         EditorSpan.addEventListener("click", () => {
             this.stringEditor(obj[prop.field],  (result) => {
-                if (obj[prop.field] !== result) obj[prop.field] = result;
+                if (obj[prop.field] !== result) { obj[prop.field] = result; }
                 this.showProperties(layout.trackProperties, layout, true);
             });
         });
@@ -6805,7 +7169,7 @@ class Dialog { // jshint ignore:line
         }
     }
 
-    notice(data, color, frame) {
+    static notice(data, color, frame) {
         let notice = document.getElementById("notice");
         if (!notice) {
             if (data === false) { return; }
@@ -6820,9 +7184,9 @@ class Dialog { // jshint ignore:line
             notice.style.color = '#FFF';
             frame.appendChild(notice);
         }
-        if (this._noticeId !== null) {
-            clearTimeout(this._noticeId);
-            this._noticeId = null;
+        if (Dialog._noticeId !== null) {
+            clearTimeout(Dialog._noticeId);
+            Dialog._noticeId = null;
         }
 
         if (data === false) {
@@ -6836,9 +7200,9 @@ class Dialog { // jshint ignore:line
         }
         notice.style.display = '';
         notice.innerHTML = data;
-        this._noticeId = setTimeout(() => {
+        Dialog._noticeId = setTimeout(() => {
             notice.style.display = 'none';
-            this._noticeId = null;
+            Dialog._noticeId = null;
         }, 7000);
     }
 }
