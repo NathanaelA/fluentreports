@@ -169,6 +169,9 @@ class FluentReportsGenerator {
         this._resetPaperSizeLocation();
     }
 
+    get formatterFunctions() { return this._formatterFunctions; }
+    set formatterFunctions(val) { this._formatterFunctions = val; }
+
     /**
      * The Constructor
      * @param options
@@ -178,6 +181,7 @@ class FluentReportsGenerator {
         this._UIBuilder = UI;
 
         // Tracking Information
+        this._formatterFunctions =  {};
         this._parentElement = null;
         this._includeCSS = options.css !== false;
         this._includeJS = options.js !== false;
@@ -254,7 +258,6 @@ class FluentReportsGenerator {
             {type: 'button', title: 'Data', click: this._setData.bind(this)}
         ];
 
-
         if (options.scale) {
             this.setConfig('scale', options.scale);
         } else {
@@ -285,10 +288,8 @@ class FluentReportsGenerator {
         }
         if (typeof options.element !== 'undefined') {
             this.setConfig('element', options.element);
-        } else {
-            if (options.id) {
-                this.setConfig('id', options.id);
-            }
+        } else if (options.id) {
+            this.setConfig('id', options.id);
         }
         if (options.debug) {
             this.setConfig('debug', options.debug);
@@ -296,6 +297,12 @@ class FluentReportsGenerator {
         if (typeof options.preview === 'function') {
             this.setConfig('preview', options.preview);
         }
+
+        if(options.formatterFunctions){
+            this.setConfig('formatterFunctions',options.formatterFunctions);
+        }
+
+
 
         this.buildUI(this._parentElement);
     }
@@ -308,6 +315,16 @@ class FluentReportsGenerator {
     setConfig(option, value) {
         if (value == null) { return; }
         switch (option) {
+            case 'formatterFunctions':
+                for (let key in value) {
+                    if (!value.hasOwnProperty(key)) { continue; }
+                    if (typeof value[key] === 'function') {
+                        this._formatterFunctions[key] = value[key];
+                    } else {
+                        this._formatterFunctions[key] = new Function('value', 'row', 'callback', value[key]); // jshint ignore:line
+                    }
+                }
+                break;
             case 'scale':
                 this._scale = parseFloat(value);
                 if (isNaN(this._scale)) { this._scale = 1.5; }
@@ -411,6 +428,19 @@ class FluentReportsGenerator {
     }
 
     /**
+     * Detect if we have any formatter functions
+     * @returns {boolean}
+     * @private
+     */
+    _hasFormatterFunctions() {
+        for (let key in this._formatterFunctions) {
+            if (this._formatterFunctions.hasOwnProperty(key)) { return true; }
+        }
+        return false;
+    }
+
+
+    /**
      * Handles dealing with switching the paper orientations
      * @private
      */
@@ -480,6 +510,7 @@ class FluentReportsGenerator {
                 header: {type: "raw", values: ["Sample Header"]},
                 footer: {type: "raw", values: ["Sample Footer"]}
             };
+
             if (this.reportFields.childrenIndexed.length === 0) {
                 tempReport.detail = {type: "print", text: "Welcome to fluentReports"};
             } else {
@@ -526,6 +557,14 @@ class FluentReportsGenerator {
 
             // Create the Sections
             this._generateReportLayout(this._reportData, 57, "", this._parsedData.dataUUID);
+        }
+
+
+        // TODO: Add any missing properties
+        this._copyProperties(report, this, ["name", "fontSize", "autoPrint", "paperSize", "paperOrientation"]);
+
+        if (report.formatterFunctions) {
+            this.setConfig('formatterFunctions', report.formatterFunctions);
         }
 
         // Does report come with its own data?
@@ -671,6 +710,11 @@ class FluentReportsGenerator {
 
         if (this._includeData) {
             results.data = this._data;
+        }
+
+      // Copy any json based formatters over to the new report
+        if (this._reportData.formatterFunctions) {
+            results.formatterFunctions = this._reportData.formatterFunctions;
         }
 
         // Clear our temporary data storage
@@ -1202,6 +1246,7 @@ class FluentReportsGenerator {
         topLayer.appendChild(close);
 
         const reportData =  options.report || this._generateSave();
+        reportData.formatterFunctions = this._formatterFunctions;
         const data = options.data || this._data;
 
         let pipeStream = new window.fluentReports.BlobStream();
@@ -2309,7 +2354,7 @@ class frElement { // jshint ignore:line
         this._properties = [
             {type: 'number', field: 'top', default: 0, destination: "settings"},
             {type: 'number', field: 'left', default: 0, destination: "settings"},
-            {type: 'string', field: 'width', default: 0, destination: "settings"},
+            {type: 'number', field: 'width', default: 0, destination: "settings"},
             {type: 'number', field: 'height', default: 0, destination: "settings"}
             ];
         this.frElements.push(this);
@@ -3064,14 +3109,20 @@ class frBandLine extends  frTitledLabel { // jshint ignore:line
         this.label = "----(auto-sized to prior printed band, thickness: "+this._thickness+"px)----";
     }
 
+    get gap() { return this._verticalGap; }
+    set gap(val) {
+        this._verticalGap = parseInt(val,10);
+    }
+
 
     constructor(report, parent, options={}) {
         super(report, parent, options);
         this._thickness = 1.0;
+        this._verticalGap = 0;
         this.elementTitle = "Band Line";
         this.label = "----(auto-width to prior printed band, thickness: 1.0px)----";
         this._deleteProperties(["top", "left", "width", "height"]);
-        this._addProperties({type: 'number', field: "thickness", default: 0});
+        this._addProperties([{type: 'number', field: "thickness", default: 0},{type: 'number', field: "gap", default: 0}]);
 
         super.width = "120px";
     }
@@ -3250,6 +3301,7 @@ class frImage extends frTitledElement { // jshint ignore:line
 }
 
 class frPrint extends frTitledLabel {
+
     constructor(report, parent, options={}) {
         super(report, parent, options);
         this._x = 0;
@@ -3262,6 +3314,7 @@ class frPrint extends frTitledLabel {
         this._rotate = 0;
         this._align = "left";
         this._font = "times";
+        this._formatFunction = "none";
 
         this._fontSize = 0;
         this._opacity = 1.0;
@@ -3287,28 +3340,87 @@ class frPrint extends frTitledLabel {
                 {type: 'number', field: "y", default: 0, destination: "settings"},
                 {type: 'number', field: "addX", default: 0, destination: "settings"},
                 {type: 'number', field: "addY", default: 0, destination: "settings"},
-                {type: 'select', field: "font", default: "times", display: this._createFontSelect.bind(this), destination: 'settings'},
-                {type: 'number', field: 'fontSize', default: 0, destination: 'settings'},
-                {type: 'boolean', field: "fontBold", default: false, destination: "settings"},
-                {type: 'boolean', field: "fontItalic", default: false, destination: "settings"},
-                {type: 'boolean', field: 'underline', title: "Underline", default: false, destination: 'settings'},
-                {type: 'boolean', field: 'strike', title: "Strikethrough", default: false, destination: 'settings'},
+                {
+                    type: 'select',
+                    field: "font",
+                    default: "times",
+                    display: this._createFontSelect.bind(this),
+                    destination: 'settings'
+                },
+                {type: 'number', field: 'fontSize', functionable: true, default: 0, destination: 'settings'},
+                {type: 'boolean', field: "fontBold", functionable: true, default: false, destination: "settings"},
+                {type: 'boolean', field: "fontItalic", functionable: true, default: false, destination: "settings"},
+                {
+                    type: 'boolean',
+                    field: 'underline',
+                    functionable: true,
+                    title: "Underline",
+                    default: false,
+                    destination: 'settings'
+                },
+                {
+                    type: 'boolean',
+                    field: 'strike',
+                    functionable: true,
+                    title: "Strikethrough",
+                    default: false,
+                    destination: 'settings'
+                },
                 {type: 'string', field: "fill", functionable: true, default: "", destination: "settings"},
                 {type: 'string', field: "textColor", functionable: true, default: "", destination: "settings"},
-                {type: 'string', field: "link", functionable: true, default: "", destination: "settings"}, 
+                {type: 'string', field: "link", functionable: true, default: "", destination: "settings"},
                 {type: 'number', field: "border", default: 0, destination: "settings"},
                 {type: 'number', field: 'characterSpacing', title: 'Char Spacing', default: 0, destination: "settings"},
                 {type: 'number', field: 'wordSpacing', default: 0, destination: "settings"},
                 {type: 'number', field: 'rotate', default: 0, destination: 'settings'},
                 {type: 'number', field: 'opacity', default: 1.0, destination: 'settings'},
 
-                {type: 'select', field: "align", default: "left", display: this._createAlignSelect.bind(this), destination: 'settings'},
-                {type: 'boolean', field: "wrap", default: false, destination: "settings"}
-                ]);
+                {
+                    type: 'select',
+                    field: "align",
+                    default: "left",
+                    display: this._createAlignSelect.bind(this),
+                    destination: 'settings'
+                },
+                {type: 'boolean', field: "wrap", default: false, destination: "settings"}]);
+
+        // Only add formatter functions, if we pass some in...
+        if (this._report._hasFormatterFunctions()) {
+            this._addProperties(
+                {
+                    type: 'select',
+                    field: "formatFunction",
+                    default: "none",
+                    display: this._createFormattersSelect.bind(this),
+                    destination: 'settings'
+                }
+            );
+        }
+
     }
 
     _createFontSelect() {
         return this.UIBuilder.createFontSelect(this.font);
+    }
+
+    _createFormattersSelect() {
+        const formatFunction = this.formatFunction;
+        let selectGroup = document.createElement('select');
+        let item = new Option("None", "none");
+        selectGroup.appendChild(item);
+
+        let formatters = this._report.formatterFunctions;
+
+        for (let key in formatters) {
+            if (!formatters.hasOwnProperty(key)) { continue; }
+            item = new Option(key, key);
+            if (key === formatFunction) {
+                item.selected = true;
+            }
+            selectGroup.appendChild(item);
+        }
+
+        return selectGroup;
     }
 
     _createAlignSelect() {
@@ -3434,9 +3546,14 @@ class frPrint extends frTitledLabel {
         }
     }
 
+    get formatFunction() { return this._formatFunction; }
+    set formatFunction(val) {
+        this._formatFunction = val;
+    }
+
     _parseElement(data) {
         this._copyProperties(data, this, ["x", "y", "addX", "addY", "font", "fontSize", "fontBold", "fontItalic", "underline",
-            "strike", "fill", "textColor", "link", "border", "characterSpacing", "wordSpacing", "rotate", "align", "wrap", "width"]);
+            "strike", "fill", "textColor", "link", "border", "characterSpacing", "wordSpacing", "rotate", "align", "wrap", "width", "formatFunction"]);
     }
 
     _saveProperties(props, ignore) {
@@ -3514,6 +3631,7 @@ class frPrintFunction extends frPrint { // jshint ignore:line
         this.name = '';
         this._async = false;
         this.function = options && options.function || '';
+        this._deleteProperties(["formatFunction"]);
         this._addProperties(
             [{type: 'boolean', field: "async", default: false}, {type: 'string', field: "name"}]
         );
@@ -4751,19 +4869,54 @@ class UI { // jshint ignore:line
             return selectGroup;
         };
 
+        const createFormattersSelect = () => {
+            const formatFunction = this.formatFunction;
+            let selectGroup = document.createElement('select');
+            let item = new Option("None", "none");
+            selectGroup.appendChild(item);
+
+            let formatters = report.formatterFunctions;
+
+            for (let key in formatters) {
+                if (!formatters.hasOwnProperty(key)) { continue; }
+                item = new Option(key, key);
+                if (key === formatFunction) {
+                    item.selected = true;
+                }
+                selectGroup.appendChild(item);
+            }
+
+            return selectGroup;
+        };
+
+
         const toInt = (val) => { return parseInt(val, 10); };
         const toOpacity = (val) => { let x = parseFloat(val); if (isNaN(x)) { return 1.0; } if (x <  0.0) { return 0.0; } if (x > 1.0) { return 1.0; } return x;};
 
-        const properties = [
-            {type: 'string', field: "width", functionable: true},
+        let properties = [];
+        if(report._hasFormatterFunctions()) {
+                properties.push({
+                    type: 'select',
+                    field: "formatFunction",
+                    default: "none",
+                    display: createFormattersSelect
+                });
+        }
+
+         properties = properties.concat([
+            {type: 'number', field: "width", functionable: true},
             {type: 'select', field: "align", translate: toInt, default: "left", display: createAlignSelect},
             {type: 'string', field: "textColor", default: "", functionable: true},
+            {type: 'boolean', field: "fontBold", title:"bold", default: false, functionable: true},
+            {type: 'boolean', field: "fontItalic", title:"italic", default: false, functionable: true},
+            {type: 'boolean', field: "underline", default: false, functionable: true},
+            {type: 'boolean', field: "strike", title:"strikethrough", default: false, functionable: true},
             {type: 'number', field: "characterSpacing", title: 'Char Spacing', default: 0, translate: toInt },
             {type: 'number', field: 'wordSpacing', default: 0, translate: toInt },
             {type: 'number', field: 'opacity', default: 1.0, translate: toOpacity},
             {type: 'boolean', field: "fontBold", default: false},
             {type: 'boolean', field: "fontItalic", default: false}
-        ];
+        ]);
 
 
         selectDiv.appendChild(select);
@@ -5685,9 +5838,9 @@ class UI { // jshint ignore:line
             let text = textArea.value;
             if (typeof ok === 'function') {
                 if (async !== null && asyncCheckbox.checked) {
-                    if (text.indexOf('done()') < 0) {
-                        text += "; done();";
-                    }
+                      if (text.indexOf('done(') < 0) {
+                          text += "; done();";
+                      }
                 }
                 ok(text, nameValue ? nameValue.value : null, async == null ? null : asyncCheckbox.checked, disabled == null ? null : skipCheckbox.checked );
             }
@@ -6541,8 +6694,17 @@ class UI { // jshint ignore:line
     }
 
     _handleShowProperties(props, obj, table, layout) {
+        let propertyToSkip = -1;
+        if(obj.text !== undefined || obj.function !== undefined){
+            for (let i = 0; i < props.length; i++) {
+                if (props[i].field === "formatFunction") {
+                    propertyToSkip = i;
+                }
+            }
+        }
         for (let i = 0; i < props.length; i++) {
             if (props[i] && props[i].skip === true) { continue; }
+            if(propertyToSkip === i) continue;
             let name =this._getShowPropertyId(props[i],obj);
             let tr = layout.querySelector("#"+name);
             if (!tr) {
@@ -6818,9 +6980,19 @@ class UI { // jshint ignore:line
         functionSpan.innerText = "\ue81f";
         functionSpan.style.border = "solid black 1px";
         functionSpan.addEventListener("click", () => {
-           this.functionEditor("return '"+obj[prop.field]+"';", null,null, null, (result) => {
+            let defaultSource = 'return ';
+            switch (prop.type){
+                case 'boolean':
+                case 'number':
+                    defaultSource += obj[prop.field] || prop.default;
+                    break;
+                default:
+                    defaultSource += "'"+(obj[prop.field] || prop.default || null)+"'";
+                    break;
+            }
+            this.functionEditor(defaultSource + ";", null, null, null, (result) => {
                 obj[prop.field] = {type: 'function', name: 'Function', function: result, async: false};
-               this.showProperties(layout.trackProperties, layout, true);
+                this.showProperties(layout.trackProperties, layout, true);
             });
         });
         return functionSpan;
