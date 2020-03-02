@@ -3295,7 +3295,7 @@ class frImage extends frTitledElement { // jshint ignore:line
     }
 
     _parseElement(data) {
-        return super._parseElement(data);
+        this._copyProperties(data, this, ["image", "aspect", "valign", "align", "imgScale", "width", "height", "top", "left"]);
         // None Needed?
     }
 }
