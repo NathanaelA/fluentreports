@@ -58,7 +58,10 @@ class FluentReportsGenerator {
     get pageWidth() {
         return this._paperDims[0] - this._marginLeft - this._marginRight;
     }
-    
+    get pageHeight() {
+        return (this._paperDims[1] - this._marginTop) - this._marginBottom;
+    }
+
     /*
      * Public Properties
      */
@@ -75,9 +78,15 @@ class FluentReportsGenerator {
      * @returns {*}
      */
     get marginLeft() { return this._marginLeft; }
-    set marginLeft(val) { this._marginLeft = parseInt(val, 10); }
+    set marginLeft(val) {
+        this._marginLeft = parseInt(val, 10);
+        this._resetPaperSizeLocation();
+    }
     get marginRight() { return this._marginRight; }
-    set marginRight(val) { this._marginRight = parseInt(val, 10); }
+    set marginRight(val) {
+        this._marginRight = parseInt(val, 10);
+        this._resetPaperSizeLocation();
+    }
     get marginTop() { return this._marginTop; }
     set marginTop(val) { this._marginTop = parseInt(val, 10); }
     get marginBottom() { return this._marginBottom; }
@@ -292,6 +301,22 @@ class FluentReportsGenerator {
         this.buildUI(this._parentElement);
     }
 
+    /**
+     *
+     * @param val The value you wish to parse
+     * @param which If you input a %, do you wish to have it a % of width/height
+     * @return {*}
+     */
+    _parseSize(val, which) {
+        if (val == null) { return 0; }
+        if (typeof val === 'number') { return val; }
+        if (val.indexOf("%") > 0) {
+            let temp = parseInt(val, 10) / 100;
+            if(which === "width") return this.pageWidth * temp;
+            else if(which === "height") return this.pageHeight * temp;
+        }
+        return val;
+    }
     /**
      * Set the Configuration for a report parameter
      * @param option
@@ -946,7 +971,7 @@ class FluentReportsGenerator {
 
         const rect = this._reportLayout.getBoundingClientRect();
         this._paperWidthLayout.style.top = (rect.top-topRect.top)+"px";
-        this._paperWidthLayout.style.left = (rect.left + (this._paperDims[0]*this.scale)) + "px";
+        this._paperWidthLayout.style.left = ((((this._paperDims[0]-this.marginLeft)-this.marginRight)*this.scale)+rect.left) + "px";
         this._paperWidthLayout.style.height = rect.height+"px";
         if (rect.width < ((this._paperDims[0]*this.scale)+18)) {
             this._paperWidthLayout.style.display = "none";
@@ -2174,6 +2199,9 @@ class frElement { // jshint ignore:line
     get pageWidth() {
         return this._report.pageWidth;
     }
+    get pageHeight() {
+        return this._report.pageHeight;
+    }
 
     /**
      * Delete this Element
@@ -2212,7 +2240,7 @@ class frElement { // jshint ignore:line
     set width(val) {
         if (val == null || val === "" || val === "auto" || val === "0px") { val = 0; }
         this._width = val;
-        val = this._parseSize(val);
+        val = this._report._parseSize(val,"width");
         if (val === 0 || val === "0") {
             this._html.style.width = "";
         } else if (val < 10) {
@@ -2242,6 +2270,7 @@ class frElement { // jshint ignore:line
     set height(val) {
         if (val == null || val === "undefinedpx" || val === "" || val === "auto" || val === "0px") { val = 0;}
         this._height = parseInt(val,10);
+        val = this._report._parseSize(val,"height");
         if (val === 0 || val === "0") {
             this._html.style.height = "";
         } else {
@@ -2299,16 +2328,6 @@ class frElement { // jshint ignore:line
 
     _refreshProperties(){
         this._report.showProperties(this, true);
-    }
-
-    _parseSize(val) {
-        if (val == null) { return 0; }
-        if (typeof val === 'number') { return val; }
-        if (val.indexOf("%") > 0) {
-            let temp = parseInt(val, 10) / 100;
-            return this.pageWidth * temp;
-        }
-        return val;
     }
 
     _generateSave(prop) {
@@ -3861,7 +3880,7 @@ class frBandElement extends frPrint { // jshint ignore:line
     }
 
     _fixCellProps(td, field) {
-        td.style.width = (this._parseSize(field.width) * this.scale || 80) + "px";
+        td.style.width = (this._report._parseSize(field.width,"width") * this.scale || 80) + "px";
         td.style.maxWidth = td.style.width;
         if (field.align != null) {
             switch(field.align) {
@@ -6457,13 +6476,27 @@ class UI { // jshint ignore:line
                                     input.style.width = "calc(100% - 20px)";
                                 }
                                 input.className = "frPropInput";
-
+                                if(prop.field === "width" || prop.field === "height"){
+                                    input.addEventListener('blur',()=>{
+                                        if(input.value.endsWith("%")){
+                                            input.value = this._parent._parseSize(input.value,prop.field);
+                                            obj[prop.field] = input.value;
+                                        }
+                                    });
+                                }
                                 input.addEventListener('input', () => {
+                                    let target;
                                     if (typeof prop.translate === 'function') {
-                                        obj[prop.field] = prop.translate(input.value);
+                                        target = prop.translate(input.value);
                                     } else {
-                                        obj[prop.field] = input.value;
+                                        target = input.value;
                                     }
+                                    if(prop.field === "width" || prop.field === "height"){
+                                        if(target.toString().endsWith("%")){
+                                            target = this._parent._parseSize(target, prop.field);
+                                        }
+                                    }
+                                    obj[prop.field] = target;
                                 });
 
                                 td2.appendChild(input);
