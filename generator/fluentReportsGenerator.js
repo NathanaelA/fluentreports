@@ -6374,7 +6374,13 @@ class UI { // jshint ignore:line
         const value1 = document.createElement('span');
         value1.innerText = "Variable value:";
         const variableValue = document.createElement('input');
-        variableValue.value = value;
+        if(typeof value === "object"){
+            for(let i in value){
+                variableValue.value = value[i];
+                break;
+            }
+        }
+        else variableValue.value = value;
         valueDiv.appendChild(value1);
         valueDiv.appendChild(variableValue);
         body.appendChild(valueDiv);
