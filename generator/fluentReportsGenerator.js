@@ -43,11 +43,11 @@ class FluentReportsGenerator {
 
     get debugging() { return this._debugging; }
     get scale() { return this._scale; }
-    get UIBuilder() { 
+    get UIBuilder() {
         if (this._UIBuilderClass == null) {
             this._UIBuilderClass = new this._UIBuilder(this);
         }
-        return this._UIBuilderClass; 
+        return this._UIBuilderClass;
     }
     get frSections() {
         return this._frSections;
@@ -58,7 +58,7 @@ class FluentReportsGenerator {
     get pageWidth() {
         return this._paperDims[0] - this._marginLeft - this._marginRight;
     }
-    
+
     /*
      * Public Properties
      */
@@ -647,9 +647,9 @@ class FluentReportsGenerator {
 
         // Save the Sections
         for (let i=0;i<this._frSections.length;i++) {
-                this._frSections[i]._generateSave(results, this._saveTemporaryData.reports);
+            this._frSections[i]._generateSave(results, this._saveTemporaryData.reports);
         }
-        
+
         // Save the Totals..{type: 'report', detail: [], dataUUID: }
         for (let key in this._saveTemporaryData.reports) {
             if (this._saveTemporaryData.reports.hasOwnProperty(key)) {
@@ -712,7 +712,7 @@ class FluentReportsGenerator {
             results.data = this._data;
         }
 
-      // Copy any json based formatters over to the new report
+        // Copy any json based formatters over to the new report
         if (this._reportData.formatterFunctions) {
             results.formatterFunctions = this._reportData.formatterFunctions;
         }
@@ -774,7 +774,7 @@ class FluentReportsGenerator {
      * @private
      */
     _setVariables() {
-       this.UIBuilder.variableBrowse(this._reportData.variables, (value) => {
+        this.UIBuilder.variableBrowse(this._reportData.variables, (value) => {
             this._reportData.variables = value;
         });
     }
@@ -784,7 +784,7 @@ class FluentReportsGenerator {
      * @private
      */
     _setTotals() {
-       this.UIBuilder.totalsBrowse(this.reportTotals, this, (value) => {
+        this.UIBuilder.totalsBrowse(this.reportTotals, this, (value) => {
             this._totals = value;
         });
     }
@@ -841,11 +841,11 @@ class FluentReportsGenerator {
         this._subReports = [];
         this._registeredFonts = [];
 
-       this.UIBuilder.clearArea(this._reportLayout);
+        this.UIBuilder.clearArea(this._reportLayout);
         // Read-add our Section Constrainer
         this._reportLayout.appendChild(this._sectionConstrainer);
 
-       this.UIBuilder.clearArea(this._propertiesLayout);
+        this.UIBuilder.clearArea(this._propertiesLayout);
         this._frElements = [];
         this._frSections = [];
     }
@@ -1014,10 +1014,10 @@ class FluentReportsGenerator {
             }, 250);
         }
     }
-    
+
     _openGroupings() {
         //groupBy
-       this.UIBuilder.groupsBrowse(this._groupBys,  this,    (groups) => {
+        this.UIBuilder.groupsBrowse(this._groupBys,  this,    (groups) => {
             let changed = false;
             if (this._groupBys.length === groups.length) {
                 for (let i = 0; i < this._groupBys.length; i++) {
@@ -1039,9 +1039,9 @@ class FluentReportsGenerator {
     }
 
     _openSections() {
-       // Generate the current layout report so we can easily parse it in the sectionBrowse
-       let currentReport = this._generateSave();
-       this.UIBuilder.sectionBrowse(this, currentReport, (updateReport) => {
+        // Generate the current layout report so we can easily parse it in the sectionBrowse
+        let currentReport = this._generateSave();
+        this.UIBuilder.sectionBrowse(this, currentReport, (updateReport) => {
             this._parseReport(updateReport);
         } );
     }
@@ -1058,32 +1058,32 @@ class FluentReportsGenerator {
 
     _generateToolBarLayout() {
 
-          this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
-          this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue834", "Report settings", () => { this._reportSettings(); }));
-          this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue822", "Group data by", () => { this._openGroupings(); }));
-          this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue819", "Sections", () => { this._openSections(); }));
-          this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
+        this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue834", "Report settings", () => { this._reportSettings(); }));
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue822", "Group data by", () => { this._openGroupings(); }));
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue819", "Sections", () => { this._openSections(); }));
+        this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
 
         this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue801", "New line", () => {
             this._addNewElementFromToolBar(frNewLine, {top: 1});
 
-/*            let options = this._getSectionOptions(this._sectionIn);
-            options.top = 1;
-            new frNewLine(this, this._getSection(this._sectionIn), options ); // jshint ignore:line */
+            /*            let options = this._getSectionOptions(this._sectionIn);
+                        options.top = 1;
+                        new frNewLine(this, this._getSection(this._sectionIn), options ); // jshint ignore:line */
         }));
-          this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
+        this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
 
         this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue82D", "Print label", () => {
             let options = this._getSectionOptions(this._sectionIn);
             new frPrintLabel(this, this._getSection(this._sectionIn), options); // jshint ignore:line
         }));
-          this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue828", "Print data field", () => {
-              let options = this._getSectionOptions(this._sectionIn);
-              const field0 = this._parsedData.fields[0] || "????";
-              options.label = field0;
-              options.field = field0;
-             new frPrintField(this, this._getSection(this._sectionIn), options); // jshint ignore:line
-          }));
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue828", "Print data field", () => {
+            let options = this._getSectionOptions(this._sectionIn);
+            const field0 = this._parsedData.fields[0] || "????";
+            options.label = field0;
+            options.field = field0;
+            new frPrintField(this, this._getSection(this._sectionIn), options); // jshint ignore:line
+        }));
         this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue818", "Print dynamic data", () => {
             let options = this._getSectionOptions(this._sectionIn);
             options.variable = "";
@@ -1229,7 +1229,7 @@ class FluentReportsGenerator {
             document.removeEventListener("keydown", keyListener);
             this.closeLayer();
             if (typeof options.close === 'function') {
-                    options.close();
+                options.close();
             }
         };
 
@@ -1402,7 +1402,7 @@ class FluentReportsGenerator {
 
         // Top most report
         if (/* report.parent === null && */ report.calcs) {
-                this._mergeTotals(report.calcs);
+            this._mergeTotals(report.calcs);
         }
         this._generateReportHeaderSectionLayout(data, height, groupName, false, report.dataUUID);
         this._generateReportDetailSectionLayout(data, height, groupName,false, report.dataUUID);
@@ -1425,17 +1425,17 @@ class FluentReportsGenerator {
 
     _generateSection(title, height, type, groupName, sectionData, reportUUID, data=null, fromGroup=false) {
         let section;
-            section = new frSection(this, {
-                title: title,
-                height: height,
-                type: type,
-                group: groupName,
-                dataUUID: reportUUID,
-                fromGroup: fromGroup
-            });
-            if (data !== null && typeof data.dataType !== 'undefined') {
-                section.dataType = data.dataType;
-            }
+        section = new frSection(this, {
+            title: title,
+            height: height,
+            type: type,
+            group: groupName,
+            dataUUID: reportUUID,
+            fromGroup: fromGroup
+        });
+        if (data !== null && typeof data.dataType !== 'undefined') {
+            section.dataType = data.dataType;
+        }
 
 
         if (sectionData == null) { return; }
@@ -1449,7 +1449,7 @@ class FluentReportsGenerator {
     }
 
     showProperties(obj, refresh=false) {
-       this.UIBuilder.showProperties(obj, this._propertiesLayout, refresh);
+        this.UIBuilder.showProperties(obj, this._propertiesLayout, refresh);
     }
 
 }
@@ -1567,10 +1567,10 @@ class frReportData { // jshint ignore:line
         return result;
     } */
 
-/*    findDataSet(name) {
-        let current = this.primary;
-        return current._findDataSet(name);
-    } */
+    /*    findDataSet(name) {
+            let current = this.primary;
+            return current._findDataSet(name);
+        } */
 
     /**
      * Searches only the direct children of this dataset
@@ -1642,7 +1642,7 @@ class frReportData { // jshint ignore:line
 // ----------------------------------------- [ Sections ] ----------------------------------------------
 
 class frSection { // jshint ignore:line
-    
+
     get readOnly() {
         return this._readOnly;
     }
@@ -1655,7 +1655,7 @@ class frSection { // jshint ignore:line
         return parseInt(this._html.style.top, 10);
     }
     set top(val) {
-        this._html.style.top = val + "px";
+        this._html.style.top = parseInt(val,10) + "px";
     }
 
     get height() {
@@ -1916,7 +1916,7 @@ class frSection { // jshint ignore:line
                 } else if (data.calculation) {
                     printElement = new frPrintDynamic(this._report, this, {ztop: top, type: 'calculation'});
                 } else if (data.variable) {
-                     printElement = new frPrintDynamic(this._report, this, {ztop: top, type: 'variable'});
+                    printElement = new frPrintDynamic(this._report, this, {ztop: top, type: 'variable'});
                 } else if (data.page) {
                     printElement = new frPrintPageNumber(this._report, this, {});
                 }
@@ -1986,7 +1986,7 @@ class frSection { // jshint ignore:line
     }
 
     clickFunctions() {
-       this.UIBuilder.functionBrowse(this._functions, ( funcs ) => {
+        this.UIBuilder.functionBrowse(this._functions, ( funcs ) => {
             this._functions = funcs;
             this.hasFunctions = funcs.length > 0;
             this._refreshProperties();
@@ -1994,7 +1994,7 @@ class frSection { // jshint ignore:line
     }
 
     clickCalcs() {
-       this.UIBuilder.calculationBrowse(this._calculations, ( calcs ) => {
+        this.UIBuilder.calculationBrowse(this._calculations, ( calcs ) => {
             this._calculations = calcs;
             this.hasCalculations = calcs.length > 0;
             this._refreshProperties();
@@ -2003,32 +2003,32 @@ class frSection { // jshint ignore:line
 
     _refreshProperties() {
         this._report.showProperties(this, true);
-   }
+    }
 
-   get frSections() {
+    get frSections() {
         return this._report.frSections;
-   }
+    }
 
-   get scale() {
+    get scale() {
         return this._report.scale;
-   }
-   
-   get debugging() {
-        return this._report.debugging;
-   }
+    }
 
-   get UIBuilder() {
+    get debugging() {
+        return this._report.debugging;
+    }
+
+    get UIBuilder() {
         return this._report.UIBuilder;
-   }
-   
+    }
+
     constructor(report, options = {}) {
         this._report = report;
-        
-        // Add our section to the report tracking 
+
+        // Add our section to the report tracking
         this._sectionId = this.frSections.length;
         this.frSections.push(this);
-        
-        
+
+
         this._readOnly = false;
         this._uuid = _frItemUUID++;
         this._functions = [];
@@ -2309,22 +2309,22 @@ class frSection { // jshint ignore:line
     }
 
     _onDragEnd() {
-            // Reset bottom of report to be where the last section is at...
-            if (this.frSections.length) {
-                let bottom = this.frSections[this.frSections.length - 1].bottom;
-                if (bottom < this._report._reportScroller.clientHeight) { bottom = this._report._reportScroller.clientHeight; }
-                this._report.reportLayout.style.height = bottom + "px";
-            }
+        // Reset bottom of report to be where the last section is at...
+        if (this.frSections.length) {
+            let bottom = this.frSections[this.frSections.length - 1].bottom;
+            if (bottom < this._report._reportScroller.clientHeight) { bottom = this._report._reportScroller.clientHeight; }
+            this._report.reportLayout.style.height = bottom + "px";
+        }
 
-            // Clear Containment after we are done dragging, so that scrolling doesn't break them
-            this._draggable.containment = {top: 0, left: 0, width: 0, height: 0};
-            this._draggable.containment = this._report.reportLayout;
-            this._draggable.position();
-            this._report.sectionConstrainer.style.top = "0px"; // jshint ignore:line
-            this._report.sectionConstrainer.style.height = "0px";
+        // Clear Containment after we are done dragging, so that scrolling doesn't break them
+        this._draggable.containment = {top: 0, left: 0, width: 0, height: 0};
+        this._draggable.containment = this._report.reportLayout;
+        this._draggable.position();
+        this._report.sectionConstrainer.style.top = "0px"; // jshint ignore:line
+        this._report.sectionConstrainer.style.height = "0px";
 
-            // Refresh Property panel
-            this._report.showProperties(this, false);
+        // Refresh Property panel
+        this._report.showProperties(this, false);
     }
 
 
@@ -2339,7 +2339,7 @@ class frSection { // jshint ignore:line
  * FluentReports Base Element
  */
 class frElement { // jshint ignore:line
-    
+
     constructor(report, parent /* , options */) {
         this._uuid = _frItemUUID++;
         this._report = report;
@@ -2356,10 +2356,10 @@ class frElement { // jshint ignore:line
             {type: 'number', field: 'left', default: 0, destination: "settings"},
             {type: 'number', field: 'width', default: 0, destination: "settings"},
             {type: 'number', field: 'height', default: 0, destination: "settings"}
-            ];
+        ];
         this.frElements.push(this);
     }
-    
+
     get uuid() { return this._uuid; }
     get frElements() {
         return this._report.frElements;
@@ -2392,7 +2392,7 @@ class frElement { // jshint ignore:line
         let idx = this.frElements.indexOf(this);
         this.frElements.splice(idx, 1);
     }
-    
+
     get properties() { return this._properties; }
 
     get draggable() { return this._draggable; }
@@ -2400,18 +2400,15 @@ class frElement { // jshint ignore:line
 
     get top() { return parseInt(this._html.style.top,10); }
     set top(val) {
-        let top = val;
         // We have to be below the header area
-        if (typeof top !== 'number') { top = 0; }
-
-        this._html.style.top = top+"px";
+        this._html.style.top = parseInt(val,10)+"px";
         this._resizeParentContainer(this.top);
     }
 
     get left() { // noinspection JSCheckFunctionSignatures
         return parseInt(parseInt(this._html.style.left, 10) / this.scale, 10);
     }
-    set left(val) { this._html.style.left = (val * this.scale)+"px"; }
+    set left(val) { this._html.style.left = (parseInt(val,10) * this.scale)+"px"; }
 
     get width() { return this._width; }
     set width(val) {
@@ -2434,7 +2431,7 @@ class frElement { // jshint ignore:line
     }
 
     get readonly() {
-         return this._readonly;
+        return this._readonly;
     }
 
     set readonly(val) {
@@ -2525,8 +2522,34 @@ class frElement { // jshint ignore:line
     }
 
     _copyProperties(src, dest, props) {
-        if (src == null) { return; }
+        if (src == null) { return; }let targetX = null;
+        let targetY = null;
         for (let i=0;i<props.length;i++) {
+            //turns "absoluteX", "x", and "left" into absoluteX
+            //same with the "Y" equilvents
+            if(props[i].toLowerCase() === "x" || props[i].toLowerCase() === "absolutex"||props[i].toLowerCase() === "addx"||props[i].toLowerCase() === "left"||props[i].toLowerCase() === "y"||props[i].toLowerCase() === "addy"||props[i].toLowerCase() === "absolutey"||props[i].toLowerCase() === "absoluteY"){
+                switch(props[i].toLowerCase()){
+                    case "x":
+                    case "addx":
+                    case "left":
+                        if(!(targetX > 0)) targetX = src.settings[props[i]];
+                        break;
+                    case "absolutex":
+                        targetX = src.settings[props[i]];
+                        break;
+                    case "y":
+                    case "addy":
+                    case "top":
+                        if(!(targetY > 0)) targetY = src.settings[props[i]];
+                        break;
+                    case "absolutey":
+                        targetY = src.settings[props[i]];
+                        break;
+                }
+                if(targetX !== null) dest["absoluteX"] = targetX;
+                if(targetY !== null) dest["absoluteY"] = targetY;
+                continue;
+            }
             if (typeof src[props[i]] !== 'undefined') {
                 dest[props[i]] = src[props[i]];
             }
@@ -2999,7 +3022,7 @@ class frStandardHeader extends frTitledLabel { // jshint ignore:line
     }
 
     _saveProperties(props) {
-            props.values = [this.title];
+        props.values = [this.title];
     }
     _parseElement(data) {
         this.title = data.values[0] || "Report";
@@ -3336,10 +3359,8 @@ class frPrint extends frTitledLabel {
 
         this._addProperties(
             [
-                {type: 'number', field: "x", default: 0, destination: "settings"},
-                {type: 'number', field: "y", default: 0, destination: "settings"},
-                {type: 'number', field: "addX", default: 0, destination: "settings"},
-                {type: 'number', field: "addY", default: 0, destination: "settings"},
+                {type: 'number', field: "absoluteX", title:"X", default: null, destination: "settings"},
+                {type: 'number', field: "absoluteY", title:"Y", default: null, destination: "settings"},
                 {
                     type: 'select',
                     field: "font",
@@ -3476,18 +3497,18 @@ class frPrint extends frTitledLabel {
     set y(val) { this._y = parseInt(val, 10); }
 
 
-    get addX() { return this.left; }
-    set addX(val) { this.left = val; }
+    get absoluteX() { return this.left; }
+    set absoluteX(val) { this.left = val; }
 
-    get addY() { return this.top; }
-    set addY(val) { this.top = val; }
+    get absoluteY() { return this.top; }
+    set absoluteY(val) { this.top = val; }
 
 
-    //get addX() { return this._addX; }
-    //set addX(val) { this._addX = parseInt(val, 10); }
+    //get absoluteX() { return this._absoluteX; }
+    //set absoluteX(val) { this._absoluteX = parseInt(val, 10); }
 
-    //get addY() { return this._addY; }
-    //set addY(val) { this._addY = parseInt(val, 10); }
+    //get absoluteY() { return this._absoluteY; }
+    //set absoluteY(val) { this._absoluteY = parseInt(val, 10); }
     get underline() { return this._underline; }
     set underline(val) { this._underline = !!val; }
 
@@ -3516,7 +3537,7 @@ class frPrint extends frTitledLabel {
     set wrap(val) {
         this._wrap = !!val;
         if (this._text) {
-           this._text.style.whiteSpace = this._wrap ? "normal" : "nowrap";
+            this._text.style.whiteSpace = this._wrap ? "normal" : "nowrap";
         }
     }
 
@@ -3552,7 +3573,7 @@ class frPrint extends frTitledLabel {
     }
 
     _parseElement(data) {
-        this._copyProperties(data, this, ["x", "y", "addX", "addY", "font", "fontSize", "fontBold", "fontItalic", "underline",
+        this._copyProperties(data, this, ["absoluteX", "absoluteY", "font", "fontSize", "fontBold", "fontItalic", "underline",
             "strike", "fill", "textColor", "link", "border", "characterSpacing", "wordSpacing", "rotate", "align", "wrap", "width", "formatFunction"]);
     }
 
@@ -3712,7 +3733,7 @@ class frPrintFunction extends frPrint { // jshint ignore:line
     }
 
     _dblClickHandler() {
-       this.UIBuilder.functionEditor(this._function, null, this.async, this.skip, (result, name, isAsync, isSkip) => {
+        this.UIBuilder.functionEditor(this._function, null, this.async, this.skip, (result, name, isAsync, isSkip) => {
             let changed = false;
             if (this._function !== result) {
                 this.function = result;
@@ -3779,7 +3800,7 @@ class frPrintField extends frPrint { // jshint ignore:line
 
 
     _dblClickHandler() {
-      this.UIBuilder.dataFieldEditor(this._generateDataFieldSelection(), (value, idx, dataUUID) => {
+        this.UIBuilder.dataFieldEditor(this._generateDataFieldSelection(), (value, idx, dataUUID) => {
             if (this.field !== value || this.dataUUID !== dataUUID) {
                 this.field = value;
                 this.dataUUID = dataUUID;
@@ -3912,7 +3933,7 @@ class frPrintDynamic extends frPrint { // jshint ignore:line
     }
 
     _dblClickHandler() {
-       this.UIBuilder.dataFieldEditor(this._generateDataFieldSelection(), (value) => {
+        this.UIBuilder.dataFieldEditor(this._generateDataFieldSelection(), (value) => {
             if (this.other !== value) {
                 this.other = value;
                 this._report.showProperties(this, true);
@@ -4021,7 +4042,7 @@ class frBandElement extends frPrint { // jshint ignore:line
         this._addProperties([{type: 'boolean', field: 'suppression', default: false},
             {type: 'number', field: 'columns', destination: false},
             {type: 'number', field: 'fillOpacity', destination: 'settings'}
-            ]);
+        ]);
         this._addProperties([
             {type: 'number', field: 'gutter', destination: 'settings',default:0},
             {type: 'boolean', field: 'collapse', destination: 'settings', default: true},
@@ -4034,7 +4055,7 @@ class frBandElement extends frPrint { // jshint ignore:line
     }
 
     _bandEditor() {
-       this.UIBuilder.bandBrowse(this._report, this._bands, (value) => {
+        this.UIBuilder.bandBrowse(this._report, this._bands, (value) => {
             for (let i =0;i<value.length;i++){
                 if(value[i].text){
                     if(value[i].text.includes("\n") || value[i].text.includes("\r")) { this.wrap = true; }
@@ -4052,21 +4073,21 @@ class frBandElement extends frPrint { // jshint ignore:line
     }
 
     _fixColumns() {
-            if (this._columns === this._gridColumns) { return;}
-            if (this._columns > this._gridColumns.length) {
-                for (let i = this._gridColumns.length; i < this._columns; i++) {
-                    let td = document.createElement("td");
-                    td.style.border = "1px dotted black";
-                    td.innerText = this._getBandTitle(i);
-                    this._gridColumns.push(td);
-                    this._tr.appendChild(td);
-                }
-            } else {
-                while (this._columns < this._gridColumns.length) {
-                    let td = this._gridColumns.pop();
-                    this._tr.removeChild(td);
-                }
+        if (this._columns === this._gridColumns) { return;}
+        if (this._columns > this._gridColumns.length) {
+            for (let i = this._gridColumns.length; i < this._columns; i++) {
+                let td = document.createElement("td");
+                td.style.border = "1px dotted black";
+                td.innerText = this._getBandTitle(i);
+                this._gridColumns.push(td);
+                this._tr.appendChild(td);
             }
+        } else {
+            while (this._columns < this._gridColumns.length) {
+                let td = this._gridColumns.pop();
+                this._tr.removeChild(td);
+            }
+        }
     }
 
     _getBandTitle(index) {
@@ -4101,9 +4122,9 @@ class frBandElement extends frPrint { // jshint ignore:line
             this._handleBandCell(data.fields[i]);
         }
         this._copyProperties(data, this, ["gutter", "fillOpacity", "suppression", "padding", "collapse"]);
-/*        this._copyProperties(data, this, ["x", "y", "addX", "addY", "font", "fontSize", "fontBold", "fontItalic", "underline",
-            "strike", "fill", "textColor", "link", "border", "characterSpacing", "wordSpacing", "rotate", "align", "wrap", "gutter", "fillOpacity"]);
-  */
+        /*        this._copyProperties(data, this, ["absoluteX", "absoluteY", "font", "fontSize", "fontBold", "fontItalic", "underline",
+                    "strike", "fill", "textColor", "link", "border", "characterSpacing", "wordSpacing", "rotate", "align", "wrap", "gutter", "fillOpacity"]);
+          */
         super._parseElement(data);
     }
 
@@ -4148,7 +4169,7 @@ class UI { // jshint ignore:line
     constructor(parent) {
         this._parent = parent;
     }
-    
+
     destroy() {
         this._parent = null;
     }
@@ -4262,7 +4283,7 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-           this.variableValueEditor("", "", (name, value) => {
+            this.variableValueEditor("", "", (name, value) => {
                 if (name != null && name !== '') {
                     if (!resultVariables.hasOwnProperty(name)) {
                         select.appendChild(new Option(name));
@@ -4275,7 +4296,7 @@ class UI { // jshint ignore:line
         // Edit
         addButtons[1].addEventListener("click", () => {
             let key = select.value;
-           this.variableValueEditor(key, resultVariables[key], (name, value) => {
+            this.variableValueEditor(key, resultVariables[key], (name, value) => {
                 if (name !== key) {
                     delete resultVariables[key];
                     select.options[select.selectedIndex].text = name;
@@ -4368,11 +4389,11 @@ class UI { // jshint ignore:line
         const rebuildGroups = () => {
             // Clear all Select->Options
             for (let key in  tempOptGroups) {
-                 if (tempOptGroups.hasOwnProperty(key)) {
-                     while (tempOptGroups[key].children.length) {
-                         tempOptGroups[key].removeChild(tempOptGroups[key].children[0]);
-                     }
-                 }
+                if (tempOptGroups.hasOwnProperty(key)) {
+                    while (tempOptGroups[key].children.length) {
+                        tempOptGroups[key].removeChild(tempOptGroups[key].children[0]);
+                    }
+                }
             }
 
             // Recreate all Select Options
@@ -4460,54 +4481,54 @@ class UI { // jshint ignore:line
         // Add
         addButtons[0].addEventListener("click", () => {
 
-           const fields =this.createDataSelect(report, null , 3);
-           this.dataFieldEditor(fields,(name, idx, dataUUID) => {
-               if (name != null && name !== '') {
+            const fields =this.createDataSelect(report, null , 3);
+            this.dataFieldEditor(fields,(name, idx, dataUUID) => {
+                if (name != null && name !== '') {
 
-                   for (let i = 0; i < resultVariables.length; i++) {
-                       if (resultVariables[i].dataUUID === dataUUID && resultVariables[i].name === name) {
-                           // Already exists, we don't have to re-add it!
-                           return;
-                       }
-                   }
+                    for (let i = 0; i < resultVariables.length; i++) {
+                        if (resultVariables[i].dataUUID === dataUUID && resultVariables[i].name === name) {
+                            // Already exists, we don't have to re-add it!
+                            return;
+                        }
+                    }
 
-                   // If this value wasn't found; we need to add it
-                   const opt = new Option(name);
-                   opt.dataUUID = dataUUID;
-                   let data = {name: name, dataUUID: dataUUID};
+                    // If this value wasn't found; we need to add it
+                    const opt = new Option(name);
+                    opt.dataUUID = dataUUID;
+                    let data = {name: name, dataUUID: dataUUID};
 
-                   // Grab the length before adding.
-                   let count = resultVariables.length;
-                   // Either no records, or this matches the last UUID group
-                   if (count === 0 || tempOptUUIDS[tempOptUUIDS.length - 1] === dataUUID) {
-                       resultVariables.push(data);
-                   } else {
+                    // Grab the length before adding.
+                    let count = resultVariables.length;
+                    // Either no records, or this matches the last UUID group
+                    if (count === 0 || tempOptUUIDS[tempOptUUIDS.length - 1] === dataUUID) {
+                        resultVariables.push(data);
+                    } else {
 
-                       // No match for other groups from the same dataset...
-                       let offset = 0;
-                       for (let i = 0; i < tempOptUUIDS.length; i++) {
-                           const group = tempOptGroups[tempOptUUIDS[i]];
-                           offset += group.children.length;
-                           if (tempOptUUIDS[i] === dataUUID) {
-                               break;
-                           }
-                       }
+                        // No match for other groups from the same dataset...
+                        let offset = 0;
+                        for (let i = 0; i < tempOptUUIDS.length; i++) {
+                            const group = tempOptGroups[tempOptUUIDS[i]];
+                            offset += group.children.length;
+                            if (tempOptUUIDS[i] === dataUUID) {
+                                break;
+                            }
+                        }
 
-                       // Now that we know where it belongs, lets add it where it goes in the resultVariables
-                       if (offset === 0) {
-                           resultVariables.unshift(data);
-                       } else if (offset === resultVariables.length) {
-                           resultVariables.push(data);
-                       } else {
-                           let temp = resultVariables.splice(0, offset);
-                           temp.push(data);
-                           resultVariables = temp.concat(resultVariables);
-                       }
+                        // Now that we know where it belongs, lets add it where it goes in the resultVariables
+                        if (offset === 0) {
+                            resultVariables.unshift(data);
+                        } else if (offset === resultVariables.length) {
+                            resultVariables.push(data);
+                        } else {
+                            let temp = resultVariables.splice(0, offset);
+                            temp.push(data);
+                            resultVariables = temp.concat(resultVariables);
+                        }
 
-                   }
-                   tempOptGroups[dataUUID].appendChild(opt);
-               }
-           });
+                    }
+                    tempOptGroups[dataUUID].appendChild(opt);
+                }
+            });
         });
 
         // Edit
@@ -4516,7 +4537,7 @@ class UI { // jshint ignore:line
             const curIndex = select.selectedIndex;
             const fields = this.createDataSelect(report, {value: select.value, dataUUID: select.options[curIndex].dataUUID} , 3);
 
-           this.dataFieldEditor(fields, (name, idx, dataUUID) => {
+            this.dataFieldEditor(fields, (name, idx, dataUUID) => {
                 let curGroup = resultVariables[curIndex];
 
                 // Check to see if already exists; if so -- we cancel the change...
@@ -4633,27 +4654,27 @@ class UI { // jshint ignore:line
         };
 
         const A = (value, parent, elementKey, tracking) => {
-             let a = document.createElement("a");
-             a.addEventListener("click", () => {
-                 if (value === "(delete)") {
-                     tracking[elementKey].style.display = "none";
-                     tracking["add" + elementKey].style.display = "";
-                     tracking.Report[elementKey] = false;
-                 } else {
-                     tracking[elementKey].style.display = "";
-                     tracking["add" + elementKey].style.display = "none";
-                     tracking.Report[elementKey] = true;
-                 }
-             });
-             a.style.marginLeft = "10px";
-             a.style.cursor = "pointer";
-             a.innerHTML = value;
-             if (parent instanceof HTMLLIElement) {
-                 parent.children[0].appendChild(a);
-             } else {
-                 parent.appendChild(a);
-             }
-             return a;
+            let a = document.createElement("a");
+            a.addEventListener("click", () => {
+                if (value === "(delete)") {
+                    tracking[elementKey].style.display = "none";
+                    tracking["add" + elementKey].style.display = "";
+                    tracking.Report[elementKey] = false;
+                } else {
+                    tracking[elementKey].style.display = "";
+                    tracking["add" + elementKey].style.display = "none";
+                    tracking.Report[elementKey] = true;
+                }
+            });
+            a.style.marginLeft = "10px";
+            a.style.cursor = "pointer";
+            a.innerHTML = value;
+            if (parent instanceof HTMLLIElement) {
+                parent.children[0].appendChild(a);
+            } else {
+                parent.appendChild(a);
+            }
+            return a;
         };
 
         const createSection = (title, elementKey, parent, tracking, reportLayout) => {
@@ -4770,18 +4791,18 @@ class UI { // jshint ignore:line
         let d = new Dialog("Sections", body, this.hostElement);
 
         const rebuildReportSection = (reportInfo, data) => {
-              for (let key in reportInfo) {
-                  if (!reportInfo.hasOwnProperty(key)) { continue; }
-                  if (reportInfo[key] === true) {
-                      if (typeof data[key] === 'undefined') {
-                          data[key] = [];
-                      }
-                  } else {
-                      if (typeof data[key] !== 'undefined') {
-                          delete data[key];
-                      }
-                  }
-              }
+            for (let key in reportInfo) {
+                if (!reportInfo.hasOwnProperty(key)) { continue; }
+                if (reportInfo[key] === true) {
+                    if (typeof data[key] === 'undefined') {
+                        data[key] = [];
+                    }
+                } else {
+                    if (typeof data[key] !== 'undefined') {
+                        delete data[key];
+                    }
+                }
+            }
         };
 
         const rebuildReport = (tracking, reportData) => {
@@ -4895,15 +4916,15 @@ class UI { // jshint ignore:line
 
         let properties = [];
         if(report._hasFormatterFunctions()) {
-                properties.push({
-                    type: 'select',
-                    field: "formatFunction",
-                    default: "none",
-                    display: createFormattersSelect
-                });
+            properties.push({
+                type: 'select',
+                field: "formatFunction",
+                default: "none",
+                display: createFormattersSelect
+            });
         }
 
-         properties = properties.concat([
+        properties = properties.concat([
             {type: 'number', field: "width", functionable: true},
             {type: 'select', field: "align", translate: toInt, default: "left", display: createAlignSelect},
             {type: 'string', field: "textColor", default: "", functionable: true},
@@ -4942,7 +4963,7 @@ class UI { // jshint ignore:line
             if (select.selectedIndex < 0) { return; }
             currentBand = resultVariables[select.selectedIndex];
             currentBand.properties = properties;
-           this.showProperties(currentBand, propDiv, true);
+            this.showProperties(currentBand, propDiv, true);
         });
 
 
@@ -4971,7 +4992,7 @@ class UI { // jshint ignore:line
                     select.appendChild(option);
                 }
             }
-           this.clearArea(propDiv);
+            this.clearArea(propDiv);
         };
         rebuildOptions();
 
@@ -5034,16 +5055,16 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-           this.bandValueEditor(report, {text: "", type:"print", width: 100}, (value) => {
-                    resultVariables.push(value);
-                    rebuildOptions();
+            this.bandValueEditor(report, {text: "", type:"print", width: 100}, (value) => {
+                resultVariables.push(value);
+                rebuildOptions();
             });
         });
 
         // Edit
         addButtons[1].addEventListener("click", () => {
             if (select.selectedIndex < 0) { return; }
-           this.bandValueEditor(report, resultVariables[select.selectedIndex], (value) => {
+            this.bandValueEditor(report, resultVariables[select.selectedIndex], (value) => {
                 resultVariables[select.selectedIndex] = value;
                 rebuildOptions();
             });
@@ -5137,7 +5158,7 @@ class UI { // jshint ignore:line
         functionButton.style.display = "none";
         functionButton.style.marginLeft = "5px";
         functionButton.addEventListener("click", () => {
-           this.functionEditor(newField.function.function || '', newField.function.name, newField.function.async, newField.function.skip,
+            this.functionEditor(newField.function.function || '', newField.function.name, newField.function.async, newField.function.skip,
                 (value, name, isAsync, skipped) => {
                     let obj = {};
                     if (isAsync != null) {
@@ -5181,7 +5202,7 @@ class UI { // jshint ignore:line
                     // TODO - Future; check to see where the band is located; we could auto-set 'field' to 'parentData'
                     newField.field = select.value;
                     newField.dataUUID = option.dataUUID;
-                 } else {
+                } else {
                     // Variables
                     if (option.tag === 4) {
                         newField.variable = select.value;
@@ -5194,7 +5215,7 @@ class UI { // jshint ignore:line
                     else if (option.tag === 16) {
                         newField.total = select.value;
                     }
-                 }
+                }
 
             }
         };
@@ -5337,7 +5358,7 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-           this.totalFieldEditor(report, "", "sum", (name, type) => {
+            this.totalFieldEditor(report, "", "sum", (name, type) => {
                 if (name != null && name !== '') {
 
                     // Check to see if total in type already exists
@@ -5362,12 +5383,12 @@ class UI { // jshint ignore:line
                     type = key; break;
                 }
             }
-           this.totalFieldEditor(report, value, type, (name, newType) => {
-               if (name == null || name === '') { return; }
+            this.totalFieldEditor(report, value, type, (name, newType) => {
+                if (name == null || name === '') { return; }
 
-               // Find old index location
-               const idx = resultVariables[type].indexOf(value);
-               if (name !== value) {
+                // Find old index location
+                const idx = resultVariables[type].indexOf(value);
+                if (name !== value) {
                     resultVariables[type][idx] = name;
                     select.options[select.selectedIndex].text = name;
                 }
@@ -5682,7 +5703,7 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-           this.functionEditor("", "", false, false, (value, name, isAsync, skipped) => {
+            this.functionEditor("", "", false, false, (value, name, isAsync, skipped) => {
                 let obj = {};
                 if (isAsync != null) {
                     obj.async = isAsync;
@@ -5702,7 +5723,7 @@ class UI { // jshint ignore:line
         // Edit
         addButtons[1].addEventListener("click", () => {
             let obj = resultFunctions[select.value];
-           this.functionEditor(obj.function, obj.name, obj.async || false, obj.skip || false, (value, name, isAsync, skipped) => {
+            this.functionEditor(obj.function, obj.name, obj.async || false, obj.skip || false, (value, name, isAsync, skipped) => {
                 if (isAsync != null) {
                     obj.async = isAsync;
                 }
@@ -5838,9 +5859,9 @@ class UI { // jshint ignore:line
             let text = textArea.value;
             if (typeof ok === 'function') {
                 if (async !== null && asyncCheckbox.checked) {
-                      if (text.indexOf('done(') < 0) {
-                          text += "; done();";
-                      }
+                    if (text.indexOf('done(') < 0) {
+                        text += "; done();";
+                    }
                 }
                 ok(text, nameValue ? nameValue.value : null, async == null ? null : asyncCheckbox.checked, disabled == null ? null : skipCheckbox.checked );
             }
@@ -6148,7 +6169,7 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-           this.calculationEditor("", "concat", [],  (name, op, fields) => {
+            this.calculationEditor("", "concat", [],  (name, op, fields) => {
                 let obj = {};
                 obj.type = 'calculation';
                 obj.name = name;
@@ -6163,7 +6184,7 @@ class UI { // jshint ignore:line
         // Edit
         addButtons[1].addEventListener("click", () => {
             let obj = resultFunctions[select.value];
-           this.calculationEditor(obj.name, obj.op, obj.fields, (name, op, fields) => {
+            this.calculationEditor(obj.name, obj.op, obj.fields, (name, op, fields) => {
                 if (name !== obj.name) {
                     select.options[select.selectedIndex].text = name;
                 }
@@ -6295,7 +6316,7 @@ class UI { // jshint ignore:line
 
 
         addButtons[0].addEventListener("click", () => {
-           this.calculationValueEditor("Text value", {text: ""}, (name, value) => {
+            this.calculationValueEditor("Text value", {text: ""}, (name, value) => {
                 if (name != null && name !== '') {
                     if (!resultFields.hasOwnProperty(name)) {
                         fieldSelect.appendChild(new Option(name));
@@ -6308,7 +6329,7 @@ class UI { // jshint ignore:line
         // Edit
         addButtons[1].addEventListener("click", () => {
             let key = fieldSelect.value;
-           this.calculationValueEditor(key, resultFields[key], (name, value) => {
+            this.calculationValueEditor(key, resultFields[key], (name, value) => {
                 if (name !== key) {
                     delete resultFields[key];
                     fieldSelect.options[fieldSelect.selectedIndex].text = name;
@@ -6487,35 +6508,35 @@ class UI { // jshint ignore:line
             }
         }
 
-            if ((dataSets & 2) === 2) { // jshint ignore:line
-                const handleDataChildren = (childrenIndexed, parent) => {
-                    if (childrenIndexed == null) {
-                        return;
-                    }
-                    for (let i = 0; i < childrenIndexed.length; i++) {
-                        const group = document.createElement("optgroup");
-                        group.label = (parent ? parent + ">" : "") + childrenIndexed[i].name;
-                        for (let j = 0; j < childrenIndexed[i].fields.length; j++) {
-                            const option = new Option(childrenIndexed[i].fields[j]);
-                            option.tag = 2;
-                            option.dataUUID = childrenIndexed[i].dataUUID;
-                            if (isTotal !== true) {
-                                if (field && field.dataUUID === option.dataUUID) {
-                                   if (field.value === childrenIndexed[i].fields[j]) {
-                                       option.selected = true;
-                                   }
-                                } else if (field === childrenIndexed[i].fields[j]) {
+        if ((dataSets & 2) === 2) { // jshint ignore:line
+            const handleDataChildren = (childrenIndexed, parent) => {
+                if (childrenIndexed == null) {
+                    return;
+                }
+                for (let i = 0; i < childrenIndexed.length; i++) {
+                    const group = document.createElement("optgroup");
+                    group.label = (parent ? parent + ">" : "") + childrenIndexed[i].name;
+                    for (let j = 0; j < childrenIndexed[i].fields.length; j++) {
+                        const option = new Option(childrenIndexed[i].fields[j]);
+                        option.tag = 2;
+                        option.dataUUID = childrenIndexed[i].dataUUID;
+                        if (isTotal !== true) {
+                            if (field && field.dataUUID === option.dataUUID) {
+                                if (field.value === childrenIndexed[i].fields[j]) {
                                     option.selected = true;
                                 }
+                            } else if (field === childrenIndexed[i].fields[j]) {
+                                option.selected = true;
                             }
-                            group.appendChild(option);
                         }
-                        selectList.appendChild(group);
-                        handleDataChildren(childrenIndexed[i].childrenIndexed, childrenIndexed[i].name);
+                        group.appendChild(option);
                     }
-                };
-                handleDataChildren(fields.primary.childrenIndexed, "");
-            }
+                    selectList.appendChild(group);
+                    handleDataChildren(childrenIndexed[i].childrenIndexed, childrenIndexed[i].name);
+                }
+            };
+            handleDataChildren(fields.primary.childrenIndexed, "");
+        }
 
         if ((dataSets & 4) === 4) { // jshint ignore:line
             const variables = report.reportVariables;
@@ -6614,7 +6635,7 @@ class UI { // jshint ignore:line
         }
         layout.trackCreated = [];
         if (refresh || obj == null) {
-           this.clearArea(layout);
+            this.clearArea(layout);
         }
         layout.trackProperties = obj;
         if (obj == null) { return; }
@@ -6659,7 +6680,7 @@ class UI { // jshint ignore:line
 
         }
         const props = overrideProps || obj.properties;
-       this._handleShowProperties(props, obj, table, layout);
+        this._handleShowProperties(props, obj, table, layout);
         layout.appendChild(table);
 
         // Might be able to scan the TR children
@@ -6712,7 +6733,7 @@ class UI { // jshint ignore:line
                 tr.id = name;
             }
 
-           this._handleShowProperty(props[i], obj, name, tr, layout);
+            this._handleShowProperty(props[i], obj, name, tr, layout);
         }
     }
 
@@ -6866,7 +6887,7 @@ class UI { // jshint ignore:line
                                 innerSpan.innerText = "\ue81f";
                                 innerSpan.style.border = "solid black 1px";
                                 innerSpan.addEventListener("click", () => {
-                                   this.functionEditor(obj[prop.field].function, null,null, null, (result) => {
+                                    this.functionEditor(obj[prop.field].function, null,null, null, (result) => {
                                         if (obj[prop.field].function !== result) {
                                             obj[prop.field].function = result;
                                             // Clear any cached Preview func object
@@ -6883,7 +6904,7 @@ class UI { // jshint ignore:line
                                 deleteSpan.style.border = "solid black 1px";
                                 deleteSpan.addEventListener("click", () => {
                                     obj[prop.field] = '';
-                                   this.showProperties(layout.trackProperties, layout, true);
+                                    this.showProperties(layout.trackProperties, layout, true);
                                 });
 
                                 input.appendChild(innerSpan);
@@ -6917,7 +6938,7 @@ class UI { // jshint ignore:line
                                     }
                                 }
                                 if (p.length) {
-                                   this._handleShowProperties(p, obj, tr.parentElement, layout);
+                                    this._handleShowProperties(p, obj, tr.parentElement, layout);
                                 }
                                 lastProps = p;
                             });
@@ -6925,7 +6946,7 @@ class UI { // jshint ignore:line
                             // Check to see if any props need to be added when re-rebuild the layout...
                             let p = prop.properties();
                             if (p.length) {
-                               this._handleShowProperties(p, obj, tr.parentElement, layout);
+                                this._handleShowProperties(p, obj, tr.parentElement, layout);
                             }
                             lastProps = p;
                         }
@@ -6937,7 +6958,7 @@ class UI { // jshint ignore:line
                             case "select":
                                 input = layout.querySelector("#" + name + "_select");
                                 if (input) {
-                                     input.value = obj[prop.field];
+                                    input.value = obj[prop.field];
                                 } else {
                                     console.warn("fluentReports: unable to find ", name + "_select");
                                 }
@@ -6958,7 +6979,7 @@ class UI { // jshint ignore:line
                     if (prop.properties) {
                         let p = prop.properties();
                         if (p.length) {
-                           this._handleShowProperties(p, obj, tr.parentElement, layout);
+                            this._handleShowProperties(p, obj, tr.parentElement, layout);
                         }
                         lastProps = p;
                     }
@@ -7074,12 +7095,12 @@ class Dialog { // jshint ignore:line
     }
 
     _keyHandler(event) {
-            if (event.key === "Escape") {
-                if (this._dialogId !== this._host.dialogCount) { return; }
-                this.hide();
-                event.stopPropagation();
-                return false;
-            }
+        if (event.key === "Escape") {
+            if (this._dialogId !== this._host.dialogCount) { return; }
+            this.hide();
+            event.stopPropagation();
+            return false;
+        }
     }
 
     hide() {
@@ -7140,7 +7161,7 @@ class Dialog { // jshint ignore:line
             this._host.appendChild(dialog);
         } else {
             dialog.style.display = '';
-           this.clearArea(dialog);
+            this.clearArea(dialog);
         }
 
         let titleElement = document.createElement("div");
