@@ -2821,7 +2821,15 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
             {type: 'number', field: 'radius', default: 0, destination: 'settings'}
         ]);
     }
-
+    _parseElement(data) {
+        console.log(data);
+        this.shape = data.settings.shape || "line";
+        this.radius = data.settings.radius || 50;
+        this.width = data.settings.width || 50;
+        this.height = data.settings.height || 50;
+        this.top = data.settings.top || 0;
+        this.left = data.settings.left || 0;
+    }
     _saveProperties(props, ignore = []) {
         super._saveProperties(props, ignore);
         props.type = 'shape';
