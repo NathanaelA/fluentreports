@@ -3366,7 +3366,7 @@ class frPrint extends frTitledLabel {
                     default: false,
                     destination: 'settings'
                 },
-                {type: 'string', field: "fill", functionable: true, default: "", destination: "settings"},
+                {type: 'string', field: "fill",title:"Fill Color",functionable: true, default: "", destination: "settings"},
                 {type: 'string', field: "textColor", functionable: true, default: "", destination: "settings"},
                 {type: 'string', field: "link", functionable: true, default: "", destination: "settings"},
                 {type: 'number', field: "border", default: 0, destination: "settings"},
@@ -4906,7 +4906,8 @@ class UI { // jshint ignore:line
          properties = properties.concat([
             {type: 'number', field: "width", functionable: true},
             {type: 'select', field: "align", translate: toInt, default: "left", display: createAlignSelect},
-            {type: 'string', field: "textColor", default: "", functionable: true},
+             {type: 'string', field: "textColor", default: "", functionable: true},
+             {type: 'string', field: "fill","title":"Fill Color", default: "", functionable: true},
             {type: 'boolean', field: "fontBold", title:"bold", default: false, functionable: true},
             {type: 'boolean', field: "fontItalic", title:"italic", default: false, functionable: true},
             {type: 'boolean', field: "underline", default: false, functionable: true},
