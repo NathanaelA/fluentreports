@@ -58,6 +58,9 @@ class FluentReportsGenerator {
     get pageWidth() {
         return this._paperDims[0] - this._marginLeft - this._marginRight;
     }
+    get pageHeight() {
+        return (this._paperDims[1] - this._marginTop) - this._marginBottom;
+    }
 
     /*
      * Public Properties
@@ -75,9 +78,15 @@ class FluentReportsGenerator {
      * @returns {*}
      */
     get marginLeft() { return this._marginLeft; }
-    set marginLeft(val) { this._marginLeft = parseInt(val, 10); }
+    set marginLeft(val) {
+        this._marginLeft = parseInt(val, 10);
+        this._resetPaperSizeLocation();
+    }
     get marginRight() { return this._marginRight; }
-    set marginRight(val) { this._marginRight = parseInt(val, 10); }
+    set marginRight(val) {
+        this._marginRight = parseInt(val, 10);
+        this._resetPaperSizeLocation();
+    }
     get marginTop() { return this._marginTop; }
     set marginTop(val) { this._marginTop = parseInt(val, 10); }
     get marginBottom() { return this._marginBottom; }
@@ -305,6 +314,27 @@ class FluentReportsGenerator {
 
 
         this.buildUI(this._parentElement);
+    }
+
+    /**
+     *
+     * @param val The value you wish to parse
+     * @param which If you input a %, do you wish to have it a % of width/height
+     * @return {*}
+     */
+    _parseSize(val, which) {
+        if (val == null) { return 0; }
+        if (typeof val === 'number') { return val; }
+        if (val.indexOf("%") > 0) {
+            let temp = parseInt(val, 10) / 100;
+            if(which === "width") {
+                return parseInt(this.pageWidth * temp, 10);
+            }
+            else if(which === "height") {
+                return parseInt(this.pageHeight * temp, 10);
+            }
+        }
+        return val;
     }
 
     /**
@@ -982,7 +1012,7 @@ class FluentReportsGenerator {
 
         const rect = this._reportLayout.getBoundingClientRect();
         this._paperWidthLayout.style.top = (rect.top-topRect.top)+"px";
-        this._paperWidthLayout.style.left = (rect.left + (this._paperDims[0]*this.scale)) + "px";
+        this._paperWidthLayout.style.left = ((((this._paperDims[0]-this.marginLeft)-this.marginRight)*this.scale)+rect.left) + "px";
         this._paperWidthLayout.style.height = rect.height+"px";
         if (rect.width < ((this._paperDims[0]*this.scale)+18)) {
             this._paperWidthLayout.style.display = "none";
@@ -1734,7 +1764,7 @@ class frSection { // jshint ignore:line
     createStockElement() {
         if (this._stockElement) { return this._stockElement; }
         // noinspection JSCheckFunctionSignatures
-        let left = (parseInt( (612 * this.scale), 10)  / 2) - 45;
+        let left = (parseInt( (this._report.pageWidth * this.scale), 10) / 2) - 45;
         switch (this._type) {
             case 1: // Header
                 this._stockElement = new frStandardHeader(this._report, this, {top: parseInt(this._html.style.top,10), left: left });
@@ -2354,8 +2384,8 @@ class frElement { // jshint ignore:line
         this._properties = [
             {type: 'number', field: 'top', default: 0, destination: "settings"},
             {type: 'number', field: 'left', default: 0, destination: "settings"},
-            {type: 'number', field: 'width', default: 0, destination: "settings"},
-            {type: 'number', field: 'height', default: 0, destination: "settings"}
+            {type: 'number', field: 'width', default: 0, destination: "settings", handlePercentage: true},
+            {type: 'number', field: 'height', default: 0, destination: "settings", handlePercentage: true}
         ];
         this.frElements.push(this);
     }
@@ -2378,6 +2408,10 @@ class frElement { // jshint ignore:line
 
     get pageWidth() {
         return this._report.pageWidth;
+    }
+
+    get pageHeight() {
+        return this._report.pageHeight;
     }
 
     /**
@@ -2410,11 +2444,11 @@ class frElement { // jshint ignore:line
     }
     set left(val) { this._html.style.left = (parseInt(val,10) * this.scale)+"px"; }
 
-    get width() { return this._width; }
+    get width() { return parseInt(this._width, 10); }
     set width(val) {
         if (val == null || val === "" || val === "auto" || val === "0px") { val = 0; }
+        val = this._report._parseSize(val,"width");
         this._width = val;
-        val = this._parseSize(val);
         if (val === 0 || val === "0") {
             this._html.style.width = "";
         } else if (val < 10) {
@@ -2440,9 +2474,10 @@ class frElement { // jshint ignore:line
         this._draggable.disabled = this._locked | this._readonly; // jshint ignore:line
     }
 
-    get height() { return this._height; }
+    get height() { return parseInt(this._height, 10); }
     set height(val) {
         if (val == null || val === "undefinedpx" || val === "" || val === "auto" || val === "0px") { val = 0;}
+        val = this._report._parseSize(val,"height");
         this._height = parseInt(val,10);
         if (val === 0 || val === "0") {
             this._html.style.height = "";
@@ -2503,16 +2538,6 @@ class frElement { // jshint ignore:line
         this._report.showProperties(this, true);
     }
 
-    _parseSize(val) {
-        if (val == null) { return 0; }
-        if (typeof val === 'number') { return val; }
-        if (val.indexOf("%") > 0) {
-            let temp = parseInt(val, 10) / 100;
-            return this.pageWidth * temp;
-        }
-        return val;
-    }
-
     _generateSave(prop) {
         this._saveProperties(prop);
     }
@@ -2563,8 +2588,8 @@ class frElement { // jshint ignore:line
                 }
             }
         }
-        if (targetX !== null) { dest["absoluteX"] = targetX; }
-        if (targetY !== null) { dest["absoluteY"] = targetY; }
+        if (targetX !== null) { dest.absoluteX = targetX; }
+        if (targetY !== null) { dest.absoluteY = targetY; }
 
     }
 
@@ -3419,7 +3444,10 @@ class frPrint extends frTitledLabel {
                     display: this._createAlignSelect.bind(this),
                     destination: 'settings'
                 },
-                {type: 'boolean', field: "wrap", default: false, destination: "settings"}]);
+
+                // Wrapping isn't actually supported in the engine on Prints
+                // {type: 'boolean', field: "wrap", default: false, destination: "settings"}
+                ]);
 
         // Only add formatter functions, if we pass some in...
         if (this._report._hasFormatterFunctions()) {
@@ -4041,7 +4069,6 @@ class frBandElement extends frPrint { // jshint ignore:line
 
         this._fillOpacity = 1.0;
 
-
         this._tr = document.createElement("tr");
         this._table.appendChild(this._tr);
         this._fixColumns();
@@ -4051,11 +4078,12 @@ class frBandElement extends frPrint { // jshint ignore:line
         this._deleteProperties(['rotate','width']);
         this._addProperties([{type: 'boolean', field: 'suppression', default: false},
             {type: 'number', field: 'columns', destination: false},
-            {type: 'number', field: 'fillOpacity', destination: 'settings'}
+            {type: 'number', field: 'fillOpacity', destination: 'settings'},
         ]);
         this._addProperties([
             {type: 'number', field: 'gutter', destination: 'settings',default:0},
             {type: 'boolean', field: 'collapse', destination: 'settings', default: true},
+            {type: 'boolean', field: "wrap", default: false, destination: "settings"},
             {type: 'number', field: 'padding', destination: 'settings', default: 1},
             {type: 'button', title: 'Band Editor', click: () => { this._bandEditor(); }}], false);
     }
@@ -4152,7 +4180,7 @@ class frBandElement extends frPrint { // jshint ignore:line
     }
 
     _fixCellProps(td, field) {
-        td.style.width = (this._parseSize(field.width) * this.scale || 80) + "px";
+        td.style.width = (this._report._parseSize(field.width,"width") * this.scale || 80) + "px";
         td.style.maxWidth = td.style.width;
         if (field.align != null) {
             switch(field.align) {
@@ -4937,8 +4965,8 @@ class UI { // jshint ignore:line
         properties = properties.concat([
             {type: 'number', field: "width", functionable: true},
             {type: 'select', field: "align", translate: toInt, default: "left", display: createAlignSelect},
-             {type: 'string', field: "textColor", default: "", functionable: true},
-             {type: 'string', field: "fill","title":"Fill Color", default: "", functionable: true},
+            {type: 'string', field: "textColor", default: "", functionable: true},
+            {type: 'string', field: "fill","title":"Fill Color", default: "", functionable: true},
             {type: 'boolean', field: "fontBold", title:"bold", default: false, functionable: true},
             {type: 'boolean', field: "fontItalic", title:"italic", default: false, functionable: true},
             {type: 'boolean', field: "underline", default: false, functionable: true},
@@ -6736,7 +6764,7 @@ class UI { // jshint ignore:line
         }
         for (let i = 0; i < props.length; i++) {
             if (props[i] && props[i].skip === true) { continue; }
-            if(propertyToSkip === i) continue;
+            if(propertyToSkip === i) { continue; }
             let name =this._getShowPropertyId(props[i],obj);
             let tr = layout.querySelector("#"+name);
             if (!tr) {
@@ -6863,6 +6891,15 @@ class UI { // jshint ignore:line
                             case 'number':
                                 input = document.createElement('input');
                                 input.type = propType === 'number' ? 'number' : 'text';
+                                if (prop.handlePercentage) {
+                                    input.type = 'text';
+                                    input.addEventListener('blur', () => {
+                                        if(input.value.endsWith("%")){
+                                            input.value = this._parent._parseSize(input.value,prop.field);
+                                            obj[prop.field] = input.value;
+                                        }
+                                    });
+                                }
                                 input.style.margin = "1px";
                                 if (prop.functionable === true || prop.lined) {
                                     input.style.width = "calc(100% - 20px)";
@@ -6874,6 +6911,11 @@ class UI { // jshint ignore:line
                                         obj[prop.field] = prop.translate(input.value);
                                     } else {
                                         obj[prop.field] = input.value;
+                                    }
+                                    if(prop.handlePercentage) {
+                                        if(obj[prop.field].toString().endsWith("%")){
+                                            obj[prop.field] = this._parent._parseSize(obj[prop.field], prop.field);
+                                        }
                                     }
                                 });
 
