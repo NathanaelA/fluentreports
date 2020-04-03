@@ -2522,41 +2522,50 @@ class frElement { // jshint ignore:line
     }
 
     _copyProperties(src, dest, props) {
-        if (src == null) { return; }let targetX = null;
+        if (src == null) { return; }
+        let targetX = null;
         let targetY = null;
         for (let i=0;i<props.length;i++) {
-            //turns "absoluteX", "x", and "left" into absoluteX
-            //same with the "Y" equilvents
-            if(props[i].toLowerCase() === "x" || props[i].toLowerCase() === "absolutex"||props[i].toLowerCase() === "addx"||props[i].toLowerCase() === "left"||props[i].toLowerCase() === "y"||props[i].toLowerCase() === "addy"||props[i].toLowerCase() === "absolutey"||props[i].toLowerCase() === "absoluteY"){
-                switch(props[i].toLowerCase()){
-                    case "x":
-                    case "addx":
-                    case "left":
-                        if(!(targetX > 0)) targetX = src.settings[props[i]];
-                        break;
-                    case "absolutex":
-                        targetX = src.settings[props[i]];
-                        break;
-                    case "y":
-                    case "addy":
-                    case "top":
-                        if(!(targetY > 0)) targetY = src.settings[props[i]];
-                        break;
-                    case "absolutey":
-                        targetY = src.settings[props[i]];
-                        break;
-                }
-                if(targetX !== null) dest["absoluteX"] = targetX;
-                if(targetY !== null) dest["absoluteY"] = targetY;
-                continue;
-            }
             if (typeof src[props[i]] !== 'undefined') {
                 dest[props[i]] = src[props[i]];
             }
             if (src.settings && typeof src.settings[props[i]] !== 'undefined') {
-                dest[props[i]] = src.settings[props[i]];
+                // turns "absoluteX", "x", and "left" into absoluteX
+                // same with the "Y" equivalents
+                const lcProp = props[i].toLowerCase();
+                switch (lcProp) {
+                    case "x":
+                    case "addx":
+                    case "left":
+                        if (targetX === null) {
+                            targetX = src.settings[props[i]];
+                        }
+                        break;
+
+                    case "absolutex":
+                        targetX = src.settings[props[i]];
+                        break;
+
+                    case "y":
+                    case "addy":
+                    case "top":
+                        if (targetY === null) {
+                            targetY = src.settings[props[i]];
+                        }
+                        break;
+
+                    case "absolutey":
+                        targetY = src.settings[props[i]];
+                        break;
+
+                    default:
+                        dest[props[i]] = src.settings[props[i]];
+                }
             }
         }
+        if (targetX !== null) { dest["absoluteX"] = targetX; }
+        if (targetY !== null) { dest["absoluteY"] = targetY; }
+
     }
 
     _notify(eventName, event) {
@@ -3503,12 +3512,6 @@ class frPrint extends frTitledLabel {
     get absoluteY() { return this.top; }
     set absoluteY(val) { this.top = val; }
 
-
-    //get absoluteX() { return this._absoluteX; }
-    //set absoluteX(val) { this._absoluteX = parseInt(val, 10); }
-
-    //get absoluteY() { return this._absoluteY; }
-    //set absoluteY(val) { this._absoluteY = parseInt(val, 10); }
     get underline() { return this._underline; }
     set underline(val) { this._underline = !!val; }
 
