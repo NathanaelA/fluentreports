@@ -2822,7 +2822,6 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         ]);
     }
     _parseElement(data) {
-        console.log(data);
         this.shape = data.settings.shape || "line";
         this.radius = data.settings.radius || 50;
         this.width = data.settings.width || 50;
