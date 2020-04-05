@@ -1008,6 +1008,7 @@ class FluentReportsGenerator {
      * @private
      */
     _resetPaperSizeLocation() {
+        if (!this._frame) { return; }
         const topRect = this._frame.getBoundingClientRect();
 
         const rect = this._reportLayout.getBoundingClientRect();
