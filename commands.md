@@ -801,6 +801,7 @@ This is one of the primary methods to put any text of the page; you pass it your
 ##### Parameters
 * text - this can be a string or an array of strings
 * options -
+  * useCurrentX - boolean; use the current X location; rather than resetting to left margin.
   * x - x coordinate to print at
   * y - y coordinate to print at
   * addX - add this x to the x coord before printing

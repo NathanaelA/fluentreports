@@ -37,6 +37,8 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.2.5 - Fixed package.json to use last version of .8 PDFKit as .9 changed several internals...
 1.2.6 - Updated to support pageWidth & pageHeight, fixed band `dash` setting
 1.2.7 - Fix issues with Builder/Generators
+1.2.8 - Fix multiple issues with Engine/Builder/Generators.
+1.2.9 - Fix multiple issues with Engine/Builder/Generators.
 
 
 Breaking changes or API inconsistencies:
