@@ -610,10 +610,15 @@ class FluentReportsGenerator {
 
         // Add Margins
         if (typeof report.margins !== 'undefined') {
-            this._marginBottom = report.margins.bottom || 72;
-            this._marginTop = report.margins.top || 72;
-            this._marginRight = report.margins.right || 72;
-            this._marginLeft = report.margins.left || 72;
+            if (isNaN(parseInt(report.margins,10))) {
+                this._marginBottom = report.margins.bottom || 72;
+                this._marginTop = report.margins.top || 72;
+                this._marginRight = report.margins.right || 72;
+                this._marginLeft = report.margins.left || 72;
+            } else {
+                const margin = parseInt(report.margins, 10);
+                this._marginBottom = this._marginTop = this._marginRight = this._marginLeft = margin;
+            }
         }
 
         // TODO: Add any missing properties
@@ -1013,9 +1018,10 @@ class FluentReportsGenerator {
 
         const rect = this._reportLayout.getBoundingClientRect();
         this._paperWidthLayout.style.top = (rect.top-topRect.top)+"px";
-        this._paperWidthLayout.style.left = ((((this._paperDims[0]-this.marginLeft)-this.marginRight)*this.scale)+rect.left) + "px";
+        const left = (((((this._paperDims[0]-this.marginLeft)-this.marginRight)*this.scale)+rect.left+6)-topRect.left);
+        this._paperWidthLayout.style.left = left + "px";
         this._paperWidthLayout.style.height = rect.height+"px";
-        if (rect.width < ((this._paperDims[0]*this.scale)+18)) {
+        if (rect.width-16 < (left-(rect.left-topRect.left))) {
             this._paperWidthLayout.style.display = "none";
         } else {
             this._paperWidthLayout.style.display = "";
@@ -2091,8 +2097,8 @@ class frSection { // jshint ignore:line
                 title: "Data Set",
                 display: this._generateDataSetView.bind(this)
             },
-            {type: "number", field: "height", functionable: false, default: 0},
-            {type: "boolean", field: "fixedHeight", functionable: false, default: false},
+            {type: 'number', field: 'height', functionable: false, default: 0},
+            {type: 'boolean', field: 'fixedHeight', functionable: false, default: false},
             {type: 'display', field: 'hasFunctions', title: 'Functions', display: () => { return this._createSpan(this._hasFunctions, "\ue81f", this.clickFunctions.bind(this)); }},
             {type: 'display', field: 'hasCalculations', title: 'Calculations', display: () => { return this._createSpan(this._hasCalculations, "\uE824", this.clickCalcs.bind(this)); }}
         ];
@@ -2867,6 +2873,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this.height = (options && options.height) || 50;
         this._shape = (options && options.shape) || "line";
         this._radius = (options && options.radius) || 50;
+        this._usesSpace = true;
 
         this._svgRoot = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         this._svgRoot.style.width = (this.width * this.scale).toString();
@@ -2876,7 +2883,8 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
 
         this._addProperties([
             {type: 'select', field: "shape", display: this.createSelect.bind(this), destination: 'settings'},
-            {type: 'number', field: 'radius', default: 0, destination: 'settings'}
+            {type: 'number', field: 'radius', default: 0, destination: 'settings'},
+            {type: 'boolean', field: 'usesSpace', default: true, destination: 'settings'}
         ]);
     }
     _parseElement(data) {
@@ -2886,6 +2894,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this.height = data.settings.height || 50;
         this.top = data.settings.top || 0;
         this.left = data.settings.left || 0;
+        this.usesSpace = data.settings.usesSpace || true;
     }
     _saveProperties(props, ignore = []) {
         super._saveProperties(props, ignore);
@@ -2930,6 +2939,13 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this._svg.style.width = (this.width * this.scale).toString();
         this._svg.style.height = (this.height * this.scale).toString();
         this._svgRoot.appendChild(this._svg);
+    }
+
+    get usesSpace() {
+        return this._usesSpace;
+    }
+    set usesSpace(val) {
+        this._usesSpace = !!val;
     }
 
     get radius() {
@@ -3211,9 +3227,11 @@ class frImage extends frTitledElement { // jshint ignore:line
         this._align = "left";
         this._valign = "top";
         this._imgScale = 0;
+        this._usesSpace = true;
         this.elementTitle = "Image";
         this._imgRoot = document.createElement('img');
         this._html.appendChild(this._imgRoot);
+        this._inFixSizing = false;
 
         this.width = (options && options.width) || 50;
         this.height = (options && options.height) || 50;
@@ -3222,15 +3240,25 @@ class frImage extends frTitledElement { // jshint ignore:line
             {type: 'select', field: "aspect", default: "none", display: this._createFitSelect.bind(this), destination: 'settings'},
             {type: 'select', field: "align", default: "left", display: this._createAlignSelect.bind(this), destination: 'settings'},
             {type: 'select', field: "valign", default: "top", display: this._createVAlignSelect.bind(this), destination: 'settings'},
-            {type: 'number', title: 'scale', field: 'imgScale', default: 0, destination: 'settings'}
+            {type: 'number', title: 'scale', field: 'imgScale', propType: "string", default: 0, destination: 'settings'},
+            {type: 'boolean', field: 'usesSpace', default: true, destination: 'settings'}
         ]);
     }
+
+    get usesSpace() {
+        return this._usesSpace;
+    }
+    set usesSpace(val) {
+        this._usesSpace = !!val;
+    }
+
 
     get imgScale() {
         return this._imgScale;
     }
     set imgScale(val) {
-        this._imgScale = parseInt(val, 10);
+        this._imgScale = parseFloat(val);
+        this._fixSizing();
     }
 
     get aspect() {
@@ -3238,6 +3266,28 @@ class frImage extends frTitledElement { // jshint ignore:line
     }
     set aspect(val) {
         this._aspect = val;
+        this._fixSizing();
+    }
+
+    _fixSizing() {
+        if (this._inFixSizing) { return; }
+        this._inFixSizing = true;
+        if (this._image !== null) {
+            switch (this._aspect) {
+                case "none":
+                    this.width = this._imgRoot.naturalWidth;
+                    this.height = this._imgRoot.naturalHeight;
+                    this._report.showProperties(this, true);
+                    break;
+                case "scale":
+                    let sc1 = this.height / this._imgRoot.naturalHeight;
+                    let sc2 = this.width / this._imgRoot.naturalWidth;
+                    this.imgScale = sc1 < sc2 ? sc1 : sc2;
+                    this._report.showProperties(this, true);
+                    break;
+            }
+        }
+        this._inFixSizing = false;
     }
 
     get align() {
@@ -3292,7 +3342,6 @@ class frImage extends frTitledElement { // jshint ignore:line
         return selectGroup;
     }
 
-
     _createFitSelect() {
         const curAlign = this._aspect;
         let selectGroup = document.createElement('select');
@@ -3319,7 +3368,6 @@ class frImage extends frTitledElement { // jshint ignore:line
 
         return selectGroup;
     }
-
 
     _dblClickHandler() {
         this.UIBuilder.fileEditor(this._image, [".jpg",".jpeg",".png"], false,(val) => {
@@ -3352,6 +3400,7 @@ class frImage extends frTitledElement { // jshint ignore:line
     set image(val) {
         this._image = val;
         this._imgRoot.src = val;
+        this._fixSizing();
     }
 
     _saveProperties(props) {
@@ -3360,7 +3409,7 @@ class frImage extends frTitledElement { // jshint ignore:line
     }
 
     _parseElement(data) {
-        this._copyProperties(data, this, ["image", "aspect", "valign", "align", "imgScale", "width", "height", "top", "left"]);
+        this._copyProperties(data, this, ["image", "aspect", "valign", "align", "imgScale", "width", "height", "top", "left", "shape"]);
         // None Needed?
     }
 }
@@ -3870,7 +3919,7 @@ class frPrintPageNumber extends frPrintLabel { // jshint ignore:line
         this._addProperties({type: "string", field: 'page'});
         this._deleteProperties(["label"]);
 
-        this._addProperties([{type: "boolean", field: 'header', default: false}, {type: "boolean", field: 'footer', default: false}]);
+        this._addProperties([{type: 'boolean', field: 'header', default: false}, {type: 'boolean', field: 'footer', default: false}]);
     }
 
     get page() {
@@ -6869,7 +6918,7 @@ class UI { // jshint ignore:line
                                 td2.appendChild(input);
                                 break;
 
-                            case 'boolean':
+                            case "boolean":
                                 input = document.createElement('input');
                                 input.type = 'checkbox';
                                 input.className = "frPropCheck";
@@ -6888,8 +6937,8 @@ class UI { // jshint ignore:line
 
                                 break;
 
-                            case 'string':
-                            case 'number':
+                            case "string":
+                            case "number":
                                 input = document.createElement('input');
                                 input.type = propType === 'number' ? 'number' : 'text';
                                 if (prop.handlePercentage) {

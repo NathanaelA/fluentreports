@@ -255,7 +255,7 @@ function guiHoursReport() {
         debug: true,
         js: false,
         css: false,
-        scale: 1.0,
+        scale: 1.45,
         save: (value, done) => {
             console.log("Saving");
             //const results = document.getElementById("results");
