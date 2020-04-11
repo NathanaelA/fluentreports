@@ -45,7 +45,7 @@ See the simple & stupid examples for a overview on how to generate a somewhat co
 In these reports I tried to throw in a chunk of the features to try and give you and idea how powerful the engine is and how to use certain features.
 
 ## Examples
-Currently has 6 example reports showing:
+Currently we ship 6 example reports showing:
 
 * Simple Grid Report with Grouping ![Example 1](https://github.com/nathanaela/fluentReports/raw/master/examples/demo1.png)
 * Simple Account Summary Report (w/ color & grid for account balances) ![Example 2](https://github.com/nathanaela/fluentReports/raw/master/examples/demo2.png)
@@ -60,10 +60,10 @@ You have the ability to EASILY FULLY override any and all of the Headers, Footer
 Really Simple Report:
 ```js
   // Our Simple Data in Object format:
-  var data = [{name: 'Elijah', age: 18}, {name: 'Abraham', age: 22}, {name: 'Gavin', age: 28}];
+  const data = [{name: 'Elijah', age: 18}, {name: 'Abraham', age: 22}, {name: 'Gavin', age: 28}];
   
   // Create a Report  
-  var rpt = new Report("Report.pdf")        
+  const rpt = new Report("Report.pdf")        
         .pageHeader( ["Employee Ages"] )      // Add a simple (optional) page Header...        
         .data( data )	 			 	      // Add some Data (This is required)
 		.detail( [['name', 200],['age', 50]]) // Layout the report in a Grid of 200px & 50px
@@ -74,10 +74,10 @@ Really Simple Report:
 The same report in Array format:
 ```js
   // Our Simple Data in Array format:
-  var data = [['Elijah', 18], ['Abraham', 22], ['Gavin', 28]];
+  const data = [['Elijah', 18], ['Abraham', 22], ['Gavin', 28]];
   
   // Create a Report  
-  var rpt = new Report("Report.pdf")
+  const rpt = new Report("Report.pdf")
         .pageHeader( ["Employee Ages"] ) // Add a simple (optional) page Header...
         .detail( [[0, 200],[1, 50]])     // Layout the report in a grid of 200px & 50px
         .render();						 // Render the report
@@ -85,7 +85,7 @@ The same report in Array format:
 
 And one other sample report using a list type output:
 ```js
-      var data = [
+      const data = [
            {item: 'Bread', count: 5, unit: 'loaf'},
            {item: 'Egg', count: 3, unit: 'dozen'},
            {item: 'Sugar', count: 32, unit: 'gram'},
@@ -94,7 +94,7 @@ And one other sample report using a list type output:
            {item: 'Peanut Butter', count: 1, unit: 'jar'}
       ];
       
-      var rpt = new Report("grocery1.pdf")      
+      const rpt = new Report("grocery1.pdf")      
           .data( data )									 // Add our Data
           .pageHeader( ["My Grocery List"] )    		 // Add a simple header          
           .detail("{{count}} {{unit}} of {{item}}")      // Put how we want to print out the data line.
@@ -117,7 +117,7 @@ So, now looking at the above simple grocery list report; and lets spruce it up a
 First lets change from the default header to make a look a bit nicer for a Grocery List; so we need to create a function that will control how the header looks.
 
 ```js
-    var headerFunction = function(Report) {
+    const headerFunction = function(Report) {
         Report.print("My Grocery List", {fontSize: 22, bold: true, underline:true, align: "center"});
         Report.newLine(2);
     };
@@ -129,7 +129,7 @@ This function changes the font size to 22 point, bolds and underlines the text a
 Next, I think I actually do want to continue to have the date and page number printed.  But I think I would prefer them on the bottom of the page, so lets add a footer for these items.  Here is our footer function that also will be printed on every page, just like the header function above.
 
 ```js
-    var footerFunction = function(Report) {
+    const footerFunction = function(Report) {
         Report.line(Report.currentX(), Report.maxY()-18, Report.maxX(), Report.maxY()-18);
         Report.pageNumber({text: "Page {0} of {1}", footer: true, align: "right"});
         Report.print("Printed: "+(new Date().toLocaleDateString()), {y: Report.maxY()-14, align: "left"});
@@ -142,7 +142,7 @@ A couple things to point out; Report.maxY and maxX are the largest location that
 So our new report is:
 
 ```js
-    var data = [
+    const data = [
           {item: 'Bread', count: 5, unit: 'loaf'},
           {item: 'Egg', count: 3, unit: 'dozen'},
           {item: 'Sugar', count: 32, unit: 'gram'},
@@ -151,18 +151,18 @@ So our new report is:
           {item: 'Peanut Butter', count: 1, unit: 'jar'}
       ];
 
-    var headerFunction = function(Report) {
+    const headerFunction = function(Report) {
         Report.print("My Grocery List", {fontSize: 22, bold: true, underline:true, align: "center"});
         Report.newLine(2);
     };
 
-    var footerFunction = function(Report) {
+    const footerFunction = function(Report) {
         Report.line(Report.currentX(), Report.maxY()-18, Report.maxX(), Report.maxY()-18);
         Report.pageNumber({text: "Page {0} of {1}", footer: true, align: "right"});
         Report.print("Printed: "+(new Date().toLocaleDateString()), {y: Report.maxY()-14, align: "left"});
     };
 
-    var rpt = new Report("grocery2.pdf")
+    const rpt = new Report("grocery2.pdf")
         .margins(20)                                 // Change the Margins to 20 pixels
         .data(data)									 // Add our Data
         .pageHeader(headerFunction)    		         // Add a header
@@ -175,7 +175,7 @@ So our new report is:
  Wow, this report looks a **lot** cleaner and sharper.   However, I think we can spruce it up a still bit more...
    
 ```js
-    var detailFunction = function(Report, Data) {
+    const detailFunction = function(Report, Data) {
         if (Data.count !== 1) {
            Data.item = pluralize(Data.item);
            Data.unit = pluralize(Data.unit);
@@ -190,13 +190,13 @@ This is our new Detail function.  I first uses a simple pluralizer to make any s
 Now since I can have a really large grocery list; I can make this two or three columns, so we lets modify the code to make it three columns like so:
 
 ```js
-    var detailFunction = function(Report, Data) {
+    const detailFunction = function(Report, Data) {
         if (Data.count !== 1) {
            Data.item = pluralize(Data.item);
            Data.unit = pluralize(Data.unit);
         }
 
-        var x = 0, y = 0;
+        let x = 0, y = 0;
         if (columnCounter % 3 === 1) {
             x += 200;
             y = (Report.heightOfString() + 1);
@@ -211,4 +211,68 @@ Now since I can have a really large grocery list; I can make this two or three c
 ```
 
 Basically it is the same functions as the prior version but we are changing the X and Y coordinates for column 2 & 3 to make them end up on the same line just in a different column.  So the finished report looks this.
-example\demo6.js contains this report in its three different iterations. 
+example\demo6.js contains this report in its three different iterations.
+
+---
+# GUI & Browser
+To build the browser version of the engine, you need to run `npm i` on the repository to install all the developer dependencies.  You might also want to install browserfy globally using `npm i -g browserfy`
+```
+cd lib
+browserify fluentReportsBuilder.js -s fluentReports --ignore iconv-lite -o ../generator/fluentReportsBrowser.js
+```
+Then I minify it with this command:
+```
+cd ../generator
+terser --compress --mangle -- fluentReportsBrowser.js > fluentReportsBrowser.min.js
+```
+
+This gives me both an easy to debug version, and a standalone version.   This will give you a full version of the Data Driven engine that runs in a browser and can run both types of reports.
+If you want to use the GUI editor in your app, you just need to include:
+```
+    <link rel="stylesheet" href="fr.css">
+    <script src="fluentReportsBrowser.min.js"></script>
+    <script src="plain-draggable.min.js"></script>
+    <script src="fluentReportsGenerator.js"></script>
+``` 
+
+You can also combine all of this together, and then minimize it also.
+   
+<b>Please note you DO NOT need to include the `fluentReportBrowser.min.js` file if you do NOT want to do previews from the browser!!!</b> <br>
+You can also override the GUI "preview" button to disable it or send the generated report to the server to serve it up for you.
+
+HTML
+```
+<div id="fluentReportsEditor"></div>
+```
+
+To create a new Report on the Browser (see the `reportgenerator.html` for detailed example);
+```
+ const frg = new window.FluentReportsGenerator({
+        id: "fluentReportsEditor",
+        data: {your data},
+        report: {your report},
+        debug: true,
+        js: false,
+        css: false,
+        scale: 1.45,
+
+        // Don't set a "preview" (or set to undefinded) for it to use the built in preview
+        preview: undefined,
+
+        // Override the preview function
+        preview: (generator, done) => {
+            // Do Whatever you need, probably with:
+            //    generator.report and generator.data
+            done();
+        },
+
+        // OR to disable preview functionality...
+        preview: false   
+        save: (value, done) => {
+            console.log("Saving");
+            console.dir(value);
+            done();
+        }
+    });
+```
+  

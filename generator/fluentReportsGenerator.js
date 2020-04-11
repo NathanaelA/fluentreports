@@ -195,6 +195,7 @@ class FluentReportsGenerator {
         this._includeCSS = options.css !== false;
         this._includeJS = options.js !== false;
         this._builtUI = false;
+        this._previewButton = null;
 
         this._reportData = {header: [], footer: [], detail: [], variables: {}};
         this._reportScroller = null;
@@ -303,7 +304,7 @@ class FluentReportsGenerator {
         if (options.debug) {
             this.setConfig('debug', options.debug);
         }
-        if (typeof options.preview === 'function') {
+        if (typeof options.preview !== 'undefined') {
             this.setConfig('preview', options.preview);
         }
 
@@ -401,6 +402,20 @@ class FluentReportsGenerator {
                 if (typeof value === 'function') {
                     this._previewFunction = value;
                 }
+                if (value === false) {
+                    this._previewFunction = false;
+                } else if (value === true || value == null) {
+                    this._previewFunction = null;
+                }
+
+                if (this._previewButton != null) {
+                    if (this._previewFunction === false) {
+                            this._previewButton.style.display = "none";
+                    } else {
+                            this._previewButton.style.display = "";
+                    }
+                }
+
                 break;
 
             default:
@@ -1096,9 +1111,15 @@ class FluentReportsGenerator {
     _generateToolBarLayout() {
 
         this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
-        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue834", "Report settings", () => { this._reportSettings(); }));
-        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue822", "Group data by", () => { this._openGroupings(); }));
-        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue819", "Sections", () => { this._openSections(); }));
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue834", "Report settings", () => {
+            this._reportSettings();
+        }));
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue822", "Group data by", () => {
+            this._openGroupings();
+        }));
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue819", "Sections", () => {
+            this._openSections();
+        }));
         this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
 
         this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue801", "New line", () => {
@@ -1164,7 +1185,7 @@ class FluentReportsGenerator {
 
         this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
 
-        let snapIcon =this.UIBuilder.createToolbarButton("\ue83A", "Snap to grid", () => {
+        let snapIcon = this.UIBuilder.createToolbarButton("\ue83A", "Snap to grid", () => {
             this._gridSnapping.snapping = !this._gridSnapping.snapping;
             if (this._gridSnapping.snapping) {
                 snapIcon.innerText = "\ue839";
@@ -1198,10 +1219,9 @@ class FluentReportsGenerator {
                 this._frame.removeChild(topLayer);
             });
 
-
         }));
 
-        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue832", "Preview", () => {
+        this._previewButton = this.UIBuilder.createToolbarButton("\ue832", "Preview", () => {
             const topLayer = document.createElement("div");
             topLayer.style.zIndex = "100";
             topLayer.style.backgroundColor = "#000000";
@@ -1226,8 +1246,13 @@ class FluentReportsGenerator {
             }
 
             this.preview({parent: topLayer});
-        }));
+        });
+        if (this._previewFunction === false) {
+            this._previewButton.style.display = "none";
+        }
+        this._toolBarLayout.appendChild(this._previewButton);
     }
+
 
     closeLayer() {
         if (this._topLayer) {
@@ -1285,6 +1310,11 @@ class FluentReportsGenerator {
         const reportData =  options.report || this._generateSave();
         reportData.formatterFunctions = this._formatterFunctions;
         const data = options.data || this._data;
+
+        if (typeof window.fluentReports === 'undefined' || typeof window.fluentReports.BlobStream === 'undefined' || typeof window.fluentReports.ReportBuilder === 'undefined') {
+            Dialog.notice("Preview cannot work without the browser viewer installed.", "#FF0000", this._frame);
+            return;
+        }
 
         let pipeStream = new window.fluentReports.BlobStream();
         // Create the Report
