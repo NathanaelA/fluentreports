@@ -6438,9 +6438,12 @@ class UI { // jshint ignore:line
             this.calculationValueEditor("Text value", {text: ""}, (name, value) => {
                 if (name != null && name !== '') {
                     if (!resultFields.hasOwnProperty(name)) {
-                        fieldSelect.appendChild(new Option(name));
+                        let option = new Option(name);
+                        option.innerText = name[0].toUpperCase() + name.substring(1,name.length)+": " + value[name];
+                        option.value = fieldSelect.childElementCount.toString();
+                        fieldSelect.appendChild(option);
                     }
-                    resultFields[name] = value;
+                    resultFields.push(value);
                 }
             });
         });
@@ -6448,13 +6451,11 @@ class UI { // jshint ignore:line
         // Edit
         addButtons[1].addEventListener("click", () => {
             let key = fieldSelect.value;
-            this.calculationValueEditor(key, resultFields[key], (name, value) => {
-                if (name !== key) {
-                    delete resultFields[key];
-                    fieldSelect.options[fieldSelect.selectedIndex].text = name;
-                }
+           this.calculationValueEditor(key, resultFields[key], (name, value) => {
+                fieldSelect.options[fieldSelect.selectedIndex].text = name[0].toUpperCase() + name.substring(1,name.length)+": " + value[name];
+
                 //valueValue.innerText = value;
-                resultFields[name] = value;
+                resultFields[key] = value;
             });
         });
 
@@ -6462,7 +6463,7 @@ class UI { // jshint ignore:line
         addButtons[2].addEventListener("click", () => {
             if (fieldSelect.selectedIndex >= 0) {
                 let key = fieldSelect.value;
-                delete resultFields[key];
+                resultFields.splice(key,1);
                 fieldSelect.options[fieldSelect.selectedIndex] = null;
                 //valueValue.innerText = '';
             }
@@ -6496,6 +6497,17 @@ class UI { // jshint ignore:line
         });
     }
 
+    createCalculationTypeSelect(){
+        let select = document.createElement('select');
+        let validOptions = ["Text","Field","Total","Function"];
+        for(let i =0;i<validOptions.length;i++){
+            let option = document.createElement('option');
+            option.value = validOptions[i].toLowerCase();
+            option.innerText = validOptions[i];
+            select.appendChild(option);
+        }
+        return select;
+    };
     calculationValueEditor(name, value, ok, cancel) {
         const body = document.createElement('div');
 
@@ -6504,8 +6516,8 @@ class UI { // jshint ignore:line
         name1.innerText = "Type:";
 
 
-        const variableName = document.createElement('input');
-        variableName.value = name;
+        const variableName = this.createCalculationTypeSelect();
+        variableName.selectedIndex = name;
         nameDiv.appendChild(name1);
         nameDiv.appendChild(variableName);
         body.appendChild(nameDiv);
@@ -6514,7 +6526,14 @@ class UI { // jshint ignore:line
         const value1 = document.createElement('span');
         value1.innerText = "Variable value:";
         const variableValue = document.createElement('input');
-        variableValue.value = value;
+        if(typeof value === "object"){
+            for(let i in value){
+                if(!value[i]) continue;
+                variableValue.value = value[i];
+                break;
+            }
+        }
+        else variableValue.value = value;
         valueDiv.appendChild(value1);
         valueDiv.appendChild(variableValue);
         body.appendChild(valueDiv);
@@ -6530,7 +6549,9 @@ class UI { // jshint ignore:line
         buttons[0].addEventListener('click', () => {
             d.hide();
             if (typeof ok === 'function') {
-                ok(variableName.value, variableValue.value);
+                let obj = {};
+                obj[variableName.value.toLowerCase()] = variableValue.value; //returns an obj like: {field: "name"}
+                ok(variableName.value, obj);
             }
         });
         buttons[1].addEventListener('click', () => {
