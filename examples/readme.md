@@ -1,5 +1,5 @@
 # Examples
-Please note a lot of these examples are really test reports; they duplicate functionality of other reports but exposed a specific issue that was needed for me to figure out a bug.
+Please note a lot of these examples in this folder are really test reports; they duplicate functionality of other reports but exposed a specific issue that was needed for me to figure out a bug.
 
 There is also an online [demo](https://fluentreports.org/demo.html) for both the Code & JSON Gui editor [located here](https://fluentreports.org/demo.html).
 

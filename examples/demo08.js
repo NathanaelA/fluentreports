@@ -153,7 +153,7 @@ const proposalFooter = function(rpt) {
 
     r.render(function(err, name) {
 	console.log("Name:", name);
-        const testing = {images: 2, debugImage: true, blocks: ["27,33,288,75", "30,1545,800,50", "30,909,800,60"]};
+        const testing = {images: 2, blocks: ["27,33,288,75", "30,1545,800,50", "30,909,800,60"]};
 
         displayReport(err, name, testing);
 
