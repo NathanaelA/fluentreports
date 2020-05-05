@@ -38,6 +38,7 @@ module.exports = function(err, reportName, testing) {
     const reportNoExt = reportName.replace(".pdf", "");
 
     if (typeof process.env.TESTING !== "undefined" || testing.force === true || 1) {
+        console.log("Testing: ", typeof process.env.TESTING);
         let blockParams = [];
         if (testing && testing.blocks) {
             for (let i=0;i<testing.blocks.length;i++) {
@@ -59,6 +60,7 @@ module.exports = function(err, reportName, testing) {
             count = testing.images;
         }
 
+        console.log([reportNameDir, __dirname + "/Check/"+reportNoExt, "-png"]);
         execFile( "pdftoppm", [reportNameDir, __dirname + "/Check/"+reportNoExt, "-png"]).then(( std ) => {
             console.log(std);
             let testGroup = [];
