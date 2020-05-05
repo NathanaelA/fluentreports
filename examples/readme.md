@@ -4,15 +4,15 @@ Please note a lot of these examples are really test reports; they duplicate func
 The unique reports in this folder are:
 
 | Image | Report Name | Type | Description |
-|-------------|-----|:----:|:---:|:------:|:---:|-------------|
-| <img src="./Originals/demo1-1.png" width="100px"/> | Demo1 | Code | The Simple Grid report with Grouping |
-| <img src="./Originals/demo2-1.png" width="100px"/> | Demo2 | Code | Account Statement Report |
-| <img src="./Originals/demo3-1.png" width="100px"/> | Demo3 | Code | Fax Cover sheet w/ image |
-| <img src="./Originals/demo4-1.png" width="100px"/> | Demo4 | Code | Same as Demo1 but w/ colors |
-| <img src="./Originals/demo5-1.png" width="100px"/> | Demo5 | Code | Proposal Report w/ grouping |
-| <img src="./Originals/demo6-1.png" width="100px"/> | Demo6 | Code | Tutorial Report w/ 3 columns |
-| <img src="./Originals/demo7-1.png" width="100px"/> | Demo7 | Code | Just a LOT of continuous text |
-| <img src="./Originals/demo9-1.png" width="100px"/> | Demo9 | Code | Embedding another PDF |
+| --- | --- |:----:| --- |
+| <img src="./Originals/demo01-1.png" width="100px"/> | Demo1 | Code | The Simple Grid report with Grouping |
+| <img src="./Originals/demo02-1.png" width="100px"/> | Demo2 | Code | Account Statement Report |
+| <img src="./Originals/demo03-1.png" width="100px"/> | Demo3 | Code | Fax Cover sheet w/ image |
+| <img src="./Originals/demo04-1.png" width="100px"/> | Demo4 | Code | Same as Demo1 but w/ colors |
+| <img src="./Originals/demo05-1.png" width="100px"/> | Demo5 | Code | Proposal Report w/ grouping |
+| <img src="./Originals/demo06-1.png" width="100px"/> | Demo6 | Code | Tutorial Report w/ 3 columns |
+| <img src="./Originals/demo07-1.png" width="100px"/> | Demo7 | Code | Just a LOT of continuous text |
+| <img src="./Originals/demo09-1.png" width="100px"/> | Demo9 | Code | Embedding another PDF |
 | <img src="./Originals/demo14-1.png" width="100px"/> | Demo14 | Code | SubReports |
 | <img src="./Originals/demo19-1.png" width="100px"/> | Demo19 | JSON | JSON Report version of Demo4 |
 | <img src="./Originals/demo20-1.png" width="100px"/> | Demo20 | Code | Opacity, Totals and PIPEs|

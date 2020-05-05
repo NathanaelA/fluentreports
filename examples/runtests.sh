@@ -15,7 +15,7 @@ blink-diff -h
 
 
 # Run all the test
-demo demo05
+node demo05
 node demo09
 if [[ $? -ne 0 ]]; then
    echo Failed demo9

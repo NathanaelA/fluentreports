@@ -108,7 +108,7 @@ And one other sample report using a list type output:
 
 ## Tutorial
 
-Data Driven reporting is done in basically a couple steps:
+Data Driven reporting is created, in basically a couple steps:
 1. Get your initial data. 
     So in the above example we are setting the data to grocery items; this data can come from databases, data stores, files, web services, anywhere ever you store your data.   
 2. Then you are defining the report/page overall structure.  So do you want headers or footers on all pages; are you grouping, totalling, or just printing raw data.
@@ -213,7 +213,7 @@ Now since I can have a really large grocery list; I can make this two or three c
     };
 ```
 
-Basically it is the same functions as the prior version but we are changing the X and Y coordinates for column 2 & 3 to make them end up on the same line just in a different column.  So the finished report looks this.
+Basically it is the same functions as the prior version, but we are changing the X and Y coordinates for column 2 & 3 to make them end up on the same line just in a different column.  So the finished report looks this.
 example\demo6.js contains this report in its three different iterations.
 
 ---
