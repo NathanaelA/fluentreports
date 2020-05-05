@@ -89,9 +89,11 @@ var proposalFooter = function(x, r) {
     x.print('Please call us if you have any other questions about how to order. Thank you for your business!', {x: 40, width: 570});
 };
 
+    const reportName = "demo05.pdf";
+    const testing = {images: 1};
 
 
-    var report = new Report("demo5.pdf").data(primary_data);
+    var report = new Report(reportName).data(primary_data);
 
 
     var r = report
@@ -108,9 +110,13 @@ var proposalFooter = function(x, r) {
         .header( productTypeHeader )
           .footer( productTypeFooter );
 
-    r.printStructure();
-    
-    r.render(displayReport);
+    if (typeof process.env.TESTING !== "undefined") { r.printStructure(); }
+
+
+
+    r.render(function(err, name) {
+        displayReport(err, name, testing);
+    });
 
 
 }

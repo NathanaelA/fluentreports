@@ -239,10 +239,12 @@ function printreport() {
 
 
   // Optional -- If you don't pass a report name, it will default to "report.pdf"
-  var rptName =  "demo2.pdf";
+  const rptName =  "demo02.pdf";
+  const testing = {images: 3, blocks: ["60,60,600,70"]};
 
 
-  var resultReport = new Report(rptName)
+
+    var resultReport = new Report(rptName)
       .data(mydata)
       .totalFormatter(totalFormatter);
 
@@ -266,13 +268,13 @@ function printreport() {
   ;
 
   // Hey, everyone needs to debug things occasionally -- creates debug output so that you can see how the report is built.
-  resultReport.printStructure();
+    if (typeof process.env.TESTING !== "undefined") { resultReport.printStructure(); }
 
 
   console.time("Rendered");
   resultReport.render(function(err, name) {
       console.timeEnd("Rendered");
-      displayReport(err, name);
+      displayReport(err, name, testing);
   });
 
 }

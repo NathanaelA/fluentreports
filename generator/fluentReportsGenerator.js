@@ -1,3 +1,11 @@
+/**************************************************************************************
+ * (c) 2019-2020, Master Technology
+ * Licensed under the MIT license or contact me for a support, changes, enhancements.
+ *
+ * Any questions please feel free to put a issue up on github
+ *
+ *                                                      Nathan@master-technology.com
+ *************************************************************************************/
 "use strict";
 
 /* global PlainDraggable, ShadowRoot */

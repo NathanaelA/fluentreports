@@ -41,7 +41,7 @@ function printReport() {
         ], {border: 1, width: 0});
     };
 
-    var reportName = "demo-truncation.pdf";
+    var reportName = "demo17.pdf";
     var rpt = new Report(reportName)
         .autoPrint(false)
         .data(reportData)
@@ -52,10 +52,11 @@ function printReport() {
     console.time("Rendered");
     rpt.render(function (error, name) {
         console.timeEnd("Rendered");
-        displayReport(error, name);
-        console.log("PerfTime", perfTime);
+        const testing = {images: 4};
+        displayReport(error, name, testing);
     });
 
-    rpt.printStructure(true);
+    if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(true); }
+
 }
 printReport();

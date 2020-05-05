@@ -35,7 +35,8 @@ function version_one() {
         .detail("{{count}} {{unit}} of {{item}}");   // Put how we want to print out the data line.
 
     rpt.render(displayReport);
-    rpt.printStructure(true);
+    if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(true); }
+
 }
 
 /**
@@ -61,7 +62,8 @@ function version_two() {
         .pageFooter(footerFunction)                  // Add a footer
         .detail("{{count}} {{unit}} of {{item}}");   // Put how we want to print out the data line.
 
-    rpt.printStructure(true);
+    if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(true); }
+
     rpt.render(displayReport);
 
 }
@@ -130,13 +132,18 @@ function version_three() {
         columnCounter++;
     };
 
-    var rpt = new Report("grocery3.pdf")
+    var rpt = new Report("demo06.pdf")
         .margins(20)                                 // Change the Margins to 20 pixels
         .data(data)									 // Add our Data
         .pageHeader(headerFunction)    		         // Add a header
         .pageFooter(footerFunction)                  // Add a footer
         .detail(detailFunction);                     // Put how we want to print out the data line.
 
-    rpt.render(displayReport);
-    rpt.printStructure(true);
+    rpt.render((err, name) => {
+        const testing = {images: 1, blocks: ["30,1560,280,60"]};
+        displayReport(err, name, testing);
+        });
+
+    //if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(true); }
+
 }

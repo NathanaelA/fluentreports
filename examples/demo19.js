@@ -93,7 +93,7 @@ let reportData =
         }],
 //        header: [],
         detail: [],
-        subReport:
+        subReports:[
             {
                 type: 'report',
                 dataType: 'parent',
@@ -135,17 +135,19 @@ let reportData =
                             }
                     },
                 ]
-            },
+            }],
 //        footer: []
     };
 
 
 let rpt = new ReportBuilder(reportData, data);
-rpt.printStructure();
+if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(); }
+
 console.time("Rendered");
 rpt.render().then((name) => {
     console.timeEnd("Rendered");
-    displayReport(null, name);
+    const testing = {images: 2, blocks: ["130,140,180,60"]};
+    displayReport(null, name, testing);
 }).catch((err) => {
     console.error("Your report had errors while running", err);
 });
@@ -219,7 +221,8 @@ function printreport() {
 
 
   // Debug output is always nice (Optional, to help you see the structure)
-  rpt.printStructure();
+  if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(); }
+
 
   // This does the MAGIC...  :-)
  console.time("Rendered");

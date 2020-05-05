@@ -38,7 +38,7 @@
     "url": "http://github.com/Nathanaela/fluentreports.git"
   },
   "main": "lib/fluentReports",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "engines": {
     "node": ">= 0.6.0"
   },
@@ -49,6 +49,10 @@
     "tinyify": "^2.5.1",
     "uglify-js": "^3.6.4",
     "uglifyify": "^5.0.2",
-    "unassertify": "^2.1.1"
+    "unassertify": "^2.1.1",
+    "blink-diff": "latest"
+  },
+  "scripts": {
+    "test": "./examples/runtests.sh"
   }
 }

@@ -19,6 +19,7 @@ Please [read the commands.md file](commands.md) for a overview of all the comman
 
 * **New: JSON based reports**
 * **New: Report Generator**
+* Testing Harness to verify reports look the same after any updates 
 * Completely Data Driven.  You pass in the data; you tell it easily how to print the data, and it generates the PDF report.
 * Data agnostic, can be arrays, and/or objects; whatever you prefer.
 * Headers, Footers, Title Headers, Summary Footers - Both built-in and totally customizable
@@ -26,7 +27,7 @@ Please [read the commands.md file](commands.md) for a overview of all the comman
 * Auto-Summing (and other automatic totals like max/min/count)
 * Sane defaults, and the ability to easily override not only the defaults but pretty much every aspect of the report generation.
 * Images, Gradients, Text, Fonts, Lines, and many other PDF features supported.
-* Data can come from anywhere and the report engine even support Pageable data loading and related(or sub-query) data loading.
+* Data can come from anywhere, and the report engine even support Pageable data loading and related(or sub-query) data loading.
 * Sub-Reports, Sub-Sub-Reports, etc...
 * Bands (Tables/Grids) & Suppressed Bands (w/ column wrapping or column clipping)
 * Free Flow Text
@@ -45,15 +46,17 @@ See the simple & stupid examples for a overview on how to generate a somewhat co
 In these reports I tried to throw in a chunk of the features to try and give you and idea how powerful the engine is and how to use certain features.
 
 ## Examples
-Currently we ship 6 example reports showing:
+Click Currently, we ship multiple [examples](examples)
 
-* Simple Grid Report with Grouping ![Example 1](https://github.com/nathanaela/fluentReports/raw/master/examples/demo1.png)
-* Simple Account Summary Report (w/ color & grid for account balances) ![Example 2](https://github.com/nathanaela/fluentReports/raw/master/examples/demo2.png)
-* Simple Fax Cover Sheet (w/ image) ![Example 3](https://github.com/nathanaela/fluentReports/raw/master/examples/demo3.png)
-* Grid Report showing off Sub-Reports with auto-queries, cell colorization and url links. ![Example 4](https://github.com/nathanaela/fluentReports/raw/master/examples/demo4.png)
-* More complex invoice/proposal with grouping, headers, footers. ![Example 5](https://github.com/nathanaela/fluentReports/raw/master/examples/demo5.png)
-* The Grocery Report Example done in stages to see from simple to complex reporting. ![Example 6](https://github.com/nathanaela/fluentReports/raw/master/examples/GroceryList3.png)
+* Simple Grid Report with Grouping ![Example 1](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo01.png)
+* Simple Account Summary Report (w/ color & grid for account balances) ![Example 2](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo02.png)
+* Simple Fax Cover Sheet (w/ image) ![Example 3](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo03.png)
+* Grid Report showing off Sub-Reports with auto-queries, cell colorization and url links. ![Example 4](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo04.png)
+* More complex invoice/proposal with grouping, headers, footers. ![Example 5](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo05.png)
+* The Grocery Report Example done in stages to see from simple to complex reporting. ![Example 6](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo06.png)
+* For many other examples; [click here](examples)
 
+## Sample Report
 Please note these following reports are using the simplest report methods; to show how quickly you can create a simple report.  
 You have the ability to EASILY FULLY override any and all of the Headers, Footers, and Detail bands.  
 

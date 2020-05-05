@@ -10,3 +10,4 @@ test/
 *.bat
 testmem.js
 fr.js
+examples/Check/

@@ -3,6 +3,11 @@ var fs = require('fs');
 var displayReport = require('./reportDisplayer');
 
 
+// Thanks to AJ Paglia for the font we are using in our demo
+// Aldo the Apache Font is FREE by AJ Paglia
+// http://ajpaglia.com/
+
+
 function printreport(options) {
     'use strict';
     options = options || {};
@@ -43,9 +48,9 @@ function printreport(options) {
         rpt.band([
             {data: 'Date:', width: 78},
             {data: Current_Date, width: 240},
-            {data: '# of Pages:', width: 78}, //, font:"Aparajita"},
+            {data: '# of Pages:', width: 78, font:"AldotheApache"},
             {data: data.number_of_pages || 2, width: 200, align: 1}
-        ], {font: "Times-Roman", fontBold: true, fontItalic: true}); //"Aparajita"});
+        ], {font: "Times-Roman", fontBold: true, fontItalic: true}); //"AldotheApache"});
         rpt.newLine();
         rpt.fontNormal();
 
@@ -66,7 +71,7 @@ function printreport(options) {
         rpt.newLine();
 
         rpt.newLine();
-        rpt.print('Comments:', {fontBold: true});
+        rpt.print('Comments:', {fontBold: true, font:"AldotheApache"});
         rpt.print(data.comments);
 };
 
@@ -81,20 +86,27 @@ function printreport(options) {
     };
 
     // You don't have to pass in a report name; it will default to "report.pdf"
-    var reportName = "demo3.pdf";
+    const reportName = "demo03.pdf";
+    const testing = {images: 1, blocks: ["210,330,240,60"]};
+
+
     var rpt = new Report(reportName);
 
+    console.log(__dirname);
     rpt
       .recordCount(recordCount)
       .margins(30)
       //.autoPrint(true)
       .header(header)
       .pageFooter(footer)
-      .registerFont("Aparajita", {normal: './aparaj.ttf', bold: './aparajb.ttf', 'italic': './aparaji.ttf'})
+
+      // Normally you would register a different font for each normal, bold, and italic; but for space size we are registering the same font for all three
+      .registerFont("AldotheApache", {normal: __dirname+'/AldotheApache.ttf', bold: __dirname+'/AldotheApache.ttf', 'italic': __dirname+'/AldotheApache.ttf'})
       .data(options.data);
 
     // Debug output is always nice (Optional, to help you see the structure)
-    rpt.printStructure();
+    if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(); }
+
 
     // This does the MAGIC...  :-)
     console.time("Rendered");
@@ -103,20 +115,13 @@ function printreport(options) {
         if (name === false) {
             console.log("Report has been cancelled!");
         } else {
-            displayReport(err, name);
+            displayReport(err, name, testing);
         }
     });
 
 }
 
-var imgLoc = "";
-
-// Depending on where the report is run from, the image location might be in the wrong folder; so we fix it here
-if (fs.existsSync("./example_image.jpg")) {
-    imgLoc = "./example_image.jpg";
-} else {
-    imgLoc = "./examples/example_image.jpg";
-}
+const imgLoc = __dirname + "/example_image.jpg";
 
 
 

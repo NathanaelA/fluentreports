@@ -102,9 +102,11 @@ function printreport() {
 
 
   // You don't have to pass in a report name; it will default to "report.pdf"
-  var reportName = "demo4.pdf";
+  var reportName = "demo04.pdf";
+  const testing = {images: 2, blocks: ["130,140,180,60"]};
 
-  var results = sql_select(0 /* select id,name from employees */);
+
+    var results = sql_select(0 /* select id,name from employees */);
    // Report.trace = true;
 
   var rpt = new Report(reportName)
@@ -136,13 +138,14 @@ function printreport() {
 
 
   // Debug output is always nice (Optional, to help you see the structure)
-  rpt.printStructure();
+  if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(); }
+
 
   // This does the MAGIC...  :-)
   console.time("Rendered");
   rpt.render(function(err, name) {
       console.timeEnd("Rendered");
-      displayReport(err, name);
+      displayReport(err, name, testing);
   });
 }
 

@@ -1,7 +1,7 @@
 "use strict";
 
-var Report = require('../lib/fluentReports' ).Report;
-var displayReport = require('./reportDisplayer');
+const Report = require('../lib/fluentReports' ).Report;
+const displayReport = require(__dirname + '/reportDisplayer');
 
 function printreport() {
   var mydata =
@@ -76,7 +76,8 @@ function printreport() {
 
 
   // You don't have to pass in a report name; it will default to "report.pdf"
-  var reportName = "demo1.pdf";
+  const reportName = "demo01.pdf";
+  const testing = {images: 2, blocks: ["130,140,180,60"]};
 
 
   var rpt = new Report(reportName)//, {margins: {left:20, top:20, right: 20, bottom:20}})
@@ -102,7 +103,7 @@ function printreport() {
 
  //
  //  var fs = require('fs');
- // var pipe = fs.createWriteStream('demo1.pdf');
+ // var pipe = fs.createWriteStream(reportName);
  // rpt.outputType(Report.renderType.buffer);
 
 
@@ -110,12 +111,13 @@ function printreport() {
   console.time("Rendered");
   rpt.render(function(err, name) {
       console.timeEnd("Rendered");
-      displayReport(err, name);
+      displayReport(err, name, testing);
   });
 
 
     // Debug output is always nice (Optional, to help you see the structure)
-   rpt.printStructure(true);
+   if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(true); }
+
 
 
 }
