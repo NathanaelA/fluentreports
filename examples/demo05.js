@@ -99,11 +99,17 @@ var proposalFooter = function(x, r) {
     const testing = {images: 1};
 
 
-    var report = new Report(reportName).data(primary_data);
+    // To Keep fonts rendered identically on all test machines, we are setting the default
+    // Font to be "OpenSans" which is close to the normal default "Helvetica" font.
+    var report = new Report(reportName, {font: "OpenSans"}).data(primary_data);
+    report.registerFont("OpenSans", {normal: __dirname+'/Fonts/OpenSans-Regular.ttf', bold: __dirname+'/Fonts/OpenSans-Bold.ttf', 'italic': __dirname+'/Fonts/OpenSans-Italic.ttf'});
+
+
 
     // Normally you would register a different font for each normal, bold, and italic; but for space size we are registering the same font for all three
     report.registerFont("AldotheApache", {normal: __dirname+'/Fonts/AldotheApache.ttf', bold: __dirname+'/Fonts/AldotheApache.ttf', 'italic': __dirname+'/Fonts/AldotheApache.ttf'});
-    report.registerFont("Helvetica", {normal: __dirname+'/Fonts/OpenSans-Regular.ttf', bold: __dirname+'/Fonts/OpenSans-Bold.ttf', 'italic': __dirname+'/Fonts/OpenSans-Italic.ttf'});
+
+
 
 
     var r = report
