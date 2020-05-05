@@ -61,7 +61,7 @@ module.exports = function(err, reportName, testing) {
 
        // console.log([reportNameDir, __dirname + "/Check/"+reportNoExt, "-png"]);
         execFile( "pdftoppm", [reportNameDir, __dirname + "/Check/"+reportNoExt, "-png"]).then(( std ) => {
-            //console.log(std);
+            console.log(std);
             let testGroup = [];
             for (let i=0;i<count;i++) {
                 let name = reportNoExt + "-"+(i+1)+".png";
@@ -78,9 +78,9 @@ module.exports = function(err, reportName, testing) {
             process.exit(0);
         }).catch((err) => {
             console.log("FAILED:", reportNoExt, err && err.code);
-            if (typeof process.env.TESTING === "undefined") {
-                //console.error("Error Code:", err, err.code);
-            }
+            //if (typeof process.env.TESTING === "undefined") {
+                console.error("Error Code:", err, err.code);
+            //}
             process.exit(1);
         });
     } else {

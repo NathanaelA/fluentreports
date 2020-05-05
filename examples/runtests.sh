@@ -14,8 +14,6 @@ node demo06
 node demo09
 if [[ $? -ne 0 ]]; then
   ls Check/
-  echo -----
-  ls /home/runner/work/fluentreports/fluentreports/examples/Check/
    echo Failed demo9
    echo Failed demo9 >> Check/results.txt
    exit 1
