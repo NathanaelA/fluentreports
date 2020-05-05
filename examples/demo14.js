@@ -4,7 +4,7 @@ const Report = require('../lib/fluentReports' ).Report;
 const displayReport = require('./reportDisplayer');
 
 
-var data = {
+const data = {
     today: "Today",
     tomorrow: "Tomorrow",
     meta:
@@ -15,17 +15,20 @@ var data = {
 
 function printreport() {
 
-    var header = function(rpt, row) {
+    const header = function(rpt, row) {
         //rpt.font(Report.fonts.times);
         //rpt.fontBold();
-        rpt.print("Today is "+row.today, {font: Report.fonts.times});
+
+        // Again CI hates the built in fonts as they render slightly differently...
+        // Example: "font:" on next line was "Report.fonts.times"
+        rpt.print("Today is "+row.today, {font: "Arimo"});
         rpt.fontBold();
         rpt.print("Tomorrow is "+row.tomorrow);
         rpt.fontNormal();
     };
 
 
-     var subDetail = function(rpt, row){
+     const subDetail = function(rpt, row){
             rpt.band([
                 {data: "high", width: 240},
                 {data: row.high, width: 60, align: 3},
@@ -36,12 +39,14 @@ function printreport() {
             ], {x: 30});
      };
 
-    var subHeader = function(rpt, row) {
+
+    const subHeader = function(rpt) {
         rpt.print("Sub Report Header");
     };
 
 
-    var report = new Report("demo14.pdf", {font: "Arimo"})
+    const reportName = __dirname + "/demo14.pdf";
+    const report = new Report(reportName, {font: "Arimo"})
         .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
         .data(data)
         .pageHeader(["Daily Report"])
@@ -49,7 +54,8 @@ function printreport() {
         .footer("main footer");
 
 
-    var subRpt = new Report(report)
+    // Adding sub-report
+    new Report(report)
             .data(data.meta)
             .detail(subDetail)
             .pageheader(subHeader)
