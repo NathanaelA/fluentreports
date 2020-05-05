@@ -27,11 +27,12 @@ function printreport() {
 
 
 
-    const report = new Report("demo07.pdf").data(primary_data);
+    const report = new Report("demo07.pdf", {font: "Arimo"}).data(primary_data);
     const testing = {images: 2, blocks: ["30,30,240,60"]};
 
 
     var r = report
+        .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
         .margins(20)
         .pageHeader( ["Test"] )
         .pageFooter( footer )

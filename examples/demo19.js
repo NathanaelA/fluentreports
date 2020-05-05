@@ -141,6 +141,13 @@ let reportData =
 
 
 let rpt = new ReportBuilder(reportData, data);
+
+// These two lines are not normally needed for any normal reports unless you want to use your own fonts...
+// We need to add this because of TESTING and making the report consistent for CI environments
+rpt.registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'});
+rpt.font("Arimo");
+
+
 if (typeof process.env.TESTING === "undefined") { rpt.printStructure(); }
 
 console.time("Rendered");
@@ -153,85 +160,3 @@ rpt.render().then((name) => {
 });
 
 
-/*
-function printreport() {
-  var counter = 0;
-  var daydetail = function ( report, data ) {
-      counter++;
-    report.band( [
-        {data: "", width: 80},
-        {data: data.day, width: 100},
-        {data: data.hours, width: 100, align: 3, textColor: data.hours < 0 ? '#FF0000' : "#000000"}
-    ], {border:0, width: 0, wrap: 1, fill: counter % 2 === 0 ? '#f0f0f0' : '#e0e0e0', textColor: '#0000ff'} );
-  };
-
-  var nameFooter = function ( report, data ) {
-    report.band( [
-      ["Totals for " + data.name, 180],
-      [report.totals.hours, 100, 3]
-    ] );
-      report.newLine();
-  };
-
-  var nameHeader = function ( report, data ) {
-    report.print( data.name, {fontBold: true, fill: '#6f6f6f', textColor: '#ffffff', link: "http://www.fluentReports.com/"} );
-  };
-
-  var weekDetail = function ( report, data ) {
-    // We could do this -->  report.setCurrentY(report.getCurrentY()+2);   Or use the shortcut below of addY: 2
-    report.print( ["Week Number: " + data.week], {x: 100, addY: 2} );
-  };
-
-  var totalFormatter = function(data, callback) {
-   // if (data.hours) { data.hours = ': ' + data.hours; }
-    callback(null, data);
-  };
-
-
-  // You don't have to pass in a report name; it will default to "report.pdf"
-  var reportName = "demo19.pdf";
-
-  //Report.trace = true;
-
-  var rpt = new Report(reportName)
-      .autoPrint(false) // Optional
-      .fullScreen(false) // Optional
-      .pageHeader( ["Employee Hours"] )// Optional
-      .finalSummary( ["Total Hours:", "hours", 3] )// Optional
-      .userdata( {hi: 1} )// Optional 
-      .data( data )	// REQUIRED
-      .totalFormatter( totalFormatter ) // Optional
-      .fontSize(8); // Optional
-
-
-  var subRpt = rpt.subDetail('emphours')
-      .detail(daydetail)
-      .sum('hours');
-
-
-  rpt.groupBy( "name" )
-      .header( nameHeader )
-      .footer( nameFooter );
-
-
-   subRpt.groupBy( "week" )
-         .header( weekDetail )
-         .footer(function(Rpt) { Rpt.newLine(); });
-
-
-
-  // Debug output is always nice (Optional, to help you see the structure)
-  if (typeof process.env.TESTING === "undefined") { rpt.printStructure(); }
-
-
-  // This does the MAGIC...  :-)
- console.time("Rendered");
-  rpt.render().then((name) => {
-      console.timeEnd("Rendered");
-      displayReport(null, name);
-  }).catch((err) => {
-      console.error("Your report had errors while running", err);
-  });
-}
-*/
-//printreport();

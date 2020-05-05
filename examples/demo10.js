@@ -108,7 +108,9 @@ function constructReport() {
     };
 
     //Report.trace =true;
-    var report = new Report("demo10.pdf", {paper: "letter"});
+    var report = new Report("demo10.pdf", {paper: "letter", font: "Arimo"});
+    report.registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'});
+
     report.pageHeader(pageHeader)
         .data(orderItems)
         .detail(detailBondBody)

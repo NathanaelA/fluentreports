@@ -29,7 +29,8 @@ version_three();
  */
 function version_one() {
 
-    var rpt = new Report("grocery1.pdf")
+    var rpt = new Report("grocery1.pdf", {font: "Arimo"})
+        .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
         .data(data)									 // Add our Data
         .pageHeader(["My Grocery List"])    		 // Add a simple header
         .detail("{{count}} {{unit}} of {{item}}");   // Put how we want to print out the data line.
@@ -55,7 +56,9 @@ function version_two() {
         Report.print("Printed: "+(new Date().toLocaleDateString()), {y: Report.maxY()-14, align: "left"});
     };
 
-    var rpt = new Report("grocery2.pdf")
+    var rpt = new Report("grocery2.pdf", {font: "Arimo"})
+        .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
+
         .margins(20)                                  // Change the Margins to 20 pixels
         .data(data)									 // Add our Data
         .pageHeader(headerFunction)    		         // Add a header
@@ -132,7 +135,8 @@ function version_three() {
         columnCounter++;
     };
 
-    var rpt = new Report("demo06.pdf")
+    var rpt = new Report("demo06.pdf", {font: "Arimo"})
+        .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
         .margins(20)                                 // Change the Margins to 20 pixels
         .data(data)									 // Add our Data
         .pageHeader(headerFunction)    		         // Add a header

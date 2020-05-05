@@ -106,10 +106,11 @@ function printreport() {
   const testing = {images: 2, blocks: ["130,140,180,60"]};
 
 
-    var results = sql_select(0 /* select id,name from employees */);
+  var results = sql_select(0 /* select id,name from employees */);
    // Report.trace = true;
 
-  var rpt = new Report(reportName)
+  var rpt = new Report(reportName, {font: "Arimo"})
+      .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
       .autoPrint(false) // Optional
       .fullScreen(false) // Optional
       .pageHeader( ["Employee Hours"] )// Optional

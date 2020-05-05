@@ -23,7 +23,9 @@ var detail = function(r, row) {
     ],{border: 1});
 };
 
-var report = new Report("demo16.pdf")
+var report = new Report("demo16.pdf", {font: "Arimo"})
+    .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
+
     .data([{favorite: 'Butter Pecan', least: 'Pistachio'}])
     .pageHeader(pageHeader)
     .detail(detail);

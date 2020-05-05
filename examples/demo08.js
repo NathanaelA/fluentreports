@@ -144,7 +144,9 @@ var proposalFooter = function(x, r) {
     x.resetState();
 };
 
-    var report = new Report("demo08.pdf").data([{name: 'Test Client',  no: 'a12345', date: '2015-01-01'}]);
+    var report = new Report("demo08.pdf", {font: "Arimo"}).data([{name: 'Test Client',  no: 'a12345', date: '2015-01-01'}])
+        .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'});
+
 
     var r = report
     .margins(20)

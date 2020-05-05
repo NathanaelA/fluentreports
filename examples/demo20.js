@@ -42,9 +42,14 @@ function printreport() {
       .autoPrint(false) // Optional
       .userdata( {hi: 1} )// Optional
       .data( mydata )	// REQUIRED
-        .sum('amount');
+      .sum('amount');
 
-  rpt.groupBy( "group" )
+    // These two lines are not normally needed for any normal reports unless you want to use your own fonts...
+    // We need to add this because of TESTING and making the report consistent for CI environments
+    rpt.registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
+       .font("Arimo");
+
+    rpt.groupBy( "group" )
       .sum('amount')
       .footer( groupfooter );
 

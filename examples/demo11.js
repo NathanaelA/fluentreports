@@ -85,8 +85,10 @@ function printreport() {
   var reportName = "demo11.pdf";
 
 
-  var rpt = new Report(reportName)//, {margins: {left:20, top:20, right: 20, bottom:20}})
-      //.margins({left:20, top:0, bottom:20, right: 0})
+  var rpt = new Report(reportName, {font: "Arimo"})//, {margins: {left:20, top:20, right: 20, bottom:20}})
+      .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
+
+    //.margins({left:20, top:0, bottom:20, right: 0})
       .autoPrint(false) // Optional
       .pageHeader( ["Employee Hours"] )// Optional
       .finalSummary( ["Total Hours:", 3, 3] )// Optional

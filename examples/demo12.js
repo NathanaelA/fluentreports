@@ -8,8 +8,10 @@ function printreport() {
     var data = [{name: 'Elijah', age: 18}, {name: 'Abraham', age: 22}, {name: 'Gavin', age: 28}];
 
     // Create a Report
-    var rpt = new Report("demo12.pdf")
-        // Add a simple page Header, this can also be a function like the detail and/or footers
+    var rpt = new Report("demo12.pdf", {font: "Arimo"})
+        .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
+
+    // Add a simple page Header, this can also be a function like the detail and/or footers
         .pageHeader( ["Employee Ages"] )
         // Add some Data
         .data( data )

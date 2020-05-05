@@ -100,9 +100,10 @@ var proposalFooter = function(x, r) {
 
 
     // To Keep fonts rendered identically on all test machines, we are setting the default
-    // Font to be "OpenSans" which is close to the normal default "Helvetica" font.
-    var report = new Report(reportName, {font: "OpenSans"}).data(primary_data);
-    report.registerFont("OpenSans", {normal: __dirname+'/Fonts/OpenSans-Regular.ttf', bold: __dirname+'/Fonts/OpenSans-Bold.ttf', 'italic': __dirname+'/Fonts/OpenSans-Italic.ttf'});
+    // Font to be "Arimo" which is close to the normal default "Helvetica" font.
+    var report = new Report(reportName, {font: "Arimo"}).data(primary_data);
+    report.registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'});
+
 
 
 

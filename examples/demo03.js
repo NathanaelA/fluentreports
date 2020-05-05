@@ -85,9 +85,9 @@ function printreport(options) {
     const testing = {images: 1, blocks: ["210,330,240,60"]};
 
 
-    var rpt = new Report(reportName);
+    var rpt = new Report(reportName, {font: "Arimo"});
+    rpt.registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'});
 
-    console.log(__dirname);
     rpt
       .recordCount(recordCount)
       .margins(30)

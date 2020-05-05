@@ -244,8 +244,9 @@ function printreport() {
 
 
 
-    var resultReport = new Report(rptName)
-      .data(mydata)
+    var resultReport = new Report(rptName, {font: "Arimo"})
+        .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
+        .data(mydata)
       .totalFormatter(totalFormatter);
 
     // You can Chain these directly after the above like I did or as I have shown below; use the resultReport variable and continue chain the report commands off of it.  Your choice.

@@ -123,14 +123,19 @@ var detail = function (r, row) {
     }
 };
 
-const r = new Report('demo25.pdf').data(reportData);
-
- r
+const r = new Report('demo25.pdf')
+    .data(reportData)
     .margins(20)
     .landscape(true)
     .titleHeader(standardHeader)
     .pageHeader(reportHeader)
     .detail(detail);
+
+    // These two lines are not normally needed for any normal reports unless you want to use your own fonts...
+    // We need to add this because of TESTING and making the report consistent for CI environments
+    r.registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
+        .font("Arimo");
+
 
 if (typeof process.env.TESTING === "undefined") { r.printStructure(); }
 

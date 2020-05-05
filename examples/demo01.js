@@ -80,8 +80,12 @@ function printreport() {
   const testing = {images: 2, blocks: ["130,140,180,60"]};
 
 
-  var rpt = new Report(reportName)//, {margins: {left:20, top:20, right: 20, bottom:20}})
-      //.margins({left:20, top:20, bottom:20, right: 0})
+  var rpt = new Report(reportName, {font: "Arimo"})//, {margins: {left:20, top:20, right: 20, bottom:20}})
+      .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
+      .registerFont("Nimbus", {normal: __dirname+'/Fonts/NimbusSanL-Reg.otf', bold: __dirname+'/Fonts/NimbusSanL-Bol.otf', 'italic': __dirname+'/Fonts/NimbusSanL-RegIta.otf'})
+
+
+    //.margins({left:20, top:20, bottom:20, right: 0})
       .autoPrint(false) // Optional
       .pageHeader( ["Employee Hours"] )// Optional
       .pageFooter( "PageFooter" )

@@ -8,7 +8,6 @@
  *************************************************************************************/
 "use strict";
 
-
 const fs = require('fs');
 const util = require('util');
 const execFile = util.promisify(require('child_process').execFile);
@@ -67,7 +66,7 @@ module.exports = function(err, reportName, testing) {
 
        // console.log([reportNameDir, __dirname + "/Check/"+reportNoExt, "-png", "-freetype", "yes"]);
         execFile( "pdftoppm", [reportNameDir, __dirname + "/Check/"+reportNoExt, "-png", "-freetype", "yes", "-aaVector", "yes"]).then(( std ) => {
-            console.log(std);
+            if (std.stdout !== '' || std.stderr !== '') { console.log(std); }
             let testGroup = [];
             for (let i=0;i<count;i++) {
                 let name = reportNoExt + "-"+(i+1)+".png";

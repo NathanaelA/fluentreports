@@ -2,9 +2,6 @@
 var Report = require('../lib/fluentReports' ).Report;
 var displayReport = require('./reportDisplayer');
 
-
-
-
 function printreport() {
 
     var formData = {
@@ -15,7 +12,8 @@ function printreport() {
 
 
 
-    var mainReport = new Report('demo15.pdf')
+    var mainReport = new Report('demo15.pdf', {font: "Arimo"})
+        .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
         .data(formData)
         .pageheader('test')
         .footer('test')

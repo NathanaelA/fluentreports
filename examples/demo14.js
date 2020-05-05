@@ -41,7 +41,8 @@ function printreport() {
     };
 
 
-    var report = new Report("demo14.pdf")
+    var report = new Report("demo14.pdf", {font: "Arimo"})
+        .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
         .data(data)
         .pageHeader(["Daily Report"])
         .header(header)

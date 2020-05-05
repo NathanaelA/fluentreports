@@ -9,8 +9,10 @@ function printreport() {
     var data = [{item: 'Bread', count: 5, qualifier: 'loaves'},
         {item: 'Eggs', count: 3, qualifier: 'dozen'},
         {item: 'Sugar', count: 32, qualifier: 'grams'}];
-    var rpt = new Report("demo13.pdf")
-        // Add a simple (optional) page Header...
+    var rpt = new Report("demo13.pdf", {font: "Arimo"})
+        .registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'})
+
+    // Add a simple (optional) page Header...
         .pageHeader( ["Grocery List"] )
         // Add some Data (This is required)
         .data( data )
