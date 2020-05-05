@@ -37,7 +37,7 @@ module.exports = function(err, reportName, testing) {
     const reportNameDir = process.cwd() + "/" + reportName;
     const reportNoExt = reportName.replace(".pdf", "");
 
-    if (typeof process.env.TESTING !== "undefined" || testing.force === true) {
+    if (typeof process.env.TESTING !== "undefined" || testing.force === true || 1) {
         let blockParams = [];
         if (testing && testing.blocks) {
             for (let i=0;i<testing.blocks.length;i++) {
