@@ -8,11 +8,6 @@ mkdir -p Check
 
 echo Starting Rendering Tests > Check/results.txt
 pwd >> Check/results.txt
-whereis pdftoppm
-
-pdftoppm -h
-blink-diff -h
-
 
 # Run all the test
 node demo05

@@ -1,5 +1,6 @@
 # Fluent Reports
 
+![.github/workflows/renderer.yml](https://github.com/NathanaelA/fluentreports/workflows/.github/workflows/renderer.yml/badge.svg)
 
 See: [https://www.fluentreports.com](FluentReports.com) for more information.
 
