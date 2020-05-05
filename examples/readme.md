@@ -27,3 +27,11 @@ The unique reports in this folder are:
 Any reports not listed in this list are a duplicate in some way; but may show how to use certain extra functionality.
 
 If you have any ideas for more reports that show off other functionality; please feel free to open an [issue](https://github.com/NathanaelA/fluentreports/issues).
+
+## Notes
+All reports use the Free "Arimo" font by Steve Matteson
+Downloaded from fonts.google.com 
+Licensed under:  Apache License, Version 2.0.
+
+The reason for this is that the internal default font, "Helvetica" is rendered VERY slightly different, depending on the CI machine, so we need to make sure all CI reports use a font that will render the same so that the checks will pass.
+So in your reports you do NOT need to add this font; as these are just to make the CI machines happy.

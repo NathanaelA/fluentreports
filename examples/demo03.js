@@ -12,8 +12,7 @@ function printreport(options) {
     var header = function(rpt, data) {
 
         // Confidential text, we need this first because everything else prints on top of it
-        rpt.print('Confidential', {x: 40, y: 610, rotate: 310, opacity: 0.5, textColor: '#EEEEEE', width: 1000, fontSize: 127});
-
+        rpt.print('Confidential', {x: 40, y: 610, rotate: 310, opacity: 0.5, textColor: '#eeeeee', width: 1000, fontSize: 127});
 
         // Company Info - Top Left
         rpt.setCurrentY(14);
@@ -45,7 +44,8 @@ function printreport(options) {
             {data: Current_Date, width: 240},
             {data: '# of Pages:', width: 78},
             {data: data.number_of_pages || 2, width: 200, align: 1}
-        ], {font: "Times-Roman", fontBold: true, fontItalic: true});
+            // font: Was "Times-Roman"; but CI Machine don't like the built in fonts
+        ], {font: "Arimo",  fontItalic: true, fontBold: true});
         rpt.newLine();
         rpt.fontNormal();
 
@@ -81,12 +81,12 @@ function printreport(options) {
     };
 
     // You don't have to pass in a report name; it will default to "report.pdf"
-    const reportName = "demo03.pdf";
+    const reportName = __dirname + "/demo03.pdf";
     const testing = {images: 1, blocks: ["210,330,240,60"]};
 
 
     var rpt = new Report(reportName, {font: "Arimo"});
-    rpt.registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', 'italic': __dirname+'/Fonts/Arimo-Italic.ttf'});
+    rpt.registerFont("Arimo", {normal: __dirname+'/Fonts/Arimo-Regular.ttf', bold: __dirname+'/Fonts/Arimo-Bold.ttf', italic: __dirname+'/Fonts/Arimo-Italic.ttf', bolditalic: __dirname+'/Fonts/Arimo-BoldItalic.ttf', boldItalic: __dirname+'/Fonts/Arimo-BoldItalic.ttf'});
 
     rpt
       .recordCount(recordCount)
