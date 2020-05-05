@@ -8,7 +8,7 @@ const displayReport = require('./reportDisplayer');
 var pdfkit = require('../lib/fluentReports.pdfkit');
 
 
-var inFile = __dirname + '/demo05.pdf';
+var inFile = __dirname + '/demo06.pdf';
 var outFile = 'demo09.pdf';
 const testing = {images: 4, blocks: ["210,330,240,60"]};
 

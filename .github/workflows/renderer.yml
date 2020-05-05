@@ -30,7 +30,7 @@ jobs:
       - run: npm test
 
       - name: Upload Results
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: results
           path: /home/runner/work/fluentreports/fluentreports/examples/Check

@@ -59,9 +59,9 @@ module.exports = function(err, reportName, testing) {
             count = testing.images;
         }
 
-        console.log([reportNameDir, __dirname + "/Check/"+reportNoExt, "-png"]);
+       // console.log([reportNameDir, __dirname + "/Check/"+reportNoExt, "-png"]);
         execFile( "pdftoppm", [reportNameDir, __dirname + "/Check/"+reportNoExt, "-png"]).then(( std ) => {
-            console.log(std);
+            //console.log(std);
             let testGroup = [];
             for (let i=0;i<count;i++) {
                 let name = reportNoExt + "-"+(i+1)+".png";

@@ -10,10 +10,9 @@ echo Starting Rendering Tests > Check/results.txt
 pwd >> Check/results.txt
 
 # Run all the test
-node demo05
+node demo06
 node demo09
 if [[ $? -ne 0 ]]; then
-   ls Check
    echo Failed demo9
    echo Failed demo9 >> Check/results.txt
    exit 1
