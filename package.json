@@ -53,6 +53,6 @@
     "blink-diff": "latest"
   },
   "scripts": {
-    "test": "./examples/runtests.sh"
+    "test": "chmod +x ./examples/runtests.sh && ./examples/runtests.sh"
   }
 }
