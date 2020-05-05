@@ -34,7 +34,13 @@ module.exports = function(err, reportName, testing) {
     let found = false;
 
     // Add the current working directory to the file so Foxit can find it
-    const reportNameDir = process.cwd() + "/" + reportName;
+    let reportNameDir;
+    if (reportName.indexOf("/") === -1) {
+        reportNameDir = process.cwd() + "/" + reportName;
+    } else {
+        reportNameDir = reportName;
+        reportName = reportName.substring(reportName.lastIndexOf("/")+1);
+    }
     const reportNoExt = reportName.replace(".pdf", "");
 
     if (typeof process.env.TESTING !== "undefined" || testing.force === true || 1) {
@@ -59,8 +65,8 @@ module.exports = function(err, reportName, testing) {
             count = testing.images;
         }
 
-       // console.log([reportNameDir, __dirname + "/Check/"+reportNoExt, "-png"]);
-        execFile( "pdftoppm", [reportNameDir, __dirname + "/Check/"+reportNoExt, "-png"]).then(( std ) => {
+       // console.log([reportNameDir, __dirname + "/Check/"+reportNoExt, "-png", "-freetype", "yes"]);
+        execFile( "pdftoppm", [reportNameDir, __dirname + "/Check/"+reportNoExt, "-png", "-freetype", "yes", "-aaVector", "yes"]).then(( std ) => {
             console.log(std);
             let testGroup = [];
             for (let i=0;i<count;i++) {

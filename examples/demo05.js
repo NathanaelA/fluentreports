@@ -95,14 +95,15 @@ var proposalFooter = function(x, r) {
     x.print('Please call us if you have any other questions about how to order. Thank you for your business!', {x: 40, width: 570});
 };
 
-    const reportName = "demo05.pdf";
+    const reportName = __dirname + "/demo05.pdf";
     const testing = {images: 1};
 
 
     var report = new Report(reportName).data(primary_data);
 
     // Normally you would register a different font for each normal, bold, and italic; but for space size we are registering the same font for all three
-    report.registerFont("AldotheApache", {normal: __dirname+'/AldotheApache.ttf', bold: __dirname+'/AldotheApache.ttf', 'italic': __dirname+'/AldotheApache.ttf'});
+    report.registerFont("AldotheApache", {normal: __dirname+'/Fonts/AldotheApache.ttf', bold: __dirname+'/Fonts/AldotheApache.ttf', 'italic': __dirname+'/Fonts/AldotheApache.ttf'});
+    report.registerFont("Helvetica", {normal: __dirname+'/Fonts/OpenSans-Regular.ttf', bold: __dirname+'/Fonts/OpenSans-Bold.ttf', 'italic': __dirname+'/Fonts/OpenSans-Italic.ttf'});
 
 
     var r = report
