@@ -3,11 +3,6 @@ var fs = require('fs');
 var displayReport = require('./reportDisplayer');
 
 
-// Thanks to AJ Paglia for the font we are using in our demo
-// Aldo the Apache Font is FREE by AJ Paglia
-// http://ajpaglia.com/
-
-
 function printreport(options) {
     'use strict';
     options = options || {};
@@ -28,8 +23,8 @@ function printreport(options) {
         }
         rpt.setCurrentY(rpt.getCurrentY() - 10);
 
-        if (options.address) rpt.print(options.address, {x: 44});
-        if (options.address2) rpt.print(options.address2, {x: 44});
+        if (options.address) { rpt.print(options.address, {x: 44}); }
+        if (options.address2) { rpt.print(options.address2, {x: 44}); }
         if (options.city && options.state && options.postal) {
             rpt.print(options.city + ', ' + options.state + ' ' + options.postal, {x: 44});
         }
@@ -48,9 +43,9 @@ function printreport(options) {
         rpt.band([
             {data: 'Date:', width: 78},
             {data: Current_Date, width: 240},
-            {data: '# of Pages:', width: 78, font:"AldotheApache"},
+            {data: '# of Pages:', width: 78},
             {data: data.number_of_pages || 2, width: 200, align: 1}
-        ], {font: "Times-Roman", fontBold: true, fontItalic: true}); //"AldotheApache"});
+        ], {font: "Times-Roman", fontBold: true, fontItalic: true});
         rpt.newLine();
         rpt.fontNormal();
 
@@ -71,7 +66,7 @@ function printreport(options) {
         rpt.newLine();
 
         rpt.newLine();
-        rpt.print('Comments:', {fontBold: true, font:"AldotheApache"});
+        rpt.print('Comments:', {fontBold: true});
         rpt.print(data.comments);
 };
 
@@ -100,8 +95,6 @@ function printreport(options) {
       .header(header)
       .pageFooter(footer)
 
-      // Normally you would register a different font for each normal, bold, and italic; but for space size we are registering the same font for all three
-      .registerFont("AldotheApache", {normal: __dirname+'/AldotheApache.ttf', bold: __dirname+'/AldotheApache.ttf', 'italic': __dirname+'/AldotheApache.ttf'})
       .data(options.data);
 
     // Debug output is always nice (Optional, to help you see the structure)

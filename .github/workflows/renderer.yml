@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [10.x, 12.x]
+        node-version: [10.x]
 
     steps:
       - name: Checkout Startup
@@ -34,3 +34,9 @@ jobs:
         with:
           name: testresults
           path: /tmp/results.txt
+
+      - name: Upload Res 2
+        uses: actions/upload-artifact@v2
+        with:
+          name: images
+          path: ~/work/fluentreports/fluentreports/examples/Check/

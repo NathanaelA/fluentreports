@@ -37,7 +37,7 @@ module.exports = function(err, reportName, testing) {
     const reportNameDir = process.cwd() + "/" + reportName;
     const reportNoExt = reportName.replace(".pdf", "");
 
-    if (typeof process.env.TESTING !== "undefined" || testing.force === true || 1 ) {
+    if (typeof process.env.TESTING !== "undefined" || testing.force === true || 1) {
         let blockParams = [];
         if (testing && testing.blocks) {
             for (let i=0;i<testing.blocks.length;i++) {
@@ -59,7 +59,8 @@ module.exports = function(err, reportName, testing) {
             count = testing.images;
         }
 
-        execFile( "pdftoppm", [reportNameDir, __dirname + "/Check/"+reportNoExt, "-png"]).then(( /* std */) => {
+        execFile( "pdftoppm", [reportNameDir, __dirname + "/Check/"+reportNoExt, "-png"]).then(( std ) => {
+            console.log(std);
             let testGroup = [];
             for (let i=0;i<count;i++) {
                 let name = reportNoExt + "-"+(i+1)+".png";
@@ -77,7 +78,7 @@ module.exports = function(err, reportName, testing) {
         }).catch((err) => {
             console.log("FAILED:", reportNoExt, err && err.code);
             if (typeof process.env.TESTING === "undefined") {
-//                console.error("Error Code:", err, err.code);
+                console.error("Error Code:", err, err.code);
             }
             process.exit(1);
         });

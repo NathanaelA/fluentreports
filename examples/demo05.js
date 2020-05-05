@@ -1,6 +1,12 @@
 var Report = require('../lib/fluentReports' ).Report;
 var displayReport = require('./reportDisplayer');
 
+// Thanks to AJ Paglia for the font we are using in our demo
+// Aldo the Apache Font is FREE by AJ Paglia
+// http://ajpaglia.com/
+
+
+
 var primary_data  = [
     {no: 1, date: '08-17-2015', name: "John Doe", type: "Hardware", address_1: "address 1 road 2", address_2: "", city: "city", state: 'ok', zip: '00000', qty: 2, price: 2.21, amount: 4.42, description: "product 1", "product.product_type": 1},
     {no: 1, date: '08-18-2015', name: "John Doe", type: "Hardware", address_1: "address 1 road 2", address_2: "", city: "city", state: 'ok', zip: '00000', qty: 1, price: 2.21, amount: 2.21, description: "product 1", "product.product_type": 1},
@@ -41,7 +47,7 @@ function printreport() {
         var proposalHeader = function(x, r) {
             var fSize = 9;
             x.print('Some address in Duncan, OK 73533', {x: 20, fontsize: fSize});
-            x.print("PROPOSAL", {x: 40, y: 70, fontSize: fSize+19, fontBold: true});
+            x.print("PROPOSAL", {x: 40, y: 70, fontSize: fSize+19, fontBold: true, font: "AldotheApache"});
             x.print('THIS IS NOT AN INVOICE', {x: 40, y: 100, fontsize: fSize + 4, fontBold: true});
             x.print('Questions? Please call us.', {x: 40, y: 150, fontsize: fSize});
             x.band([{data: 'Proposal #:', width: 100}, {data: "12345", width: 100, align: "left", fontSize: 9}], {x: 400, y: 60});
@@ -78,7 +84,7 @@ function printreport() {
                 {data: 'Price', width: 70, align: 3},
                 {data: 'Ext. Price', width: 90, align: 3},
                 {data: 'Annual', width: 70, align: 3}
-            ], {x: 0});
+            ], {x: 0});  // , font: "AldotheApache"});
             x.bandLine(1);
         };
 
@@ -94,6 +100,9 @@ var proposalFooter = function(x, r) {
 
 
     var report = new Report(reportName).data(primary_data);
+
+    // Normally you would register a different font for each normal, bold, and italic; but for space size we are registering the same font for all three
+    report.registerFont("AldotheApache", {normal: __dirname+'/AldotheApache.ttf', bold: __dirname+'/AldotheApache.ttf', 'italic': __dirname+'/AldotheApache.ttf'});
 
 
     var r = report

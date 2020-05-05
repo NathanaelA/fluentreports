@@ -8,7 +8,7 @@ const displayReport = require('./reportDisplayer');
 var pdfkit = require('../lib/fluentReports.pdfkit');
 
 
-var inFile = __dirname + '/demo03.pdf';
+var inFile = __dirname + '/demo05.pdf';
 var outFile = 'demo09.pdf';
 const testing = {images: 4, blocks: ["210,330,240,60"]};
 
@@ -30,6 +30,7 @@ console.log("Reading", inFile, " --- Writing: ", outFile);
 var buffer = fs.readFileSync(inFile);
 
 var pdf = new pdfkit();
+
 
 
 pdf.text("Page 1, Prior to Importing PDF");
