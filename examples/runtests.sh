@@ -17,8 +17,9 @@ for f in demo*.js ; do
     echo Failed $f >> Check/results.txt
     exit 1
   else
-    # Remove any images that passed so the Artifacts don't have them...
-    rm Check/${f}*.png
+    # Remove any of the images that passed so the Artifacts don't have them...
+    name=$(echo "${f}" | cut -f 1 -d '.')
+    rm Check/${name}*.png
     echo Success $f >> Check/results.txt
   fi
 done;
