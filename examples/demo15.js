@@ -32,7 +32,7 @@ function printreport() {
 
 
 
-    if (typeof process.env.TESTING !== "undefined") { mainReport.printStructure(); }
+    if (typeof process.env.TESTING === "undefined") { mainReport.printStructure(); }
 
     mainReport.render((err, name) => {
         const testing = {images: 1, blocks: ["120,130,300,100"]};

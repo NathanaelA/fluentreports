@@ -71,7 +71,7 @@ if (reportId === 0) {
         .data({});
 }
 
-    if (typeof process.env.TESTING !== "undefined") { r.printStructure(); }
+    if (typeof process.env.TESTING === "undefined") { r.printStructure(); }
 
     console.time("Rendered");
     r.render().then((name) => {

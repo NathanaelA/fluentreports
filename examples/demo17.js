@@ -56,7 +56,7 @@ function printReport() {
         displayReport(error, name, testing);
     });
 
-    if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(true); }
+    if (typeof process.env.TESTING === "undefined") { rpt.printStructure(true); }
 
 }
 printReport();

@@ -132,7 +132,7 @@ const r = new Report('demo25.pdf').data(reportData);
     .pageHeader(reportHeader)
     .detail(detail);
 
-if (typeof process.env.TESTING !== "undefined") { r.printStructure(); }
+if (typeof process.env.TESTING === "undefined") { r.printStructure(); }
 
     console.time("Rendered");
     r.render().then((name) => {

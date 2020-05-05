@@ -159,7 +159,7 @@ let reportData =
     };
 
 let rpt = new ReportBuilder(reportData, data);
-if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(); }
+if (typeof process.env.TESTING === "undefined") { rpt.printStructure(); }
 
 console.time("Rendered");
 rpt.render().then((name) => {

@@ -90,7 +90,7 @@ function printreport() {
         .totalFormatter(myTotalFormatter);
 
   // Hey, everyone needs to debug things occasionally -- creates debug output so that you can see how the report is built.
-    if (typeof process.env.TESTING !== "undefined") { resultReport.printStructure(); }
+    if (typeof process.env.TESTING === "undefined") { resultReport.printStructure(); }
 
 
   console.time("Rendered");

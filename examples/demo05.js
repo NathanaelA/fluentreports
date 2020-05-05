@@ -119,7 +119,7 @@ var proposalFooter = function(x, r) {
         .header( productTypeHeader )
           .footer( productTypeFooter );
 
-    if (typeof process.env.TESTING !== "undefined") { r.printStructure(); }
+    if (typeof process.env.TESTING === "undefined") { r.printStructure(); }
 
 
 

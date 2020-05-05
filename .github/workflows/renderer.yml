@@ -33,4 +33,4 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: results
-          path: ~/work/fluentreports/fluentreports/examples/Check/
+          path: /home/runner/work/fluentreports/fluentreports/examples/Check

@@ -138,7 +138,7 @@ function printreport() {
 
 
   // Debug output is always nice (Optional, to help you see the structure)
-  if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(); }
+  if (typeof process.env.TESTING === "undefined") { rpt.printStructure(); }
 
 
   // This does the MAGIC...  :-)

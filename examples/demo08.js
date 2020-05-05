@@ -183,7 +183,7 @@ var proposalFooter = function(x, r) {
 
         });
 
-    if (typeof process.env.TESTING !== "undefined") { r.printStructure(1); }
+    if (typeof process.env.TESTING === "undefined") { r.printStructure(1); }
 
 }
 

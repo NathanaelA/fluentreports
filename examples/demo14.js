@@ -57,7 +57,7 @@ function printreport() {
 
 
 
-    if (typeof process.env.TESTING !== "undefined") { report.printStructure(); }
+    if (typeof process.env.TESTING === "undefined") { report.printStructure(); }
     report.render((err, name) => {
         const testing = {images: 1, blocks: ["120,130,300,100"]};
         displayReport(err, name, testing);

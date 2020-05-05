@@ -35,7 +35,7 @@ function version_one() {
         .detail("{{count}} {{unit}} of {{item}}");   // Put how we want to print out the data line.
 
     rpt.render(displayReport);
-    if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(true); }
+    if (typeof process.env.TESTING === "undefined") { rpt.printStructure(true); }
 
 }
 
@@ -62,7 +62,7 @@ function version_two() {
         .pageFooter(footerFunction)                  // Add a footer
         .detail("{{count}} {{unit}} of {{item}}");   // Put how we want to print out the data line.
 
-    if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(true); }
+    if (typeof process.env.TESTING === "undefined") { rpt.printStructure(true); }
 
     rpt.render(displayReport);
 
@@ -144,6 +144,6 @@ function version_three() {
         displayReport(err, name, testing);
         });
 
-    //if (typeof process.env.TESTING !== "undefined") { rpt.printStructure(true); }
+    //if (typeof process.env.TESTING === "undefined"){ rpt.printStructure(true); }
 
 }
