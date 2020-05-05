@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set Testing to True
-TESTING=true
+export TESTING=1
 
 pushd examples
 mkdir -p Check
