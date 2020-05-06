@@ -107,4 +107,4 @@ Now since I can have a really large grocery list; I can make this two or three c
 ```
 
 Basically it is the same functions as the prior version, but we are changing the X and Y coordinates for column 2 & 3 to make them end up on the same line just in a different column.  So the finished report looks this.
-[examples\demo06.js](../examples/demo06.js) contains this report in its three different iterations.
+[examples/demo06.js](../master/examples/demo06.js) contains this report in its three different iterations.

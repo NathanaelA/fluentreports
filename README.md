@@ -2,6 +2,19 @@
 
 ![.github/workflows/renderer.yml](https://github.com/NathanaelA/fluentreports/workflows/fluentReports%20Renderer%20CI/badge.svg)
 
+[![npm](https://img.shields.io/npm/v/fluentreports.svg)](https://www.npmjs.com/package/fluentReports)
+[![npm](https://img.shields.io/npm/l/fluentreports.svg)](https://www.npmjs.com/package/fluentReports)
+[![npm](https://img.shields.io/npm/dt/fluentreports.svg?label=npm%20d%2fls)](https://www.npmjs.com/package/fluentReports)
+![GitHub last commit](https://img.shields.io/github/last-commit/nathanaela/fluentreports)
+[![Dependancies](https://img.shields.io/librariesio/github/nathanaela/fluentreports)](https://www.github.com/nathanaela/fluentReports)
+---
+### Funding
+[![github](https://img.shields.io/badge/Github-Sponsorship-orange)](https://github.com/sponsors/nathanaela)
+
+You can now sponsor us on Github: [https://github.com/sponsors/NathanaelA](https://github.com/sponsors/nathanaela)
+
+---
+
 See: [https://www.fluentreports.com](https://FluentReports.com) for more information.
 
 Fluent Reports - Data Driven PDF Reporting Engine for **Node.js** and **Browsers**
@@ -14,8 +27,10 @@ Try out the reporting engine in your own browser at [https://www.fluentreports.c
 
 ## Documentation
 
-Please [read the commands.md file](commands.md) for a overview of all the commands. The files in the `docs/` folder are generated from the source code via jsdocs, so they **might** be more up to date.
-Please [read the examples.md file](examples/examples.md) for a list of examples
+Please [read the commands.md file](commands.md) for an overview of all the commands. The files in the `docs/` folder are generated from the source code via jsdocs, so they **might** be more up to date.
+
+Please [read the examples readme file](examples) for a list of examples.
+
 Please [read the tutorial.md file](tutorials.md) for the tutorials.
 
 ## Features:

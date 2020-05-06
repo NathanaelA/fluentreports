@@ -25,7 +25,11 @@
     "Michael Keller <michael.keller@kellpro.com>",
     "Marcus Christensson"
   ],
-  "licenses": "MIT",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/NathanaelA/"
+  },
+  "license": "MIT",
   "lib": "lib",
   "bugs": {
     "url": "http://github.com/Nathanaela/fluentreports/issues"
@@ -40,7 +44,7 @@
   "main": "lib/fluentReports",
   "version": "1.3.1",
   "engines": {
-    "node": ">= 0.6.0"
+    "node": "*"
   },
   "devDependencies": {
     "browser-pack-flat": "^3.4.2",
