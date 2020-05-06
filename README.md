@@ -5,16 +5,19 @@
 [![npm](https://img.shields.io/npm/v/fluentreports.svg)](https://www.npmjs.com/package/fluentReports)
 [![npm](https://img.shields.io/npm/l/fluentreports.svg)](https://www.npmjs.com/package/fluentReports)
 [![npm](https://img.shields.io/npm/dt/fluentreports.svg?label=npm%20d%2fls)](https://www.npmjs.com/package/fluentReports)
-![GitHub last commit](https://img.shields.io/github/last-commit/nathanaela/fluentreports)
-[![Dependancies](https://img.shields.io/librariesio/github/nathanaela/fluentreports)](https://www.github.com/nathanaela/fluentReports)
+[![GitHub last commit](https://img.shields.io/github/last-commit/nathanaela/fluentreports)](https://img.shields.io/github/last-commit/nathanaela/fluentreports)
+[![Dependencies](https://img.shields.io/librariesio/github/nathanaela/fluentreports)](https://www.github.com/nathanaela/fluentReports)
+
 ---
-### Funding
+
+#### Funding and sponsorship
 [![github](https://img.shields.io/badge/Github-Sponsorship-orange)](https://github.com/sponsors/nathanaela)
 
 You can now sponsor us on Github: [https://github.com/sponsors/NathanaelA](https://github.com/sponsors/nathanaela)
 
 ---
 
+#### Website and demos
 See: [https://www.fluentreports.com](https://FluentReports.com) for more information.
 
 Fluent Reports - Data Driven PDF Reporting Engine for **Node.js** and **Browsers**
@@ -66,16 +69,16 @@ In these reports I tried to throw in a chunk of the features to try and give you
 ## Some Examples
 Currently, we ship multiple [examples](examples)
 
-* Simple Grid Report with Grouping ![Example 1](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo01.png)
-* Simple Account Summary Report (w/ color & grid for account balances) ![Example 2](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo02.png)
-* Simple Fax Cover Sheet (w/ image) ![Example 3](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo03.png)
-* Grid Report showing off Sub-Reports with auto-queries, cell colorization and url links. ![Example 4](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo04.png)
-* More complex invoice/proposal with grouping, headers, footers. ![Example 5](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo05.png)
-* The Grocery Report Example done in stages to see from simple to complex reporting. ![Example 6](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo06.png)
+* Simple Grid Report with Grouping ![Example 1](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo01-1.png)
+* Simple Account Summary Report (w/ color & grid for account balances) ![Example 2](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo02-1.png)
+* Simple Fax Cover Sheet (w/ image) ![Example 3](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo03-1.png)
+* Grid Report showing off Sub-Reports with auto-queries, cell colorization and url links. ![Example 4](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo04-1.png)
+* More complex invoice/proposal with grouping, headers, footers. ![Example 5](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo05-1.png)
+* The Grocery Report Example done in stages to see from simple to complex reporting. ![Example 6](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo06-1.png)
 * For many other examples; [click here](examples)
 
 ## Simple Sample Report
-This following report is using the simplest report methods; to show how quickly you can create a simple report.  
+This following report is using the a few of the simplest report methods.   We can show you how quickly you can create a simple report.  
 You have the ability to EASILY FULLY override any and all of the Headers, Footers, and Detail bands (and much more).  
 
 Really Simple Report:
@@ -92,19 +95,7 @@ Really Simple Report:
 
 ```
 
-The same report in Array format:
-```js
-  // Our Simple Data in Array format:
-  const data = [['Elijah', 18], ['Abraham', 22], ['Gavin', 28]];
-  
-  // Create a Report  
-  const rpt = new Report("Report.pdf")
-        .pageHeader( ["Employee Ages"] ) // Add a simple (optional) page Header...
-        .detail( [[0, 200],[1, 50]])     // Layout the report in a grid of 200px & 50px
-        .render();						 // Render the report
-```
-
-And one other sample report using a list type output:
+One other sample report using a list type output:
 ```js
       const data = [
            {item: 'Bread', count: 5, unit: 'loaf'},
