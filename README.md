@@ -66,18 +66,10 @@ Please [read the tutorial.md file](tutorials.md) for the tutorials.
 See the simple & stupid examples for a overview on how to generate a somewhat complex report.
 In these reports I tried to throw in a chunk of the features to try and give you and idea how powerful the engine is and how to use certain features.
 
-## Some Examples
-Currently, we ship multiple [examples](examples)
+### Examples
+Currently, we ship multiple [examples](examples).
 
-* Simple Grid Report with Grouping ![Example 1](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo01-1.png)
-* Simple Account Summary Report (w/ color & grid for account balances) ![Example 2](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo02-1.png)
-* Simple Fax Cover Sheet (w/ image) ![Example 3](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo03-1.png)
-* Grid Report showing off Sub-Reports with auto-queries, cell colorization and url links. ![Example 4](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo04-1.png)
-* More complex invoice/proposal with grouping, headers, footers. ![Example 5](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo05-1.png)
-* The Grocery Report Example done in stages to see from simple to complex reporting. ![Example 6](https://github.com/nathanaela/fluentReports/raw/master/examples/Originals/demo06-1.png)
-* For many other examples; [click here](examples)
-
-## Simple Sample Report
+### Simple Sample Report
 This following report is using the a few of the simplest report methods.   We can show you how quickly you can create a simple report.  
 You have the ability to EASILY FULLY override any and all of the Headers, Footers, and Detail bands (and much more).  
 

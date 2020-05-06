@@ -21,3 +21,8 @@ testmem.js
 fr.js
 *.txt
 docs/
+.github/
+*.tgz
+*.zip
+*.tar
+generator/
