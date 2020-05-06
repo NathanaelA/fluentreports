@@ -2,11 +2,11 @@
 
 ![.github/workflows/renderer.yml](https://github.com/NathanaelA/fluentreports/workflows/fluentReports%20Renderer%20CI/badge.svg)
 
-[![npm](https://img.shields.io/npm/v/fluentreports.svg)](https://www.npmjs.com/package/fluentReports)
-[![npm](https://img.shields.io/npm/l/fluentreports.svg)](https://www.npmjs.com/package/fluentReports)
-[![npm](https://img.shields.io/npm/dt/fluentreports.svg?label=npm%20d%2fls)](https://www.npmjs.com/package/fluentReports)
+[![npm](https://img.shields.io/npm/v/fluentreports.svg)](https://www.npmjs.com/package/fluentreports)
+[![npm](https://img.shields.io/npm/l/fluentreports.svg)](https://www.npmjs.com/package/fluentreports)
+[![npm](https://img.shields.io/npm/dt/fluentreports.svg?label=npm%20d%2fls)](https://www.npmjs.com/package/fluentreports)
 [![GitHub last commit](https://img.shields.io/github/last-commit/nathanaela/fluentreports)](https://img.shields.io/github/last-commit/nathanaela/fluentreports)
-[![Dependencies](https://img.shields.io/librariesio/github/nathanaela/fluentreports)](https://www.github.com/nathanaela/fluentReports)
+[![Dependencies](https://img.shields.io/librariesio/github/nathanaela/fluentreports)](https://www.github.com/nathanaela/fluentreports)
 
 ---
 
