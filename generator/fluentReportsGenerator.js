@@ -2909,6 +2909,9 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         super(report, parent, options);
         this.width = (options && options.width) || 50;
         this.height = (options && options.height) || 50;
+        this._borderColor = (options && options.borderColor) || "";
+        this._fill = (options && options.fill) || "";
+        this._fillOpacity = (options && options.fillOpacity) || 1;
         this._shape = (options && options.shape) || "line";
         this._radius = (options && options.radius) || 50;
         this._usesSpace = true;
@@ -2922,7 +2925,10 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this._addProperties([
             {type: 'select', field: "shape", display: this.createSelect.bind(this), destination: 'settings'},
             {type: 'number', field: 'radius', default: 0, destination: 'settings'},
-            {type: 'boolean', field: 'usesSpace', default: true, destination: 'settings'}
+            {type: 'boolean', field: 'usesSpace', default: true, destination: 'settings'},
+            {type: 'string', field: 'borderColor', title:"Border Color", default: "", destination: 'settings', functionable:true},
+            {type: 'string', field: 'fill', title:"Fill Color", default: "", destination: 'settings',functionable:true},
+            {type: 'number', field: 'fillOpacity', title:"Fill Opacity", default: 1, destination: 'settings',functionable:true},
         ]);
     }
     _parseElement(data) {
@@ -2932,6 +2938,8 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this.height = data.settings.height || 50;
         this.top = data.settings.top || 0;
         this.left = data.settings.left || 0;
+        this.borderColor = data.settings.borderColor || "";
+        this.fill = data.settings.fill || "";
         this.usesSpace = data.settings.usesSpace || true;
     }
     _saveProperties(props, ignore = []) {
@@ -2971,9 +2979,10 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
             return;
         }
 
-        this._svg.style.stroke = "#000000";
+        this._svg.style.stroke = this.borderColor || "#000000";
         this._svg.style.strokeWidth = "2px";
-        this._svg.style.fill = "none";
+        this._svg.style.fill = this.fill || "none";
+        this._svg.style.fillOpacity = this.fillOpacity || 1;
         this._svg.style.width = (this.width * this.scale).toString();
         this._svg.style.height = (this.height * this.scale).toString();
         this._svgRoot.appendChild(this._svg);
@@ -2984,6 +2993,29 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
     }
     set usesSpace(val) {
         this._usesSpace = !!val;
+    }
+
+    get borderColor(){
+        return this._borderColor;
+    }
+    set borderColor(val){
+        this._borderColor = val;
+        this._svg.style.stroke = this.borderColor || "#000000";
+    }
+    get fill(){
+        return this._fill;
+    }
+    set fill(val){
+        this._fill = val;
+        this._svg.style.fill = this.fill || "none";
+    }
+
+    get fillOpacity(){
+        return this._fillOpacity;
+    }
+    set fillOpacity(val){
+        this._fillOpacity = val;
+        this._svg.style.fillOpacity = this.fillOpacity || 1;
     }
 
     get radius() {
