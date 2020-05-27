@@ -2918,8 +2918,12 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this._svgRoot.style.height = (this.height * this.scale).toString();
         this._html.appendChild(this._svgRoot);
         this.setupShape();
-
+        this._deleteProperties(['top','left', 'width', 'height']);
         this._addProperties([
+            {type: 'number', field: 'top', default: 0, destination: "settings"},
+            {type: 'number', field: 'left', default: 0, destination: "settings"},
+            {type: 'number', field: 'width', default: 50, destination: "settings", handlePercentage: true},
+            {type: 'number', field: 'height', default: 50, destination: "settings", handlePercentage: true},
             {type: 'select', field: "shape", display: this.createSelect.bind(this), destination: 'settings'},
             {type: 'number', field: 'radius', default: 0, destination: 'settings'},
             {type: 'boolean', field: 'usesSpace', default: true, destination: 'settings'}
