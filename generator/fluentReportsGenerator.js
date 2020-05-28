@@ -1961,10 +1961,18 @@ class frSection { // jshint ignore:line
             results[type].fixedHeight = true;
             results[type].height = this.height;
         }
+        if(this.newPage !== "auto"){
+            results[type].newPage = this.newPage;
+        }
 
-
+        if(this.newPage === "before"){
+            results[type].children.push({type:'newPage'});
+        }
         let group = results[type].children;
         this._saveSectionInfo(group);
+        if(this.newPage === "after"){
+            results[type].children.push({type:'newPage'});
+        }
     }
 
     _saveSectionInfo(results) {
@@ -2151,6 +2159,7 @@ class frSection { // jshint ignore:line
         this._hasFunctions = false;
         this._calculations = [];
         this._hasCalculations = false;
+        this._newPage= options && options.newPage || "auto";
         this._fromGroup = options && options.fromGroup || false;
         this._dataUUID = options && options.dataUUID || null;
 
@@ -2158,7 +2167,7 @@ class frSection { // jshint ignore:line
 
         this._type = options && options.type || 0;
         this._stockElement = null;
-        this._fixedHeight = false;
+        this._fixedHeight = options && options.fixedHeight || false;
         this._usingStock = false;
         this._groupName = options && options.group || '';
         this._properties = [
@@ -2178,6 +2187,7 @@ class frSection { // jshint ignore:line
             },
             {type: 'number', field: 'height', functionable: false, default: 0},
             {type: 'boolean', field: 'fixedHeight', functionable: false, default: false},
+            {type: 'select', field: "newPage", display: this.createPageSelect.bind(this), destination: 'settings'},
             {type: 'display', field: 'hasFunctions', title: 'Functions', display: () => { return this._createSpan(this._hasFunctions, "\ue81f", this.clickFunctions.bind(this)); }},
             {type: 'display', field: 'hasCalculations', title: 'Calculations', display: () => { return this._createSpan(this._hasCalculations, "\uE824", this.clickCalcs.bind(this)); }}
         ];
@@ -2285,6 +2295,46 @@ class frSection { // jshint ignore:line
 
         };
     }
+
+    get newPage(){
+        return this._newPage;
+    }
+    set newPage(val){
+        if(typeof val === "string") this._newPage = val;
+        else if(typeof val === "number"){
+            switch(val){
+                case 0: this._newPage = "before";break;
+                case 1: this._newPage = "auto";break;
+                case 2: this._newPage = "after";break;
+            }
+        }
+    }
+
+    createPageSelect() {
+        const currentSelection = this._newPage;
+        let selectGroup = document.createElement('select');
+
+        let item = new Option("Before", "before");
+        if (currentSelection === "before"){
+            item.selected = true;
+        }
+        selectGroup.appendChild(item);
+
+        item = new Option("Auto", "auto");
+        if (currentSelection === "auto") {
+            item.selected = true;
+        }
+        selectGroup.appendChild(item);
+
+        item = new Option("After", "after");
+        if (currentSelection === "after") {
+            item.selected = true;
+        }
+        selectGroup.appendChild(item);
+
+        return selectGroup;
+    }
+
 
     get isSubReport() {
         return this._type === 3 && this._fromGroup === false;
