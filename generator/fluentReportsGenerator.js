@@ -537,9 +537,9 @@ class FluentReportsGenerator {
     newBlankReport(clearData= true) {
         const tempReport = {
             type: "report",
-            header: [],
-            detail: [],
-            footer: []
+            header: {children: []},
+            detail: {children: []},
+            footer: {children: []}
         };
         if (clearData) {
             this.data = [];
@@ -553,19 +553,19 @@ class FluentReportsGenerator {
         if (this._data.length === 0) {
             tempReport = {
                 type: "report",
-                header: {type: "raw", values: ["Sample Header"]},
-                detail: {type: "print", text: "Welcome to fluentReports"},
-                footer: {type: "raw", values: ["Sample Footer"]}
+                header: {children: [{type: "raw", values: ["Sample Header"]}]},
+                detail: {children: [{type: "print", text: "Welcome to fluentReports"}]},
+                footer: {children: [{type: "raw", values: ["Sample Footer"]}]}
             };
         } else {
             tempReport = {
                 type: "report",
-                header: {type: "raw", values: ["Sample Header"]},
-                footer: {type: "raw", values: ["Sample Footer"]}
+                header: {children: [{type: "raw", values: ["Sample Header"]}]},
+                footer: {children: [{type: "raw", values: ["Sample Footer"]}]}
             };
 
             if (this.reportFields.childrenIndexed.length === 0) {
-                tempReport.detail = {type: "print", text: "Welcome to fluentReports"};
+                tempReport.detail = {children: [{type: "print", text: "Welcome to fluentReports"}]};
             } else {
                 this._createReportOnChildData(tempReport, this.reportFields.childrenIndexed);
             }
@@ -594,7 +594,7 @@ class FluentReportsGenerator {
                     name = parent.name + "/" + name;
                 }
 
-                curReport.detail = {type: "print", text: "Subreport "+name+" Data"};
+                curReport.detail = {children: [{type: "print", text: "Subreport "+name+" Data"}]};
             }
         }
     }
@@ -604,6 +604,16 @@ class FluentReportsGenerator {
      * @param report
      */
     _parseReport(report) {
+        if (report && typeof report.version !== "undefined") {
+            if (report.version !== 1) {
+                console.error("This engine only understands version _1_ reports, please upgrade engine to use this report.");
+                report = {
+                    type: "report",
+                    detail: {children: [{type: "print", text: "Invalid Report version"}]}
+                };
+            }
+        }
+
         this._reportData = report;
         if (this._builtUI) {
             this._clearReport();
@@ -685,7 +695,7 @@ class FluentReportsGenerator {
         // Setup our temporary data storage
         this._saveTemporaryData = {reports: {}};
 
-        const results = {type: 'report', dataUUID: this._parsedData.dataUUID};
+        const results = {type: 'report', dataUUID: this._parsedData.dataUUID, version: 1};
         this._copyProperties(this, results, ["fontSize", "autoPrint", "name", "paperSize", "paperOrientation"]);
         if (this._marginBottom !== 72 || this._marginTop !== 72 || this._marginLeft !== 72 || this._marginRight !== 72) {
             results.margins = {left: this._marginLeft, top: this._marginTop, right: this._marginRight, bottom: this._marginBottom};
@@ -1359,6 +1369,7 @@ class FluentReportsGenerator {
      * @param data
      * @param height
      * @param groupName
+     * @param isGroup
      * @param reportUUID
      * @private
      */
@@ -1442,6 +1453,7 @@ class FluentReportsGenerator {
      * @param data
      * @param height
      * @param groupName
+     * @param isGroup
      * @param reportUUID
      * @private
      */
@@ -1518,7 +1530,14 @@ class FluentReportsGenerator {
             for (let i=0;i<sectionData.length;i++) {
                 section._parseSection(sectionData[i]);
             }
+        } else if (sectionData.children) {
+            section._parseSelf(sectionData);
+            for (let i=0;i<sectionData.children.length;i++) {
+                section._parseSection(sectionData.children[i]);
+            }
         } else {
+            console.log("Object, non-array, section");
+            // TODO: Depreciated loading method
             section._parseSection(sectionData);
         }
     }
@@ -1930,10 +1949,21 @@ class frSection { // jshint ignore:line
                     console.error("Unknown Section type", this._title);
                 }
         }
-        if (!Array.isArray(results[type])) {
-            results[type] = [];
+        if (typeof results[type] === "undefined") {
+            results[type] = {children: []};
         }
-        let group = results[type];
+        if (!Array.isArray(results[type].children)) {
+            results[type].children =  [];
+        }
+
+        // Save any Properties needed
+        if (this.fixedHeight) {
+            results[type].fixedHeight = true;
+            results[type].height = this.height;
+        }
+
+
+        let group = results[type].children;
         this._saveSectionInfo(group);
     }
 
@@ -1960,9 +1990,22 @@ class frSection { // jshint ignore:line
         }
     }
 
+    _parseSelf(data) {
+        if (data.fixedHeight) {
+            this.fixedHeight = data.fixedHeight;
+            this.height = data.height != null ? data.height : this.height;
+        }
+    }
+
     _parseSection(data) {
         let top = (this._children.length * 32) + 6;
         if (top+50 >= this.height) { this.height = top + 50; }
+
+        // Depreciation notice...
+        if (data.type === "text") {
+            console.log("FluentReports: type=text, depreciated, proper type=print."); // jshint ignore:line
+            data.type = "print";
+        }
 
         switch (data.type) {
             case 'raw':
@@ -1976,8 +2019,6 @@ class frSection { // jshint ignore:line
                 break;
 
             case 'text':
-                console.log("FluentReports: type=text, depreciated, proper type=print."); // jshint ignore:line
-
             case 'print':
                 let printElement;
                 if (data.field) {
@@ -2911,7 +2952,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this.height = (options && options.height) || 50;
         this._borderColor = (options && options.borderColor) || "";
         this._fill = (options && options.fill) || "";
-        this._fillOpacity = (options && options.fillOpacity) || 1;
+        this._fillOpacity = (options && options.fillOpacity) || 1.0;
         this._shape = (options && options.shape) || "line";
         this._radius = (options && options.radius) || 50;
         this._usesSpace = true;
@@ -2932,7 +2973,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
             {type: 'boolean', field: 'usesSpace', default: true, destination: 'settings'},
             {type: 'string', field: 'borderColor', title:"Border Color", default: "", destination: 'settings', functionable:true},
             {type: 'string', field: 'fill', title:"Fill Color", default: "", destination: 'settings',functionable:true},
-            {type: 'number', field: 'fillOpacity', title:"Fill Opacity", default: 1, destination: 'settings',functionable:true},
+            {type: 'number', field: 'fillOpacity', title:"Fill Opacity", default: 1.0, destination: 'settings',functionable:true},
         ]);
     }
     _parseElement(data) {
@@ -2945,6 +2986,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this.borderColor = data.settings.borderColor || "";
         this.fill = data.settings.fill || "";
         this.usesSpace = data.settings.usesSpace || true;
+        this.fillOpacity = data.settings.fillOpacity || 1.0;
     }
     _saveProperties(props, ignore = []) {
         super._saveProperties(props, ignore);
@@ -2986,7 +3028,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this._svg.style.stroke = this.borderColor || "#000000";
         this._svg.style.strokeWidth = "2px";
         this._svg.style.fill = this.fill || "none";
-        this._svg.style.fillOpacity = this.fillOpacity || 1;
+        this._svg.style.fillOpacity = minDisplayOpacity(this.fillOpacity || 1.0);
         this._svg.style.width = (this.width * this.scale).toString();
         this._svg.style.height = (this.height * this.scale).toString();
         this._svgRoot.appendChild(this._svg);
@@ -3018,8 +3060,8 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         return this._fillOpacity;
     }
     set fillOpacity(val){
-        this._fillOpacity = val;
-        this._svg.style.fillOpacity = this.fillOpacity || 1;
+        this._fillOpacity = handleOpacity(val);
+        this._svg.style.fillOpacity = minDisplayOpacity(this.fillOpacity);
     }
 
     get radius() {
@@ -3635,10 +3677,7 @@ class frPrint extends frTitledLabel {
         return this._opacity;
     }
     set opacity(val) {
-        this._opacity = parseFloat(val);
-        if (isNaN(this._opacity)) { this._opacity = 1.0; }
-        if (this._opacity < 0) { this._opacity = 0.0; }
-        else if (this._opacity > 1.0) { this._opacity = 1.0; }
+        this._opacity = handleOpacity(val);
     }
 
     get wordSpacing() {
@@ -4148,10 +4187,7 @@ class frBandElement extends frPrint { // jshint ignore:line
         return this._fillOpacity;
     }
     set fillOpacity(val) {
-        this._fillOpacity = parseFloat(val);
-        if (isNaN(this._fillOpacity)) { this._fillOpacity = 1.0; }
-        if (this._fillOpacity < 0.0) { this._fillOpacity = 0.0; }
-        if (this._fillOpacity > 1.0) { this._fillOpacity = 1.0; }
+        this._fillOpacity = handleOpacity(val);
     }
 
     get bands() {
@@ -5074,7 +5110,7 @@ class UI { // jshint ignore:line
 
 
         const toInt = (val) => { return parseInt(val, 10); };
-        const toOpacity = (val) => { let x = parseFloat(val); if (isNaN(x)) { return 1.0; } if (x <  0.0) { return 0.0; } if (x > 1.0) { return 1.0; } return x;};
+        const toOpacity = (val) => { return handleOpacity(val); };
 
         let properties = [];
         if(report._hasFormatterFunctions()) {
@@ -6551,14 +6587,14 @@ class UI { // jshint ignore:line
             select.appendChild(option);
         }
         return select;
-    };
+    }
+
     calculationValueEditor(name, value, ok, cancel) {
         const body = document.createElement('div');
 
         const nameDiv = document.createElement('div');
         const name1 = document.createElement('span');
         name1.innerText = "Type:";
-
 
         const variableName = this.createCalculationTypeSelect();
         variableName.selectedIndex = name;
@@ -6571,13 +6607,16 @@ class UI { // jshint ignore:line
         value1.innerText = "Variable value:";
         const variableValue = document.createElement('input');
         if(typeof value === "object"){
-            for(let i in value){
-                if(!value[i]) continue;
+            for (let i in value){
+                if(!value.hasOwnProperty(i)) { continue; }
+                if (!value[i]) { continue; }
                 variableValue.value = value[i];
                 break;
             }
         }
-        else variableValue.value = value;
+        else {
+            variableValue.value = value;
+        }
         valueDiv.appendChild(value1);
         valueDiv.appendChild(variableValue);
         body.appendChild(valueDiv);
@@ -6638,8 +6677,8 @@ class UI { // jshint ignore:line
     /**
      * Create a select list based on values
      * @param report
-     * @param field <object>
-     * @param dataSets <number>
+     * @param field {object}
+     * @param dataSets {number}
      * @param isTotal <boolean>
      * @returns {HTMLSelectElement}
      */
@@ -7439,6 +7478,31 @@ function shallowClone(value, skipValues=[]) { // jshint ignore:line
         result[key] = value[key];
     }
     return result;
+}
+
+/***
+ * Used to make sure the number is a valid opacity value
+ * @param value
+ * @return {number} - 0.0 thru 1.0
+ */
+function handleOpacity(value) { // jshint ignore:line
+    let opacity = parseFloat(value);
+    if (isNaN(opacity)) { opacity = 1.0; }
+    if (opacity < 0.0) { opacity = 0.0; }
+    if (opacity > 1.0) { opacity = 1.0; }
+    return opacity;
+}
+
+/***
+ * Used to make sure opacity doesn't make the element invisible on browser...
+ * @param value
+ * @return {string}
+ */
+function minDisplayOpacity(value) { // jshint ignore:line
+    let opacity = parseFloat(value);
+    if (isNaN(opacity)) { opacity = 1.0; }
+    if (opacity < 0.1) { opacity = 0.1; }
+    return opacity+"";
 }
 
 window.FluentReportsGenerator = FluentReportsGenerator;
