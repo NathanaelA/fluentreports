@@ -41,6 +41,7 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.2.9 - Fix multiple issues with Engine/Builder/Generators.
 1.3.0 - Upgraded to PDFKit 0.11.0 & Fixed several Gui issues
 1.3.1 - Add/Publish testing Infrastructure, remove some extra console.logs
+1.3.2 - FRG: Added Shape properties, allowed section properties to save, added generator to npm.
 
 
 Breaking changes or API inconsistencies:

@@ -16,6 +16,7 @@ test/
 browser/
 projectFilesBackup/
 examples/
+examples/test
 test/
 testmem.js
 fr.js
@@ -25,4 +26,5 @@ docs/
 *.tgz
 *.zip
 *.tar
-generator/
+generator/*.htm
+generator/fonts/

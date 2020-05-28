@@ -19,6 +19,7 @@ const child_process = require('child_process');
 const PDFApplications = [
     // Linux
     "/usr/bin/xreader",
+    
     // Windows
     "C:\\Program Files (x86)\\Foxit Software\\Foxit Reader\\Foxit Reader.exe",
     "C:\\Program Files (x86)\\Foxit Software\\Foxit Reader\\FoxitReader.exe",
@@ -32,7 +33,7 @@ module.exports = function(err, reportName, testing) {
     }
     let found = false;
 
-    // Add the current working directory to the file so Foxit can find it
+    // Add the current working directory to the file so PDF Reader can find it
     let reportNameDir;
     if (reportName.indexOf("/") === -1) {
         reportNameDir = process.cwd() + "/" + reportName;
@@ -42,7 +43,7 @@ module.exports = function(err, reportName, testing) {
     }
     const reportNoExt = reportName.replace(".pdf", "");
 
-    if (typeof process.env.TESTING !== "undefined" || testing.force === true || 1) {
+    if (typeof process.env.TESTING !== "undefined" || testing.force === true ) {
         let blockParams = [];
         if (testing && testing.blocks) {
             for (let i=0;i<testing.blocks.length;i++) {
@@ -65,12 +66,14 @@ module.exports = function(err, reportName, testing) {
         }
 
        // console.log([reportNameDir, __dirname + "/Check/"+reportNoExt, "-png", "-freetype", "yes"]);
+
         execFile( "pdftoppm", [reportNameDir, __dirname + "/Check/"+reportNoExt, "-png", "-freetype", "yes", "-aaVector", "yes"]).then(( std ) => {
             if (std.stdout !== '' || std.stderr !== '') { console.log(std); }
             let testGroup = [];
             for (let i=0;i<count;i++) {
                 let name = reportNoExt + "-"+(i+1)+".png";
                 let outName = __dirname + "/Check/" + reportNoExt + "-" + (i+1)+"c.png";
+                //console.log(  [__dirname + "/Originals/" + name, __dirname + "/Check/" + name, "--output", outName, "--no-composition", "--threshold", "0", "--delta", "0"].concat(blockParams, debugging).join(" "));
                 testGroup.push(
                     execFile("blink-diff",
                         [__dirname + "/Originals/" + name, __dirname + "/Check/" + name, "--output", outName, "--no-composition", "--threshold", "0", "--delta", "0"].concat(blockParams, debugging)
