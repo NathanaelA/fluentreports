@@ -2518,6 +2518,12 @@ class frElement { // jshint ignore:line
     get draggable() { return this._draggable; }
     get html() { return this._html; }
 
+    get absoluteX() { return this.left; }
+    set absoluteX(val) { this.left = val; }
+
+    get absoluteY() { return this.top; }
+    set absoluteY(val) { this.top = val; }
+
     get top() { return parseInt(this._html.style.top,10); }
     set top(val) {
         // We have to be below the header area
