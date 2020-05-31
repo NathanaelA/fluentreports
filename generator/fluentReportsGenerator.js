@@ -1147,6 +1147,9 @@ class FluentReportsGenerator {
                         options.top = 1;
                         new frNewLine(this, this._getSection(this._sectionIn), options ); // jshint ignore:line */
         }));
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\\n", "Page Break", () => {
+            this._addNewElementFromToolBar(frPageBreak, {top: 1});
+        }));
         this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
 
         this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue82D", "Print label", () => {
@@ -2064,6 +2067,11 @@ class frSection { // jshint ignore:line
             case 'newLine':
                 const newLine = new frNewLine(this._report, this, {top: top});
                 newLine._parseElement(data);
+                break;
+
+            case 'newPage':
+                const newPage = new frPageBreak(this._report, this, {top: top});
+                newPage._parseElement(data);
                 break;
 
             case 'calculation':
@@ -3352,6 +3360,41 @@ class frNewLine extends  frTitledLabel { // jshint ignore:line
 
     _parseElement(data) {
         if (data.count > 0) { this.count = data.count; }
+    }
+}
+
+class frPageBreak extends  frTitledLabel { // jshint ignore:line
+    get active() { return this._active; }
+    set active(val) {
+        //TODO: turn this code into a functionable value, when the fixFunctions branch is merged.
+        this._active = !!val;//this.getBooleanOrFunction(val);
+        /*
+        if(this.isFunction(val){
+            this.label = "Page Break: {FUNC}
+        }
+        else {
+        */
+            this.label = "Page Break: ("+(this._active ? "active" : "inactive")+")";
+        //}
+    }
+
+    constructor(report, parent, options={}) {
+        super(report, parent, options);
+        this.active = true;
+        this.elementTitle = "Page Breakage Point";
+        this._deleteProperties(["top", "left", "width", "height"]);
+        this._addProperties({type: 'boolean', field: "active", default: true,functionable:true});
+    }
+
+    _saveProperties(props) {
+        super._saveProperties(props);
+        props.type = "newPage";
+    }
+
+    _parseElement(data) {
+        if(data){
+            this.active = data.active;
+        }
     }
 }
 
