@@ -1147,6 +1147,9 @@ class FluentReportsGenerator {
                         options.top = 1;
                         new frNewLine(this, this._getSection(this._sectionIn), options ); // jshint ignore:line */
         }));
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue81e", "Page Break", () => {
+            this._addNewElementFromToolBar(frPageBreak, {top: 1});
+        }));
         this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
 
         this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue82D", "Print label", () => {
@@ -2065,6 +2068,12 @@ class frSection { // jshint ignore:line
                 const newLine = new frNewLine(this._report, this, {top: top});
                 newLine._parseElement(data);
                 break;
+
+            case 'newPage':
+                const newPage = new frPageBreak(this._report, this, {top: top});
+                newPage._parseElement(data);
+                break;
+
 
             case 'calculation':
                 this._calculations.push(data);
@@ -3353,6 +3362,37 @@ class frStandardFooter extends frTitledLabel { // jshint ignore:line
         this._inDelete = false;
     }
 
+}
+
+class frPageBreak extends  frTitledLabel { // jshint ignore:line
+    get active() { return this._active; }
+    set active(val) {
+        this._active = this.getBooleanOrFunction(val);
+        if(this.isFunction(val)) {
+            this.label = "Page Break: {FUNC}";
+        } else {
+            this.label = "Page Break: ("+(this._active ? "active" : "inactive")+")";
+        }
+    }
+
+    constructor(report, parent, options={}) {
+        super(report, parent, options);
+        this.active = true;
+        this.elementTitle = "Page Breaking Point";
+        this._deleteProperties(["top", "left", "width", "height"]);
+        this._addProperties({type: 'boolean', field: "active", default: false, functionable: true});
+    }
+
+    _saveProperties(props) {
+        super._saveProperties(props);
+        props.type = "newPage";
+    }
+
+    _parseElement(data) {
+        if(data){
+            this.active = data.active;
+        }
+    }
 }
 
 class frNewLine extends  frTitledLabel { // jshint ignore:line
@@ -6696,8 +6736,7 @@ class UI { // jshint ignore:line
                 variableValue.value = value[i];
                 break;
             }
-        }
-        else {
+        } else {
             variableValue.value = value;
         }
         valueDiv.appendChild(value1);
