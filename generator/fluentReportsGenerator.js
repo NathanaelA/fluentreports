@@ -2507,7 +2507,26 @@ class frSection { // jshint ignore:line
  * FluentReports Base Element
  */
 class frElement { // jshint ignore:line
-
+    isFunction(value){
+        if(typeof value === "object"){
+            if(value.type === "function"){
+                return true;
+            }
+        }
+        return false;
+    }
+    getNumeralOrFunction(value){
+        if(this.isFunction(value)){
+            return value;
+        }
+        return parseInt(value,10);
+    }
+    getBooleanOrFunction(value){
+        if(this.isFunction(value)){
+            return value;
+        }
+        return !!value;
+    }
     constructor(report, parent /* , options */) {
         this._uuid = _frItemUUID++;
         this._report = report;
@@ -2571,10 +2590,10 @@ class frElement { // jshint ignore:line
     get html() { return this._html; }
 
     get absoluteX() { return this.left; }
-    set absoluteX(val) { this.left = val; }
+    set absoluteX(val) { this.left = this.getNumeralOrFunction(val); }
 
     get absoluteY() { return this.top; }
-    set absoluteY(val) { this.top = val; }
+    set absoluteY(val) { this.top = this.getNumeralOrFunction(val); }
 
     get top() { return parseInt(this._html.style.top,10); }
     set top(val) {
@@ -3096,7 +3115,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         return this._usesSpace;
     }
     set usesSpace(val) {
-        this._usesSpace = !!val;
+        this._usesSpace = this.getBooleanOrFunction(val);
     }
 
     get borderColor(){
@@ -3118,8 +3137,14 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         return this._fillOpacity;
     }
     set fillOpacity(val){
-        this._fillOpacity = handleOpacity(val);
-        this._svg.style.fillOpacity = minDisplayOpacity(this.fillOpacity);
+        if(this.isFunction(val)){
+            this._fillOpacity = val;
+            this._svg.style.fillOpacity = "0.7";
+        }
+        else{
+            this._fillOpacity = handleOpacity(val);
+            this._svg.style.fillOpacity = minDisplayOpacity(this.fillOpacity);
+        }
     }
 
     get radius() {
@@ -3746,7 +3771,7 @@ class frPrint extends frTitledLabel {
     }
 
     get fontSize() { return this._fontSize; }
-    set fontSize(val) { this._fontSize = parseInt(val, 10); }
+    set fontSize(val) { this._fontSize = this.getNumeralOrFunction(val); }
 
     get characterSpacing() {
         return this._characterSpacing;
@@ -3769,16 +3794,16 @@ class frPrint extends frTitledLabel {
     set absoluteY(val) { this.top = val; }
 
     get underline() { return this._underline; }
-    set underline(val) { this._underline = !!val; }
+    set underline(val) { this._underline = this.getBooleanOrFunction(val); }
 
     get strike() { return this._strike; }
-    set strike(val) { this._strike = !!val; }
+    set strike(val) { this._strike = this.getBooleanOrFunction(val); }
 
     get fontBold() { return this._fontBold; }
-    set fontBold(val) { this._fontBold = !!val; }
+    set fontBold(val) { this._fontBold = this.getBooleanOrFunction(val); }
 
     get fontItalic() { return this._fontItalic; }
-    set fontItalic(val) { this._fontItalic = !!val; }
+    set fontItalic(val) { this._fontItalic = this.getBooleanOrFunction(val); }
 
     get fill() { return this._fill; }
     set fill(val) { this._fill = val; }
