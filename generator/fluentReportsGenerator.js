@@ -1961,18 +1961,12 @@ class frSection { // jshint ignore:line
             results[type].fixedHeight = true;
             results[type].height = this.height;
         }
-        if(this.newPage !== "auto"){
-            results[type].newPage = this.newPage;
+        if(this.pageBreak !== "auto"){
+            results[type].pageBreak = this.pageBreak;
         }
 
-        if(this.newPage === "before"){
-            results[type].children.push({type:'newPage'});
-        }
         let group = results[type].children;
         this._saveSectionInfo(group);
-        if(this.newPage === "after"){
-            results[type].children.push({type:'newPage'});
-        }
     }
 
     _saveSectionInfo(results) {
@@ -2159,7 +2153,7 @@ class frSection { // jshint ignore:line
         this._hasFunctions = false;
         this._calculations = [];
         this._hasCalculations = false;
-        this._newPage= options && options.newPage || "auto";
+        this._pageBreak = options && options.pageBreak || "auto";
         this._fromGroup = options && options.fromGroup || false;
         this._dataUUID = options && options.dataUUID || null;
 
@@ -2187,7 +2181,7 @@ class frSection { // jshint ignore:line
             },
             {type: 'number', field: 'height', functionable: false, default: 0},
             {type: 'boolean', field: 'fixedHeight', functionable: false, default: false},
-            {type: 'select', field: "newPage", display: this.createPageSelect.bind(this), destination: 'settings'},
+            {type: 'select', field: "pageBreak", display: this.createPageSelect.bind(this), destination: 'settings'},
             {type: 'display', field: 'hasFunctions', title: 'Functions', display: () => { return this._createSpan(this._hasFunctions, "\ue81f", this.clickFunctions.bind(this)); }},
             {type: 'display', field: 'hasCalculations', title: 'Calculations', display: () => { return this._createSpan(this._hasCalculations, "\uE824", this.clickCalcs.bind(this)); }}
         ];
@@ -2296,22 +2290,30 @@ class frSection { // jshint ignore:line
         };
     }
 
-    get newPage(){
-        return this._newPage;
+    get pageBreak(){
+        return this._pageBreak;
     }
-    set newPage(val){
-        if(typeof val === "string") this._newPage = val;
+    set pageBreak(val){
+        if(typeof val === "string") {
+            this._pageBreak = val;
+        }
         else if(typeof val === "number"){
-            switch(val){
-                case 0: this._newPage = "before";break;
-                case 1: this._newPage = "auto";break;
-                case 2: this._newPage = "after";break;
+            switch(val) {
+                case 0:
+                    this._pageBreak = "before";
+                    break;
+                case 1:
+                    this._pageBreak = "auto";
+                    break;
+                case 2:
+                    this._pageBreak = "after";
+                    break;
             }
         }
     }
 
     createPageSelect() {
-        const currentSelection = this._newPage;
+        const currentSelection = this._pageBreak;
         let selectGroup = document.createElement('select');
 
         let item = new Option("Before", "before");
