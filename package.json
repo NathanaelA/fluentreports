@@ -42,7 +42,7 @@
     "url": "http://github.com/Nathanaela/fluentreports.git"
   },
   "main": "lib/fluentReports",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "engines": {
     "node": "*"
   },

@@ -28,3 +28,4 @@ docs/
 *.tar
 generator/*.htm
 generator/fonts/
+.editorconfig
