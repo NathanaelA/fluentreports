@@ -1066,8 +1066,10 @@ class FluentReportsGenerator {
             this._currentSelected.blur();
         }
 
-        const offset = this._reportLayout.getBoundingClientRect();
-        const y = (args.clientY - offset.top) + this._reportScroller.scrollTop;
+        const bounding = this._toolBarLayout.getBoundingClientRect();
+        const offset = 1 + bounding.height + bounding.top;
+        const y = (args.clientY - offset) + this._reportScroller.scrollTop;
+
         this._sectionIn = this._getSectionIn(y);
         this.showProperties(this._getSection(this._sectionIn), true);
     }
