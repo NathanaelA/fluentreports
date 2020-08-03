@@ -5212,7 +5212,7 @@ class UI { // jshint ignore:line
         };
 
         const createFormattersSelect = () => {
-            const formatFunction = this.formatFunction;
+            const formatFunction = resultVariables[select.selectedIndex].formatFunction;
             let selectGroup = document.createElement('select');
             let item = new Option("None", "none");
             selectGroup.appendChild(item);
