@@ -418,9 +418,9 @@ class FluentReportsGenerator {
 
                 if (this._previewButton != null) {
                     if (this._previewFunction === false) {
-                            this._previewButton.style.display = "none";
+                        this._previewButton.style.display = "none";
                     } else {
-                            this._previewButton.style.display = "";
+                        this._previewButton.style.display = "";
                     }
                 }
 
@@ -5212,7 +5212,7 @@ class UI { // jshint ignore:line
         };
 
         const createFormattersSelect = () => {
-            const formatFunction = resultVariables[select.selectedIndex].formatFunction;
+            const formatFunction = this.formatFunction;
             let selectGroup = document.createElement('select');
             let item = new Option("None", "none");
             selectGroup.appendChild(item);
@@ -6654,7 +6654,7 @@ class UI { // jshint ignore:line
         // Edit
         addButtons[1].addEventListener("click", () => {
             let key = fieldSelect.value;
-           this.calculationValueEditor(key, resultFields[key], (name, value) => {
+            this.calculationValueEditor(key, resultFields[key], (name, value) => {
                 fieldSelect.options[fieldSelect.selectedIndex].text = name[0].toUpperCase() + name.substring(1,name.length)+": " + value[name];
 
                 //valueValue.innerText = value;
