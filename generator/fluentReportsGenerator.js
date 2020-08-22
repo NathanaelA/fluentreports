@@ -2005,9 +2005,10 @@ class frSection { // jshint ignore:line
     }
 
     _parseSection(data) {
-        let top = (this._children.length * 32) + 6;
-        if (top+50 >= this.height) { this.height = top + 50; }
-
+        if(data && data.settings && data.settings.absoluteY){
+            let top = data.settings.absoluteY + (data.settings.height || 32);//Some elements have height, others use the default 32.
+            if (top >= this.height) { this.height = top; }
+        }
         // Depreciation notice...
         if (data.type === "text") {
             console.log("FluentReports: type=text, depreciated, proper type=print."); // jshint ignore:line
