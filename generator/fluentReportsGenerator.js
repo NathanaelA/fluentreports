@@ -3366,37 +3366,6 @@ class frStandardFooter extends frTitledLabel { // jshint ignore:line
 
 }
 
-class frPageBreak extends  frTitledLabel { // jshint ignore:line
-    get active() { return this._active; }
-    set active(val) {
-        this._active = this.getBooleanOrFunction(val);
-        if(this.isFunction(val)) {
-            this.label = "Page Break: {FUNC}";
-        } else {
-            this.label = "Page Break: ("+(this._active ? "active" : "inactive")+")";
-        }
-    }
-
-    constructor(report, parent, options={}) {
-        super(report, parent, options);
-        this.active = true;
-        this.elementTitle = "Page Breaking Point";
-        this._deleteProperties(["top", "left", "width", "height"]);
-        this._addProperties({type: 'boolean', field: "active", default: false, functionable: true});
-    }
-
-    _saveProperties(props) {
-        super._saveProperties(props);
-        props.type = "newPage";
-    }
-
-    _parseElement(data) {
-        if(data){
-            this.active = data.active;
-        }
-    }
-}
-
 class frNewLine extends  frTitledLabel { // jshint ignore:line
     get count() { return this._count; }
     set count(val) {
@@ -3910,6 +3879,48 @@ class frPrint extends frTitledLabel {
     }
 
 
+}
+
+class frPageBreak extends  frTitledLabel { // jshint ignore:line
+    get active() { return this._active; }
+    set active(val) {
+        this._active = this.getBooleanOrFunction(val);
+        if(this.isFunction(val)) {
+            this.label = "Page Break: {FUNC}";
+        } else {
+            this.label = "Page Break: ("+(this._active ? "active" : "inactive")+")";
+        }
+    }
+    get absoluteY(){
+        return this.top;
+    }
+    set absoluteY(val){
+        this.top = parseInt(val,10);
+    }
+    constructor(report, parent, options={}) {
+        super(report, parent, options);
+        this.active = true;
+        this.elementTitle = "Page Breaking Point";
+        this._deleteProperties([ "top","left", "width", "height"])
+        this._addProperties([
+            {type: 'boolean', field: "active", default: false, functionable: true},
+            {type: 'number', field: "absoluteY", title:"Y", default: null, destination: "settings"}
+            ]);
+    }
+
+    _saveProperties(props) {
+        super._saveProperties(props);
+        props.type = "newPage";
+    }
+
+    _parseElement(data) {
+        //super._parseElement(data);
+        this._copyProperties(data, this, ["active", "absoluteY"]);
+        if(data){
+//            this.absoluteY = data.absoluteY || 0;
+ //           this.active = data.active;
+        }
+    }
 }
 
 class frPrintLabel extends frPrint  { // jshint ignore:line
