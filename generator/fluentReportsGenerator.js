@@ -1060,17 +1060,17 @@ class FluentReportsGenerator {
             this._paperWidthLayout.style.display = "";
         }
     }
-
+    _updateSectionIn(Y){
+        const bounding = this._toolBarLayout.getBoundingClientRect();
+        const offset = 1 + bounding.height + bounding.top;
+        const y = (Y - offset) + this._reportScroller.scrollTop;
+        this._sectionIn = this._getSectionIn(y);
+    }
     _reportLayoutClicked(args) {
         if (this._currentSelected) {
             this._currentSelected.blur();
         }
-
-        const bounding = this._toolBarLayout.getBoundingClientRect();
-        const offset = 1 + bounding.height + bounding.top;
-        const y = (args.clientY - offset) + this._reportScroller.scrollTop;
-
-        this._sectionIn = this._getSectionIn(y);
+        this._updateSectionIn(args.clientY);
         this.showProperties(this._getSection(this._sectionIn), true);
     }
 
@@ -2902,6 +2902,7 @@ class frElement { // jshint ignore:line
     }
 
     _clickHandler(args) {
+        this._report._updateSectionIn(args.clientY);
         if (this._handlers.click && this._handlers.click.length) {
             this._notify('click', args);
         } else {
