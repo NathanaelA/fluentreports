@@ -4693,7 +4693,9 @@ class UI { // jshint ignore:line
         select.style.width = "200px";
         select.size = 10;
         let resultVariables = [];
-
+        for (let i = 0; i < groups.length; i++) {
+            resultVariables.push(shallowClone(groups[i]));
+        }
         let tempFields = report.reportFields;
         const tempOptGroups = {};
 
