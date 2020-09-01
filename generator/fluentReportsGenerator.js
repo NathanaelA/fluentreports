@@ -418,9 +418,9 @@ class FluentReportsGenerator {
 
                 if (this._previewButton != null) {
                     if (this._previewFunction === false) {
-                            this._previewButton.style.display = "none";
+                        this._previewButton.style.display = "none";
                     } else {
-                            this._previewButton.style.display = "";
+                        this._previewButton.style.display = "";
                     }
                 }
 
@@ -4162,9 +4162,9 @@ class frPrintPageNumber extends frPrintLabel { // jshint ignore:line
         super(report, parent, options);
         this.header = options && options.header;
         this.footer = options && options.footer;
-        this.page = (options && options.page) || "Page {0} or {1}";
+        this.page = (options && options.page) || "Page {0} of {1}";
         this._addProperties({type: "string", field: 'page'});
-        this._deleteProperties(["label"]);
+        this._deleteProperties(["label","text"]);
 
         this._addProperties([{type: 'boolean', field: 'header', default: false}, {type: 'boolean', field: 'footer', default: false}]);
     }
@@ -6667,7 +6667,7 @@ class UI { // jshint ignore:line
         // Edit
         addButtons[1].addEventListener("click", () => {
             let key = fieldSelect.value;
-           this.calculationValueEditor(key, resultFields[key], (name, value) => {
+            this.calculationValueEditor(key, resultFields[key], (name, value) => {
                 fieldSelect.options[fieldSelect.selectedIndex].text = name[0].toUpperCase() + name.substring(1,name.length)+": " + value[name];
 
                 //valueValue.innerText = value;
