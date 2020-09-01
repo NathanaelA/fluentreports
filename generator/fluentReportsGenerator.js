@@ -715,6 +715,16 @@ class FluentReportsGenerator {
 
         // Save the Sections
         for (let i=0;i<this._frSections.length;i++) {
+            //Sort section's children by Y pos
+            if(this._frSections[i]._children){
+                this._frSections[i]._children.sort((CUR,NXT)=>{
+                    if(CUR.absoluteY === NXT.absoluteY){
+                        return CUR.absoluteX - NXT.absoluteX;
+                    }
+                    else return CUR.absoluteY - NXT.absoluteY;
+                });
+
+            }
             this._frSections[i]._generateSave(results, this._saveTemporaryData.reports);
         }
 
