@@ -2526,6 +2526,7 @@ class frSection { // jshint ignore:line
  * FluentReports Base Element
  */
 class frElement { // jshint ignore:line
+
     isFunction(value){
         if(typeof value === "object"){
             if(value.type === "function"){
@@ -2534,66 +2535,61 @@ class frElement { // jshint ignore:line
         }
         return false;
     }
+
     getNumeralOrFunction(value){
         if(this.isFunction(value)){
             return value;
         }
         return parseInt(value,10);
     }
+
     getBooleanOrFunction(value){
         if(this.isFunction(value)){
             return value;
         }
         return !!value;
     }
-    runFunction(funct,async){
-         var code = (cb) => {
-            const func = new Function('report', 'data', 'state', 'vars', 'done', funct);   // jshint ignore:line
-            let data = {};
 
-            // TODO: We need to tie this to the proper datafields for this section...
-            const fields = this._report.reportFields;
+    /**
+     * Runs a user Function -- currently only used for Width/Height calculations...
+     * @param func
+     * @return {*}
+     * @private
+     */
+    _runFunction(func) {
+        // TODO: We might want to reprogram this to support Async functions...
 
-            for (let i = 0; i < fields.primary.length; i++) {
-                data[fields.primary[i]] = "data." + fields.primary[i];
-            }
+        const _func = new Function('report', 'data', 'state', 'vars', 'done', func);   // jshint ignore:line
+        let data = {};
 
-            for (let i = 1; i <= fields.levels; i++) {
-                if (fields['level' + i].length > 0) {
-                    for (let j = 0; j < fields['level' + i].length; j++) {
-                        data[fields['level' + i][j]] = "data." + fields['level' + i][j];
-                    }
-                }
-            }
+        // TODO: We need to tie this to the proper datafields for this section...
+        const fields = this._report.reportFields;
 
-            let vars = {};
-            const variables = this._report.reportVariables;
-            if (variables != null) {
-                for (let key in variables) {
-                    if (!variables.hasOwnProperty(key)) {
-                        continue;
-                    }
-                    vars[key] = "vars." + key;
-                }
-            }
-
-            if (!async) {
-                return func({}, data, {}, vars)
-            } else {
-                func({}, data, {}, vars, cb);
-            }
-        };
-        if(async) {
-            return new Promise((cb, rj) => {
-                try {
-                    code(cb);
-                } catch (e) {
-                    rj(e);
-                }
-            });
+        for (let i = 0; i < fields.primary.length; i++) {
+            data[fields.primary[i]] = "data." + fields.primary[i];
         }
-        else return code();
+
+        for (let i = 1; i <= fields.levels; i++) {
+            if (fields['level' + i].length > 0) {
+                for (let j = 0; j < fields['level' + i].length; j++) {
+                    data[fields['level' + i][j]] = "data." + fields['level' + i][j];
+                }
+            }
+        }
+
+        let vars = {};
+        const variables = this._report.reportVariables;
+        if (variables != null) {
+            for (let key in variables) {
+                if (!variables.hasOwnProperty(key)) {
+                    continue;
+                }
+                vars[key] = "vars." + key;
+            }
+        }
+        return (_func({}, data, {}, vars));
     }
+
     constructor(report, parent /* , options */) {
         this._uuid = _frItemUUID++;
         this._report = report;
@@ -2678,7 +2674,7 @@ class frElement { // jshint ignore:line
     set width(val) {
         if (val == null || val === "" || val === "auto" || val === "0px") { val = 0; }
         if(typeof val === "object" && val.type === "function"){
-            val = this.runFunction(val.function,false);
+            val = this._runFunction(val.function);
         }
         val = this._report._parseSize(val,"width");
         this._width = val;
@@ -2711,9 +2707,11 @@ class frElement { // jshint ignore:line
     set height(val) {
         if (val == null || val === "undefinedpx" || val === "" || val === "auto" || val === "0px") { val = 0;}
         if(typeof val === "object" && val.type === "function"){
-            val = this.runFunction(val.function,false)
+            val = this._runFunction(val.function);
         }
-        else val = this._report._parseSize(val,"height");
+        else {
+            val = this._report._parseSize(val,"height");
+        }
         this._height = parseInt(val,10);
         if (val === 0 || val === "0") {
             this._html.style.height = "";
@@ -4078,16 +4076,6 @@ class frPrintFunction extends frPrint { // jshint ignore:line
         this._async = !!val;
     }
 
-    // noinspection JSUnusedGlobalSymbols
-    _runFunction() {
-        this.runFunction(this._function,this._async).then(function(val){
-            this.label = "{ FUNCTION: " + val + " }";
-        }).catch(function(error){
-            console.error("fluentReports: Error in runFunction", error);
-            this.label = "{ FUNCTION }";
-        })
-    }
-
     _dblClickHandler() {
         this.UIBuilder.functionEditor(this._function, null, this.async, this.skip, (result, name, isAsync, isSkip) => {
             let changed = false;
@@ -4485,19 +4473,10 @@ class frBandElement extends frPrint { // jshint ignore:line
         return this._tr.children[id];
     }
 
-    _handleBandCell(field) {
-        const cellId = this._bands.length;
-        this._bands.push(field);
-        const td = this._getCell(cellId);
-        td.innerText = this._getBandTitle(cellId);
-
-        this._fixCellProps(td, field);
-    }
-
     _fixCellProps(td, field) {
-        var val = field.width;
+        let val = field.width;
         if(typeof val === "object" && val.type === "function"){
-            val = this.runFunction(val.function,false)
+            val = this._runFunction(val.function);
         }
         td.style.width = (this._report._parseSize(val,"width") * this.scale || 80) + "px";
         td.style.maxWidth = td.style.width;
@@ -4515,6 +4494,15 @@ class frBandElement extends frPrint { // jshint ignore:line
             }
         }
         // TODO: Handle rest of properties
+    }
+
+    _handleBandCell(field) {
+        const cellId = this._bands.length;
+        this._bands.push(field);
+        const td = this._getCell(cellId);
+        td.innerText = this._getBandTitle(cellId);
+
+        this._fixCellProps(td, field);
     }
 
 }
