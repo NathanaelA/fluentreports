@@ -2724,35 +2724,32 @@ class frElement { // jshint ignore:line
         if (src == null) { return; }
         let targetX = null;
         let targetY = null;
+        if(src.settings){
+            // turns "absoluteX", "x", and "left" into absoluteX
+            // same with the "Y" equivalents
+            targetX = (src.settings.x || src.settings.newX || src.settings.addX || src.settings.left || 0);
+            targetY = (src.settings.y || src.settings.newY || src.settings.addY || src.settings.top || 0);
+        }
         for (let i=0;i<props.length;i++) {
             if (typeof src[props[i]] !== 'undefined') {
                 dest[props[i]] = src[props[i]];
             }
             if (src.settings && typeof src.settings[props[i]] !== 'undefined') {
-                // turns "absoluteX", "x", and "left" into absoluteX
-                // same with the "Y" equivalents
                 const lcProp = props[i].toLowerCase();
                 switch (lcProp) {
-                    case "x":
-                    case "addx":
                     case "left":
                         if (targetX === null) {
                             targetX = src.settings[props[i]];
                         }
                         break;
-
                     case "absolutex":
                         targetX = src.settings[props[i]];
                         break;
-
-                    case "y":
-                    case "addy":
                     case "top":
                         if (targetY === null) {
                             targetY = src.settings[props[i]];
                         }
                         break;
-
                     case "absolutey":
                         targetY = src.settings[props[i]];
                         break;
