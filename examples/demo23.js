@@ -63,7 +63,7 @@ let reportData =
         "fonts": [],
         "variables": {
             "test": "1",
-            "temp": "2"
+            "temp": "5"
         },
         "subReports": [
             {
@@ -81,24 +81,24 @@ let reportData =
                                 "text": "Subreport items/blah Data",
                                 "settings": {
                                     "align": 0,
-                                    "newY": 0,
+                                    "absoluteY": 0,
                                 },
                                 "type": "print"
                             },
                             {
                                 "type": "print",
                                 "settings": {
-                                    "newX": 190,
-                                    "newY": 0,
+                                    "absoluteX": 210,
+                                    "absoluteY": 0,
                                     "align": 0
                                 },
-                                "total": "group"
+                                "field": "hi"
                             },
                             {
                                 "type": "print",
                                 "settings": {
-                                    "newX": 190,
-                                    "newY": 0,
+                                    "absoluteX": 190,
+                                    "absoluteY": 0,
                                     "align": 0
                                 },
                                 "variable": "temp"
