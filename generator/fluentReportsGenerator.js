@@ -2594,6 +2594,30 @@ class frElement { // jshint ignore:line
         let idx = this.frElements.indexOf(this);
         this.frElements.splice(idx, 1);
     }
+    /**
+     * Duplicate this Element
+     */
+    duplicate() {
+        if (this._report.currentSelected === this) {
+            this.blur();
+            this._report.showProperties(null);
+        }
+        let options = {};
+        for(let i =0;i<this.properties.length;i++){
+            options[this.properties[i].field] = this[this.properties[i].field];
+        }
+        if(options.absoluteY){
+            options.absoluteY += 20;
+        }
+        else{
+            options.absoluteY = 20;
+        }
+        let duplicate = new this.constructor(this._report,this._parent,options);
+        if(typeof duplicate._parseElement === "function"){
+            duplicate._parseElement(options);
+        }
+    }
+
 
     get properties() { return this._properties; }
 
@@ -7023,6 +7047,14 @@ class UI { // jshint ignore:line
                     obj.delete();
                 });
                 div.appendChild(deleteIcon);
+                let duplicateIcon = document.createElement('span');
+                duplicateIcon.innerText = "[]";//TODO: get a proper icon for duplicate
+                duplicateIcon.className = "frIcon frIconClickableNB";
+                duplicateIcon.style.position = "absolute";
+                duplicateIcon.style.right = "25px";
+                duplicateIcon.style.top = "3px";
+                duplicateIcon.addEventListener("click", () => {obj.duplicate();});
+                div.appendChild(duplicateIcon);
             }
 
         }
