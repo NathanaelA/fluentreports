@@ -3110,6 +3110,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this._svgRoot.style.width = (this.width * this.scale).toString();
         this._svgRoot.style.height = (this.height * this.scale).toString();
         this._html.appendChild(this._svgRoot);
+        this._html.style.minWidth = "0px";
         this.setupShape();
         this._deleteProperties(['top','left', 'width', 'height']);
         this._addProperties([
@@ -3141,7 +3142,26 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         super._saveProperties(props, ignore);
         props.type = 'shape';
     }
-
+    updateShape(){
+        switch (this._shape) {
+            case 'line':
+                this._svg.setAttribute("x1","0");
+                this._svg.setAttribute("y1","3");
+                this._svg.setAttribute("x2", (this.width * this.scale).toString());
+                this._svg.setAttribute("y2", (3+this.height).toString());
+                break;
+            case 'circle':
+                const offset = this.radius;
+                this._svg.setAttribute("cx",offset);
+                this._svg.setAttribute("cy",offset);
+                this._svg.setAttribute("r",this.radius.toString());
+                break;
+        }
+        this._svgRoot.style.width = (this.width * this.scale).toString();
+        this._svgRoot.style.height = (5 + this.height).toString();
+        this._svg.style.width = (this.width * this.scale).toString();
+        this._svg.style.height = (5 + this.height).toString();
+    }
     setupShape() {
         if (this._svg) {
             this._svgRoot.removeChild(this._svg);
@@ -3150,25 +3170,16 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         switch (this._shape) {
             case 'line':
                 this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'line');
-                this._svg.setAttribute("x1","0");
-                this._svg.setAttribute("y1","3");
-                this._svg.setAttribute("x2", (this.width * this.scale).toString());
-                this._svg.setAttribute("y2", (3+(this.height * this.scale)).toString());
                 break;
             case 'box':
                 this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
                 break;
             case 'circle':
                 this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
-
-                const midY = Math.floor((this.height * this.scale ) / 2);
-                const midX = Math.floor((this.width * this.scale) / 2);
-                this._svg.setAttribute("cx",midX.toString());
-                this._svg.setAttribute("cy",midY.toString());
-                this._svg.setAttribute("r",this.radius.toString());
                 break;
 
         }
+        this.updateShape();
         if (!this._svg) {
             console.error("fluentReportGenerator: SVG shape is not configured in setupShape, set to: ", this._shape);
             return;
@@ -3246,12 +3257,9 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
     }
     set width(val) {
         super.width = val;
+        this._html.style.width = (this.width * this.scale)+"px";
         if (this._svg) {
-            this._svgRoot.style.width = (this._width * this.scale).toString();
-            this._svg.style.width = (this._width * this.scale).toString();
-            if (this._shape === "line") {
-                this._svg.setAttribute("x2", (this.width * this.scale).toString());
-            }
+            this.updateShape();
         }
     }
 
@@ -3260,13 +3268,9 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
     }
     set height(val) {
         super.height = val;
-        this._html.style.height = (5+(this.height * this.scale))+"px";
+        this._html.style.height = (5+(this.height))+"px";
         if (this._svg) {
-            this._svgRoot.style.height = (5 + (this.height * this.scale)).toString();
-            this._svg.style.height = (5 + (this.height * this.scale)).toString();
-            if (this._shape === "line") {
-                this._svg.setAttribute("y2", (3 + (this.height * this.scale)).toString());
-            }
+            this.updateShape();
         }
     }
 
@@ -7260,7 +7264,6 @@ class UI { // jshint ignore:line
                                 }
                                 input.value = obj[prop.field] || "";
                                 break;
-
                             case 'function':
                                 input = document.createElement('span');
                                 input.innerText = "{FUNC}";
