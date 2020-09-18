@@ -258,7 +258,7 @@ class FluentReportsGenerator {
         this._marginRight= 72;
         this._marginTop = 72;
         this._marginBottom = 72;
-
+        this._copiedElement = null;
         this._name = "report.pdf";
         this._properties = [
             {type: 'string', field: 'name', functionable: true, lined:false},
@@ -1024,6 +1024,8 @@ class FluentReportsGenerator {
         this._reportLayout.className = "frReportInner";
         this._reportLayout.style.minHeight = (this._frame.clientHeight-51)+"px"; // TODO: Get actual size of toolBarLayout instead of hardcoding it...
         this._reportLayout.addEventListener("click", this._reportLayoutClicked.bind(this));
+        this._reportLayout.addEventListener("keydown", this._reportLayoutKeyed.bind(this));
+        this._reportLayout.tabIndex = 0;
         this._reportScroller.appendChild(this._reportLayout);
         this._sectionConstrainer = document.createElement("div");
         this._sectionConstrainer.style.left = "0px";
@@ -1072,6 +1074,25 @@ class FluentReportsGenerator {
 
         this._sectionIn = this._getSectionIn(y);
         this.showProperties(this._getSection(this._sectionIn), true);
+    }
+    _reportLayoutKeyed(args) {
+        console.log(args.key.toLowerCase(),args.ctrlKey);
+        if(args.key.toLowerCase() === 'c' && args.ctrlKey){
+            if (this._currentSelected) {
+                this._copiedElement = this._currentSelected;
+            }
+        }
+        else if(args.key.toLowerCase() === 'v' && args.ctrlKey){
+            if(this._copiedElement){
+                this._copiedElement.duplicate();
+            }
+        }
+        else if(args.key.toLowerCase() === 'x' && args.ctrlKey){
+            if(this._currentSelected){
+                this._copiedElement = this._currentSelected;
+                this._copiedElement.delete();
+            }
+        }
     }
 
     _generateInterface() {
