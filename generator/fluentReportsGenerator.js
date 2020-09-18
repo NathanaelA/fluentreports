@@ -258,7 +258,8 @@ class FluentReportsGenerator {
         this._marginRight= 72;
         this._marginTop = 72;
         this._marginBottom = 72;
-        this._copiedElement = null;
+        this._copiedElementClass = null;
+        this._copiedElementOptions = null;
         this._name = "report.pdf";
         this._properties = [
             {type: 'string', field: 'name', functionable: true, lined:false},
@@ -1079,18 +1080,31 @@ class FluentReportsGenerator {
         console.log(args.key.toLowerCase(),args.ctrlKey);
         if(args.key.toLowerCase() === 'c' && args.ctrlKey){
             if (this._currentSelected) {
-                this._copiedElement = this._currentSelected;
+                this._copiedElementClass = this._currentSelected.constructor;
+                let options = {};
+                for(let i =0;i<this._currentSelected.properties.length;i++){
+                    options[this._currentSelected.properties[i].field] = this._currentSelected[this._currentSelected.properties[i].field];
+                }
+                this._copiedElementOptions = options;
             }
         }
         else if(args.key.toLowerCase() === 'v' && args.ctrlKey){
-            if(this._copiedElement){
-                this._copiedElement.duplicate();
+            if(this._copiedElementClass){
+                let duplicate = new this._copiedElementClass(this,this._getSection(this._sectionIn),this._copiedElementOptions);
+                if(typeof duplicate._parseElement === "function"){
+                    duplicate._parseElement(this._copiedElementOptions);
+                }
             }
         }
         else if(args.key.toLowerCase() === 'x' && args.ctrlKey){
             if(this._currentSelected){
-                this._copiedElement = this._currentSelected;
-                this._copiedElement.delete();
+                this._copiedElementClass = this._currentSelected.constructor;
+                let options = {};
+                for(let i =0;i<this._currentSelected.properties.length;i++){
+                    options[this.properties[i].field] = this._currentSelected[this._currentSelected.properties[i].field];
+                }
+                this._copiedElementOptions = options;
+                this._currentSelected.delete();
             }
         }
     }
@@ -3110,16 +3124,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         ]);
     }
     _parseElement(data) {
-        this.shape = data.settings.shape || "line";
-        this.radius = data.settings.radius || 50;
-        this.width = data.settings.width || 50;
-        this.height = data.settings.height || 50;
-        this.top = data.settings.top || 0;
-        this.left = data.settings.left || 0;
-        this.borderColor = data.settings.borderColor || "";
-        this.fill = data.settings.fill || "";
-        this.usesSpace = data.settings.usesSpace || true;
-        this.fillOpacity = data.settings.fillOpacity || 1.0;
+        this._copyProperties(data,this,["shape","radius","width","height","top","left","borderColor","fill","usesSpace","fillOpacity"])
     }
     _saveProperties(props, ignore = []) {
         super._saveProperties(props, ignore);
@@ -7082,7 +7087,6 @@ class UI { // jshint ignore:line
         const props = overrideProps || obj.properties;
         this._handleShowProperties(props, obj, table, layout);
         layout.appendChild(table);
-
         // Might be able to scan the TR children
         let children = table.children[0].children;
         // Skip first row because it is our "Title" row....
@@ -7139,7 +7143,6 @@ class UI { // jshint ignore:line
 
     _handleShowProperty(prop, obj, name, tr, layout) {
         layout.trackCreated.push(name);
-
         let td1, td2, created=true, input;
         if (tr.children.length) {
             if (tr.children.length === 1) {
