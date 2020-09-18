@@ -1077,7 +1077,9 @@ class FluentReportsGenerator {
         this.showProperties(this._getSection(this._sectionIn), true);
     }
     _reportLayoutKeyed(args) {
-        console.log(args.key.toLowerCase(),args.ctrlKey);
+        if(this._currentSelected.constructor.name !== "frPrintLabel") {
+            return;//TODO: currently there's a issue if you're editing a label via the html contentEditable, it will listen to keybinds.
+        }
         if(args.key.toLowerCase() === 'c' && args.ctrlKey){
             if (this._currentSelected) {
                 this._copiedElementClass = this._currentSelected.constructor;
@@ -1104,6 +1106,11 @@ class FluentReportsGenerator {
                     options[this.properties[i].field] = this._currentSelected[this._currentSelected.properties[i].field];
                 }
                 this._copiedElementOptions = options;
+                this._currentSelected.delete();
+            }
+        }
+        else if(args.key.toLowerCase() === 'delete' || args.key.toLowerCase() === "backspace"){
+            if(this._currentSelected){
                 this._currentSelected.delete();
             }
         }
@@ -2675,7 +2682,9 @@ class frElement { // jshint ignore:line
     get left() { // noinspection JSCheckFunctionSignatures
         return parseInt(parseInt(this._html.style.left, 10) / this.scale, 10);
     }
-    set left(val) { this._html.style.left = (parseInt(val,10) * this.scale)+"px"; }
+    set left(val) { this._html.style.left = (parseInt(val,10) * this.scale)+"px";
+        console.log(val,this.left);
+    }
 
     get width() { return parseInt(this._width, 10); }
     set width(val) {
@@ -3964,6 +3973,7 @@ class frPrint extends frTitledLabel {
 
 class frPrintLabel extends frPrint  { // jshint ignore:line
     constructor(report, parent, options = {}) {
+
         if (typeof options.elementTitle === 'undefined') {
             options.elementTitle = "Label";
         }
