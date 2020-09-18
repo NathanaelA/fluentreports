@@ -2682,9 +2682,7 @@ class frElement { // jshint ignore:line
     get left() { // noinspection JSCheckFunctionSignatures
         return parseInt(parseInt(this._html.style.left, 10) / this.scale, 10);
     }
-    set left(val) { this._html.style.left = (parseInt(val,10) * this.scale)+"px";
-        console.log(val,this.left);
-    }
+    set left(val) { this._html.style.left = (parseInt(val,10) * this.scale)+"px";}
 
     get width() { return parseInt(this._width, 10); }
     set width(val) {
