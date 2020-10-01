@@ -7087,7 +7087,7 @@ class UI { // jshint ignore:line
 
     _handleShowProperties(props, obj, table, layout) {
         let propertyToSkip = -1;
-        if(obj.text !== undefined || obj.function !== undefined){
+        if(obj.text !== undefined){
             for (let i = 0; i < props.length; i++) {
                 if (props[i].field === "formatFunction") {
                     propertyToSkip = i;
