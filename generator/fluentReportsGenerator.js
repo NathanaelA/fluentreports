@@ -2491,7 +2491,9 @@ class frSection { // jshint ignore:line
         return results;
     }
 
-    _onDragStart() {
+    _onDragStart(e) {
+        // Only allow left-mouse button dragging
+        if (typeof e.button !== 'undefined' && e.button !== 0) { return false; }
 
         let pageEnd = parseInt(this._report.reportScroller.clientHeight,10);
         if (this.frSections.length) {
@@ -2923,8 +2925,11 @@ class frElement { // jshint ignore:line
         //this._draggable.autoScroll = {target: document.getElementById("frReport")};
         this._draggable.containment = this._parent.elementContainer;
 
-        this._draggable.onDragStart = () => {
-            if (this._locked || this._readonly) { return; }
+        this._draggable.onDragStart = (e) => {
+            // Only allow left-mouse button dragging
+            if (typeof e.button !== 'undefined' && e.button !== 0) { return false; }
+
+            if (this._locked || this._readonly) { return false; }
 
             this._draggable.containment = this._report.reportLayout;
             this._draggable.snap = this._generateSnapping();
@@ -3004,7 +3009,10 @@ class frElement { // jshint ignore:line
         }
     }
 
-    _mouseDown() {
+    _mouseDown(e) {
+        // Only allow Left mouse button to select items...
+        if (e.button !== 0) { return; }
+        
         this._selected();
     }
 
@@ -3193,7 +3201,16 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         ]);
     }
     _parseElement(data) {
-        this._copyProperties(data,this,["shape","radius","width","height","top","left","borderColor","fill","usesSpace","fillOpacity"])
+        this.shape = data.settings.shape || "line";
+        this.radius = data.settings.radius || 50;
+        this.width = data.settings.width || 50;
+        this.height = data.settings.height || 50;
+        this.top = data.settings.top || 0;
+        this.left = data.settings.left || 0;
+        this.borderColor = data.settings.borderColor || "";
+        this.fill = data.settings.fill || "";
+        this.usesSpace = data.settings.usesSpace || true;
+        this.fillOpacity = data.settings.fillOpacity || 1.0;
     }
     _saveProperties(props, ignore = []) {
         super._saveProperties(props, ignore);
