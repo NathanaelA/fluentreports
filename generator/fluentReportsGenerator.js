@@ -258,7 +258,8 @@ class FluentReportsGenerator {
         this._marginRight= 72;
         this._marginTop = 72;
         this._marginBottom = 72;
-
+        this._copiedElementClass = null;
+        this._copiedElementOptions = null;
         this._name = "report.pdf";
         this._properties = [
             {type: 'string', field: 'name', functionable: true, lined:false},
@@ -1030,6 +1031,8 @@ class FluentReportsGenerator {
         this._reportLayout.className = "frReportInner";
         this._reportLayout.style.minHeight = (this._frame.clientHeight-51)+"px"; // TODO: Get actual size of toolBarLayout instead of hardcoding it...
         this._reportLayout.addEventListener("click", this._reportLayoutClicked.bind(this));
+        this._reportLayout.addEventListener("keydown", this._reportLayoutKeyed.bind(this));
+        this._reportLayout.tabIndex = 0;
         this._reportScroller.appendChild(this._reportLayout);
         this._sectionConstrainer = document.createElement("div");
         this._sectionConstrainer.style.left = "0px";
@@ -1078,6 +1081,45 @@ class FluentReportsGenerator {
         }
         this._updateSectionIn(args.clientY);
         this.showProperties(this._getSection(this._sectionIn), true);
+    }
+    _reportLayoutKeyed(args) {
+        if(this._currentSelected.constructor.name !== "frPrintLabel") {
+            return;//TODO: currently there's a issue if you're editing a label via the html contentEditable, it will listen to keybinds.
+        }
+        if(args.key.toLowerCase() === 'c' && args.ctrlKey){
+            if (this._currentSelected) {
+                this._copiedElementClass = this._currentSelected.constructor;
+                let options = {};
+                for(let i =0;i<this._currentSelected.properties.length;i++){
+                    options[this._currentSelected.properties[i].field] = this._currentSelected[this._currentSelected.properties[i].field];
+                }
+                this._copiedElementOptions = options;
+            }
+        }
+        else if(args.key.toLowerCase() === 'v' && args.ctrlKey){
+            if(this._copiedElementClass){
+                let duplicate = new this._copiedElementClass(this,this._getSection(this._sectionIn),this._copiedElementOptions);
+                if(typeof duplicate._parseElement === "function"){
+                    duplicate._parseElement(this._copiedElementOptions);
+                }
+            }
+        }
+        else if(args.key.toLowerCase() === 'x' && args.ctrlKey){
+            if(this._currentSelected){
+                this._copiedElementClass = this._currentSelected.constructor;
+                let options = {};
+                for(let i =0;i<this._currentSelected.properties.length;i++){
+                    options[this.properties[i].field] = this._currentSelected[this._currentSelected.properties[i].field];
+                }
+                this._copiedElementOptions = options;
+                this._currentSelected.delete();
+            }
+        }
+        else if(args.key.toLowerCase() === 'delete' || args.key.toLowerCase() === "backspace"){
+            if(this._currentSelected){
+                this._currentSelected.delete();
+            }
+        }
     }
 
     _generateInterface() {
@@ -2646,6 +2688,30 @@ class frElement { // jshint ignore:line
         let idx = this.frElements.indexOf(this);
         this.frElements.splice(idx, 1);
     }
+    /**
+     * Duplicate this Element
+     */
+    duplicate() {
+        if (this._report.currentSelected === this) {
+            this.blur();
+            this._report.showProperties(null);
+        }
+        let options = {};
+        for(let i =0;i<this.properties.length;i++){
+            options[this.properties[i].field] = this[this.properties[i].field];
+        }
+        if(options.absoluteY){
+            options.absoluteY += 20;
+        }
+        else{
+            options.absoluteY = 20;
+        }
+        let duplicate = new this.constructor(this._report,this._parent,options);
+        if(typeof duplicate._parseElement === "function"){
+            duplicate._parseElement(options);
+        }
+    }
+
 
     get properties() { return this._properties; }
 
@@ -2668,7 +2734,7 @@ class frElement { // jshint ignore:line
     get left() { // noinspection JSCheckFunctionSignatures
         return parseInt(parseInt(this._html.style.left, 10) / this.scale, 10);
     }
-    set left(val) { this._html.style.left = (parseInt(val,10) * this.scale)+"px"; }
+    set left(val) { this._html.style.left = (parseInt(val,10) * this.scale)+"px";}
 
     get width() { return parseInt(this._width, 10); }
     set width(val) {
@@ -3127,16 +3193,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         ]);
     }
     _parseElement(data) {
-        this.shape = data.settings.shape || "line";
-        this.radius = data.settings.radius || 50;
-        this.width = data.settings.width || 50;
-        this.height = data.settings.height || 50;
-        this.top = data.settings.top || 0;
-        this.left = data.settings.left || 0;
-        this.borderColor = data.settings.borderColor || "";
-        this.fill = data.settings.fill || "";
-        this.usesSpace = data.settings.usesSpace || true;
-        this.fillOpacity = data.settings.fillOpacity || 1.0;
+        this._copyProperties(data,this,["shape","radius","width","height","top","left","borderColor","fill","usesSpace","fillOpacity"])
     }
     _saveProperties(props, ignore = []) {
         super._saveProperties(props, ignore);
@@ -3979,6 +4036,7 @@ class frPrint extends frTitledLabel {
 
 class frPrintLabel extends frPrint  { // jshint ignore:line
     constructor(report, parent, options = {}) {
+
         if (typeof options.elementTitle === 'undefined') {
             options.elementTitle = "Label";
         }
@@ -7051,13 +7109,20 @@ class UI { // jshint ignore:line
                     obj.delete();
                 });
                 div.appendChild(deleteIcon);
+                let duplicateIcon = document.createElement('span');
+                duplicateIcon.innerText = "[]";//TODO: get a proper icon for duplicate
+                duplicateIcon.className = "frIcon frIconClickableNB";
+                duplicateIcon.style.position = "absolute";
+                duplicateIcon.style.right = "25px";
+                duplicateIcon.style.top = "3px";
+                duplicateIcon.addEventListener("click", () => {obj.duplicate();});
+                div.appendChild(duplicateIcon);
             }
 
         }
         const props = overrideProps || obj.properties;
         this._handleShowProperties(props, obj, table, layout);
         layout.appendChild(table);
-
         // Might be able to scan the TR children
         let children = table.children[0].children;
         // Skip first row because it is our "Title" row....
@@ -7114,7 +7179,6 @@ class UI { // jshint ignore:line
 
     _handleShowProperty(prop, obj, name, tr, layout) {
         layout.trackCreated.push(name);
-
         let td1, td2, created=true, input;
         if (tr.children.length) {
             if (tr.children.length === 1) {
