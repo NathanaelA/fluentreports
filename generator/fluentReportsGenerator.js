@@ -3446,6 +3446,43 @@ class frElement { // jshint ignore:line
         }
     }
 
+    _createAlignSelect() {
+        const curAlign = this._align;
+        let selectGroup = document.createElement('select');
+
+        let item;
+        if (this._hasAlignNone === true) {
+            item = new Option("None", "none");
+            if (curAlign === "none") {
+                item.selected = true;
+            }
+            selectGroup.appendChild(item);
+        }
+
+        item = new Option("Left", "left");
+        if (curAlign === "left" || curAlign === "0" || curAlign === 0) {
+            item.selected = true;
+        }
+        selectGroup.appendChild(item);
+
+        item = new Option("Center", "center");
+        if (curAlign === "center" || curAlign === "2" || curAlign === 2) {
+            item.selected = true;
+        }
+        selectGroup.appendChild(item);
+
+        item = new Option("Right", "right");
+        if (curAlign === "right" || curAlign === "1" || curAlign === 1) {
+            item.selected = true;
+        }
+        selectGroup.appendChild(item);
+
+
+
+        return selectGroup;
+    }
+
+
     _deleteProperties(arr) {
         if (Array.isArray(arr)) {
             for (let i = 0; i < arr.length; i++) {
@@ -3838,7 +3875,6 @@ class frStandardHeader extends frTitledLabel { // jshint ignore:line
     }
 }
 
-// TODO: Maybe Footer should be a descendant of Band?
 class frStandardFooter extends frTitledLabel { // jshint ignore:line
     constructor(report, parent, options = {}) {
         options.elementTitle = "Standard Footer";
@@ -4158,31 +4194,6 @@ class frImage extends frTitledElement { // jshint ignore:line
         this._valign = val;
     }
 
-    _createAlignSelect() {
-        const curAlign = this._align;
-        let selectGroup = document.createElement('select');
-
-        let item = new Option("Left", "left");
-        if (curAlign === "left") {
-            item.selected = true;
-        }
-        selectGroup.appendChild(item);
-
-        item = new Option("Right", "right");
-        if (curAlign === "right") {
-            item.selected = true;
-        }
-        selectGroup.appendChild(item);
-
-        item = new Option("Center", "center");
-        if (curAlign === "center") {
-            item.selected = true;
-        }
-        selectGroup.appendChild(item);
-
-        return selectGroup;
-    }
-
     _createVAlignSelect() {
         const curAlign = this._valign;
         let selectGroup = document.createElement('select');
@@ -4306,7 +4317,7 @@ class frPrint extends frTitledLabel {
         this._textColor = '';
         this._link = "";
         this._rotate = 0;
-        this._align = "left";
+        this._align = (this._hasAlignNone === true ? "none" : "left");
         this._font = "times";
         this._formatFunction = "none";
 
@@ -4377,7 +4388,7 @@ class frPrint extends frTitledLabel {
                 {
                     type: 'select',
                     field: "align",
-                    default: "left",
+                    default: (this._hasAlignNone === true ? "none" : "left"),
                     display: this._createAlignSelect.bind(this),
                     destination: 'settings'
                 },
@@ -4399,6 +4410,10 @@ class frPrint extends frTitledLabel {
             );
         }
 
+    }
+
+    get _hasAlignNone() {
+        return true;
     }
 
     _createFontSelect() {
@@ -4423,31 +4438,6 @@ class frPrint extends frTitledLabel {
             }
             selectGroup.appendChild(item);
         }
-
-        return selectGroup;
-    }
-
-    _createAlignSelect() {
-        const curAlign = this._align;
-        let selectGroup = document.createElement('select');
-
-        let item = new Option("Left", "left");
-        if (curAlign === "left" || curAlign === "0" || curAlign === 0) {
-            item.selected = true;
-        }
-        selectGroup.appendChild(item);
-
-        item = new Option("Right", "right");
-        if (curAlign === "right" || curAlign === "1" || curAlign === 1) {
-            item.selected = true;
-        }
-        selectGroup.appendChild(item);
-
-        item = new Option("Center", "center");
-        if (curAlign === "center" || curAlign === "2" || curAlign === 2) {
-            item.selected = true;
-        }
-        selectGroup.appendChild(item);
 
         return selectGroup;
     }
@@ -4604,26 +4594,40 @@ class frPrint extends frTitledLabel {
         return this._align;
     }
 
+    get _htmlWidth() {
+        return this._html.clientWidth;
+    }
+
+
     set align(val) {
         switch (val) {
             case 0:
             case "left":
                 this._align = "left";
+                this.absoluteX = 0;
                 break;
 
             case 1:
             case 'right':
                 this._align = "right";
+                //this.absoluteX = (parseInt((this.pageWidth * this.scale), 10)) - (this._htmlWidth * this.scale);
                 break;
 
             case 2:
             case "center":
                 this._align = "center";
+                //this.absoluteX = (parseInt((this.pageWidth ), 10) / 2) - (this._htmlWidth / 2);
+                break;
+
+            case 3:
+            case "none":
+                this._align = "none";
                 break;
 
             default:
                 console.error("fluentReports: Unknown alignment", val);
         }
+
     }
 
     get formatFunction() {
@@ -4642,7 +4646,6 @@ class frPrint extends frTitledLabel {
     _saveProperties(props, ignore) {
         super._saveProperties(props, ignore);
         props.type = 'print';
-
     }
 
 
@@ -4905,7 +4908,6 @@ class frPrintPageNumber extends frPrintLabel { // jshint ignore:line
         super._parseElement(data);
     }
 
-
 }
 
 class frPrintDynamic extends frPrint { // jshint ignore:line
@@ -5027,6 +5029,10 @@ class frPrintDynamic extends frPrint { // jshint ignore:line
 class frBandElement extends frPrint { // jshint ignore:line
     get columns() {
         return this._columns;
+    }
+
+    get _hasAlignNone() {
+        return false;
     }
 
     set columns(val) {
@@ -6006,17 +6012,18 @@ class UI { // jshint ignore:line
             }
             selectGroup.appendChild(item);
 
+            item = new Option("Center", "2");
+            if (curAlign === "2" || curAlign === 2) {
+                item.selected = true;
+            }
+            selectGroup.appendChild(item);
+
             item = new Option("Right", "3");
             if (curAlign === "3" || curAlign === 3) {
                 item.selected = true;
             }
             selectGroup.appendChild(item);
 
-            item = new Option("Center", "2");
-            if (curAlign === "2" || curAlign === 2) {
-                item.selected = true;
-            }
-            selectGroup.appendChild(item);
 
             return selectGroup;
         };
