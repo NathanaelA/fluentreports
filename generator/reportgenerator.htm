@@ -12,7 +12,7 @@
         }
         #fluentReportsEditor {
             border: solid red 1px;
-            height: 300px;
+            height: 450px;
             zwidth: 1136px;
         }
     </style>
@@ -74,6 +74,7 @@
                 name: 'demo19.pdf',
                 autoPrint: false,
                 fontSize: 8,
+                paperSize: "legal",
 
                 variables: {counter: 0},
 
@@ -160,6 +161,7 @@
             data: data,
             report: reportData,
             debug: true,
+            // preview: false,  // You can disable the preview button if you want...
             save: (value, done) => {
                 console.log("Saving");
                 const results = document.getElementById("results");

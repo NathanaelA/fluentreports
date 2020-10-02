@@ -4,7 +4,7 @@
  *
  * Any questions please feel free to put a issue up on github
  *
- *                                                      Nathan@master-technology.com
+ *                                                        Nathan@master-technology.com
  *************************************************************************************/
 "use strict";
 
@@ -16,56 +16,121 @@
 // This counter makes sure we generate unique elements against every instance, every object -- this needs to stay static
 let _frItemUUID = 10000; // jshint ignore:line
 
-class FluentReportsGenerator {
+// Used to track if dialogs are opened, so that global key handler won't interfere
+let _frDialogCounter=0;
 
+class FluentReportsGenerator {
     /*
     * Private Properties
      */
-    get uuid() { return this._uuid; }
+    get uuid() {
+        return this._uuid;
+    }
 
-    get reportLayout() { return this._reportLayout; }
-    get reportScroller() { return this._reportScroller; }
-    get sectionConstrainer() { return this._sectionConstrainer; }
-    // noinspection JSUnusedGlobalSymbols
-    get reportData() { return this._reportData; }
-    get reportFields() { return this._parsedData; }
-    get reportCalculations() { return this._calculations; }
-    get reportVariables() { return this._reportData.variables;}
-    get reportTotals() { return this._totals; }
-    // noinspection JSUnusedGlobalSymbols
-    get reportSections() { return this._sections; }
-    // noinspection JSUnusedGlobalSymbols
-    get reportGroups() { return this._groupBys; }
-    // noinspection JSUnusedGlobalSymbols
-    get reportFunctions() { return this._functions; }
-    // noinspection JSUnusedGlobalSymbols
-    get sectionIn() { return this._sectionIn; }
-    get additionalFonts() { return this._registeredFonts; }
+    get reportLayout() {
+        return this._reportLayout;
+    }
 
-    get currentSelected() { return this._currentSelected; }
-    set currentSelected(val) { this._currentSelected = val; }
-    get properties() { return this._properties; }
+    get reportScroller() {
+        return this._reportScroller;
+    }
 
-    get elementTitle() { return "Report"; }
-    get gridSnapping() { return this._gridSnapping; }
+    get sectionConstrainer() {
+        return this._sectionConstrainer;
+    }
 
-    get debugging() { return this._debugging; }
-    get scale() { return this._scale; }
+    // noinspection JSUnusedGlobalSymbols
+    get reportData() {
+        return this._reportData;
+    }
+
+    get reportFields() {
+        return this._parsedData;
+    }
+
+    get reportCalculations() {
+        return this._calculations;
+    }
+
+    get reportVariables() {
+        return this._reportData.variables;
+    }
+
+    get reportTotals() {
+        return this._totals;
+    }
+
+    // noinspection JSUnusedGlobalSymbols
+    get reportSections() {
+        return this._sections;
+    }
+
+    // noinspection JSUnusedGlobalSymbols
+    get reportGroups() {
+        return this._groupBys;
+    }
+
+    // noinspection JSUnusedGlobalSymbols
+    get reportFunctions() {
+        return this._functions;
+    }
+
+    // noinspection JSUnusedGlobalSymbols
+    get sectionIn() {
+        return this._sectionIn;
+    }
+
+    get additionalFonts() {
+        return this._registeredFonts;
+    }
+
+    get currentSelected() {
+        return this._currentSelected;
+    }
+
+    set currentSelected(val) {
+        this._currentSelected = val;
+    }
+
+    get properties() {
+        return this._properties;
+    }
+
+    get elementTitle() {
+        return "Report";
+    }
+
+    get gridSnapping() {
+        return this._gridSnapping;
+    }
+
+    get debugging() {
+        return this._debugging;
+    }
+
+    get scale() {
+        return this._scale;
+    }
+
     get UIBuilder() {
         if (this._UIBuilderClass == null) {
             this._UIBuilderClass = new this._UIBuilder(this);
         }
         return this._UIBuilderClass;
     }
+
     get frSections() {
         return this._frSections;
     }
+
     get frElements() {
         return this._frElements;
     }
+
     get pageWidth() {
         return this._paperDims[0] - this._marginLeft - this._marginRight;
     }
+
     get pageHeight() {
         return (this._paperDims[1] - this._marginTop) - this._marginBottom;
     }
@@ -78,47 +143,84 @@ class FluentReportsGenerator {
      * Enable/Disable auto printing
      * @returns {boolean}
      */
-    get autoPrint() { return this._autoPrint; }
-    set autoPrint(val) { this._autoPrint = !!val; }
+    get autoPrint() {
+        return this._autoPrint;
+    }
+
+    set autoPrint(val) {
+        this._autoPrint = !!val;
+    }
 
     /**
      * Expose Margins
      * @returns {*}
      */
-    get marginLeft() { return this._marginLeft; }
+    get marginLeft() {
+        return this._marginLeft;
+    }
+
     set marginLeft(val) {
         this._marginLeft = parseInt(val, 10);
         this._resetPaperSizeLocation();
     }
-    get marginRight() { return this._marginRight; }
+
+    get marginRight() {
+        return this._marginRight;
+    }
+
     set marginRight(val) {
         this._marginRight = parseInt(val, 10);
         this._resetPaperSizeLocation();
     }
-    get marginTop() { return this._marginTop; }
-    set marginTop(val) { this._marginTop = parseInt(val, 10); }
-    get marginBottom() { return this._marginBottom; }
-    set marginBottom(val) { this._marginBottom = parseInt(val, 10); }
+
+    get marginTop() {
+        return this._marginTop;
+    }
+
+    set marginTop(val) {
+        this._marginTop = parseInt(val, 10);
+    }
+
+    get marginBottom() {
+        return this._marginBottom;
+    }
+
+    set marginBottom(val) {
+        this._marginBottom = parseInt(val, 10);
+    }
 
     /**
      * Set/get the file name of the report
      * @returns {string}
      */
-    get name() { return this._name; }
-    set name(val) { this._name = val; }
+    get name() {
+        return this._name;
+    }
+
+    set name(val) {
+        this._name = val;
+    }
 
     /**
      * Set/Get the font size
      * @returns {number}
      */
-    get fontSize() { return this._fontSize; }
-    set fontSize(val) { this._fontSize = parseInt(val, 10);}
+    get fontSize() {
+        return this._fontSize;
+    }
+
+    set fontSize(val) {
+        this._fontSize = parseInt(val, 10);
+    }
 
     /**
      * set/get the paper size
      * @returns {string}
      */
-    get paperSize() { return this._paperSize; }
+    get paperSize() {
+        return this._paperSize;
+    }
+
     // noinspection JSUnusedGlobalSymbols
     set paperSize(val) {
         if (val === this._paperSize) {
@@ -150,6 +252,7 @@ class FluentReportsGenerator {
     get data() {
         return this._data;
     }
+
     set data(val) {
         if (this._data !== val) {
             this._parseData(val);
@@ -163,6 +266,7 @@ class FluentReportsGenerator {
     get report() {
         return this._generateSave();
     }
+
     set report(val) {
         if (val !== this._reportData) {
             this._parseReport(val);
@@ -173,10 +277,15 @@ class FluentReportsGenerator {
      * Set/Get the Paper orientation
      * @returns {string}
      */
-    get paperOrientation() { return this._paperOrientation; }
+    get paperOrientation() {
+        return this._paperOrientation;
+    }
+
     // noinspection JSUnusedGlobalSymbols
     set paperOrientation(val) {
-        if (val === this._paperOrientation) { return; }
+        if (val === this._paperOrientation) {
+            return;
+        }
         if (val === 'landscape') {
             this._paperOrientation = "landscape";
         } else {
@@ -186,8 +295,13 @@ class FluentReportsGenerator {
         this._resetPaperSizeLocation();
     }
 
-    get formatterFunctions() { return this._formatterFunctions; }
-    set formatterFunctions(val) { this._formatterFunctions = val; }
+    get formatterFunctions() {
+        return this._formatterFunctions;
+    }
+
+    set formatterFunctions(val) {
+        this._formatterFunctions = val;
+    }
 
     /**
      * The Constructor
@@ -198,7 +312,7 @@ class FluentReportsGenerator {
         this._UIBuilder = UI;
 
         // Tracking Information
-        this._formatterFunctions =  {};
+        this._formatterFunctions = {};
         this._parentElement = null;
         this._includeCSS = options.css !== false;
         this._includeJS = options.js !== false;
@@ -242,7 +356,9 @@ class FluentReportsGenerator {
         this._groupBys = [];
         this._subReports = [];
 
-        this._saveFunction = (value, done) => { done(); };
+        this._saveFunction = (value, done) => {
+            done();
+        };
         this._previewFunction = null;
         this._uuid = _frItemUUID++;
         this._gridSnapping = {snapping: false, size: 10};
@@ -255,21 +371,34 @@ class FluentReportsGenerator {
         this._fontSize = 0;
         this._autoPrint = false;
         this._marginLeft = 72;
-        this._marginRight= 72;
+        this._marginRight = 72;
         this._marginTop = 72;
         this._marginBottom = 72;
-
+        this._copiedElementClass = null;
+        this._copiedElementOptions = null;
         this._name = "report.pdf";
         this._properties = [
-            {type: 'string', field: 'name', functionable: true, lined:false},
+            {type: 'string', field: 'name', functionable: true, lined: false},
             {type: 'boolean', field: 'autoPrint', default: false},
             {type: 'number', field: 'fontSize', default: 0},
             {type: 'number', title: 'margin.left', field: 'marginLeft', default: 72},
             {type: 'number', title: 'margin.right', field: 'marginRight', default: 72},
             {type: 'number', title: 'margin.top', field: 'marginTop', default: 72},
             {type: 'number', title: 'margin.bottom', field: 'marginBottom', default: 72},
-            {type: 'selection', title: 'Paper Size', field: 'paperSize', values: ['letter', 'legal'], default: 'letter'},
-            {type: 'selection', title: 'Orientation', field:'paperOrientation', values: ['portrait', 'landscape'], default: 'portrait'},
+            {
+                type: 'selection',
+                title: 'Paper Size',
+                field: 'paperSize',
+                values: ['letter', 'legal'],
+                default: 'letter'
+            },
+            {
+                type: 'selection',
+                title: 'Orientation',
+                field: 'paperOrientation',
+                values: ['portrait', 'landscape'],
+                default: 'portrait'
+            },
             {type: 'button', title: 'Variables', click: this._setVariables.bind(this)},
             {type: 'button', title: 'Totals', click: this._setTotals.bind(this)},
             {type: 'button', title: 'Fonts', click: this._setFonts.bind(this)},
@@ -316,10 +445,9 @@ class FluentReportsGenerator {
             this.setConfig('preview', options.preview);
         }
 
-        if(options.formatterFunctions){
-            this.setConfig('formatterFunctions',options.formatterFunctions);
+        if (options.formatterFunctions) {
+            this.setConfig('formatterFunctions', options.formatterFunctions);
         }
-
 
 
         this.buildUI(this._parentElement);
@@ -332,14 +460,17 @@ class FluentReportsGenerator {
      * @return {*}
      */
     _parseSize(val, which) {
-        if (val == null) { return 0; }
-        if (typeof val === 'number') { return val; }
+        if (val == null) {
+            return 0;
+        }
+        if (typeof val === 'number') {
+            return val;
+        }
         if (val.indexOf("%") > 0) {
             let temp = parseInt(val, 10) / 100;
-            if(which === "width") {
+            if (which === "width") {
                 return parseInt(this.pageWidth * temp, 10);
-            }
-            else if(which === "height") {
+            } else if (which === "height") {
                 return parseInt(this.pageHeight * temp, 10);
             }
         }
@@ -352,11 +483,15 @@ class FluentReportsGenerator {
      * @param value
      */
     setConfig(option, value) {
-        if (value == null) { return; }
+        if (value == null) {
+            return;
+        }
         switch (option) {
             case 'formatterFunctions':
                 for (let key in value) {
-                    if (!value.hasOwnProperty(key)) { continue; }
+                    if (!value.hasOwnProperty(key)) {
+                        continue;
+                    }
                     if (typeof value[key] === 'function') {
                         this._formatterFunctions[key] = value[key];
                     } else {
@@ -366,7 +501,9 @@ class FluentReportsGenerator {
                 break;
             case 'scale':
                 this._scale = parseFloat(value);
-                if (isNaN(this._scale)) { this._scale = 1.5; }
+                if (isNaN(this._scale)) {
+                    this._scale = 1.5;
+                }
                 break;
 
             case 'UIBuilder':
@@ -418,9 +555,9 @@ class FluentReportsGenerator {
 
                 if (this._previewButton != null) {
                     if (this._previewFunction === false) {
-                            this._previewButton.style.display = "none";
+                        this._previewButton.style.display = "none";
                     } else {
-                            this._previewButton.style.display = "";
+                        this._previewButton.style.display = "";
                     }
                 }
 
@@ -443,7 +580,7 @@ class FluentReportsGenerator {
     _getSectionIn(offset) {
         let sec = 0;
         const len = this._frSections.length;
-        for (let i=0;i<len;i++) {
+        for (let i = 0; i < len; i++) {
             const top = this._frSections[i].top;
             if (offset >= top && offset <= top + this._frSections[i].height) {
                 sec = i;
@@ -472,10 +609,10 @@ class FluentReportsGenerator {
     _getSectionOptions(sectionIn) {
         let options = {top: "5px"};
         if (sectionIn > 0) {
-            const section = this._frSections[sectionIn-1];
+            const section = this._frSections[sectionIn - 1];
 
             // TODO: Change to calculated number 5 is +5 for white space offset
-            options.top = (parseInt(section._draggable.element.style.top, 10)+5)+"px";
+            options.top = (parseInt(section._draggable.element.style.top, 10) + 5) + "px";
         }
         return options;
     }
@@ -487,7 +624,9 @@ class FluentReportsGenerator {
      */
     _hasFormatterFunctions() {
         for (let key in this._formatterFunctions) {
-            if (this._formatterFunctions.hasOwnProperty(key)) { return true; }
+            if (this._formatterFunctions.hasOwnProperty(key)) {
+                return true;
+            }
         }
         return false;
     }
@@ -534,7 +673,7 @@ class FluentReportsGenerator {
      * Creates a dummy report based on the data, if you haven't passed in a report.
      * @private
      */
-    newBlankReport(clearData= true) {
+    newBlankReport(clearData = true) {
         const tempReport = {
             type: "report",
             header: {children: []},
@@ -578,7 +717,7 @@ class FluentReportsGenerator {
         if (!Array.isArray(src.subReports)) {
             src.subReports = [];
         }
-        for (let i=0;i<children.length;i++) {
+        for (let i = 0; i < children.length; i++) {
             const curReport = {type: 'report', dataType: 'parent', data: children[i].name};
             src.subReports.push(curReport);
 
@@ -594,7 +733,7 @@ class FluentReportsGenerator {
                     name = parent.name + "/" + name;
                 }
 
-                curReport.detail = {children: [{type: "print", text: "Subreport "+name+" Data"}]};
+                curReport.detail = {children: [{type: "print", text: "Subreport " + name + " Data"}]};
             }
         }
     }
@@ -643,7 +782,7 @@ class FluentReportsGenerator {
 
         // Add Margins
         if (typeof report.margins !== 'undefined') {
-            if (isNaN(parseInt(report.margins,10))) {
+            if (isNaN(parseInt(report.margins, 10))) {
                 this._marginBottom = report.margins.bottom || 72;
                 this._marginTop = report.margins.top || 72;
                 this._marginRight = report.margins.right || 72;
@@ -680,7 +819,7 @@ class FluentReportsGenerator {
 
         // Loop thru the children of this child
         let children = dataSet.childrenIndexed;
-        for (let i=0;i<children.length;i++) {
+        for (let i = 0; i < children.length; i++) {
             this._generateChildSave(children[i], newResult);
         }
     }
@@ -698,7 +837,12 @@ class FluentReportsGenerator {
         const results = {type: 'report', dataUUID: this._parsedData.dataUUID, version: 1};
         this._copyProperties(this, results, ["fontSize", "autoPrint", "name", "paperSize", "paperOrientation"]);
         if (this._marginBottom !== 72 || this._marginTop !== 72 || this._marginLeft !== 72 || this._marginRight !== 72) {
-            results.margins = {left: this._marginLeft, top: this._marginTop, right: this._marginRight, bottom: this._marginBottom};
+            results.margins = {
+                left: this._marginLeft,
+                top: this._marginTop,
+                right: this._marginRight,
+                bottom: this._marginBottom
+            };
         }
 
         // Add our first level report
@@ -709,12 +853,18 @@ class FluentReportsGenerator {
 
         // This actually generates a subreport info keys
         let children = this._parsedData.childrenIndexed;
-        for (let i=0;i<children.length;i++) {
+        for (let i = 0; i < children.length; i++) {
             this._generateChildSave(children[i], results);
         }
 
         // Save the Sections
-        for (let i=0;i<this._frSections.length;i++) {
+        for (let i = 0; i < this._frSections.length; i++) {
+            //Sort section's children by Y pos
+            if (this._frSections[i]._children) {
+                this._frSections[i]._children.sort((element1, element2) => {
+                    return element1.absoluteY === element2.absoluteY ? (element1.absoluteX - element2.absoluteX) : (element1.absoluteY - element2.absoluteY);
+                });
+            }
             this._frSections[i]._generateSave(results, this._saveTemporaryData.reports);
         }
 
@@ -727,13 +877,19 @@ class FluentReportsGenerator {
 
         // TODO: See if this is needed anymore?   Seems all data is found
         // Update groups data with any Groups that have no actual sections
-        for (let i=0;i<this._groupBys.length;i++) {
+        for (let i = 0; i < this._groupBys.length; i++) {
             let found = false;
             let curData = this._saveTemporaryData.reports[this._groupBys[i].dataUUID];
             let dataSet = this._parsedData.findByUUID(this._groupBys[i].dataUUID);
 
             if (!curData) {
-                curData = {type: 'report', dataUUID: this._groupBys[i].dataUUID, dataType: 'parent', data: dataSet.name, groupBy: []};
+                curData = {
+                    type: 'report',
+                    dataUUID: this._groupBys[i].dataUUID,
+                    dataType: 'parent',
+                    data: dataSet.name,
+                    groupBy: []
+                };
                 this._saveTemporaryData.reports[this._groupBys[i].dataUUID] = curData;
             } else if (curData.groupBy) {
                 for (let j = 0; j < curData.groupBy.length; j++) {
@@ -754,22 +910,26 @@ class FluentReportsGenerator {
         // TODO: Is this needed????
         // Remove Groups in Report, that no longer exist in the groupby data
         for (let key in this._saveTemporaryData.reports) {
-            if (!this._saveTemporaryData.reports.hasOwnProperty(key)) { continue; }
+            if (!this._saveTemporaryData.reports.hasOwnProperty(key)) {
+                continue;
+            }
             let curData = this._saveTemporaryData.reports[key];
 
             // No Groups; proceed to the next one...
-            if (!curData.groupBy) { continue; }
+            if (!curData.groupBy) {
+                continue;
+            }
 
-            for (let j=0;j<curData.groupBy.length;j++) {
+            for (let j = 0; j < curData.groupBy.length; j++) {
                 let found = false;
-                for (let k=0;k<this._groupBys.length;k++) {
+                for (let k = 0; k < this._groupBys.length; k++) {
                     // TODO: Now - Need to check to see about DATAUUID match?
                     if (curData.groupBy[j].groupOn === this._groupBys[k].name) {
                         found = true;
                     }
                 }
                 if (!found) {
-                    console.log("Deleting from Save" , curData.groupBy[j]);
+                    console.log("Deleting from Save", curData.groupBy[j]);
                     curData.groupBy.splice(j, 1);
                     j--;
                 }
@@ -812,14 +972,16 @@ class FluentReportsGenerator {
      */
     _saveTotals(dest, dataUUID) {
         const totals = this.reportTotals;
-        let fields, calcs=null;
+        let fields, calcs = null;
 
         const curData = this._parsedData.findByUUID(dataUUID);
         fields = curData.fields;
 
         for (let key in totals) {
-            if (!totals.hasOwnProperty(key)) { continue; }
-            for (let i=0;i<totals[key].length;i++) {
+            if (!totals.hasOwnProperty(key)) {
+                continue;
+            }
+            for (let i = 0; i < totals[key].length; i++) {
                 if (fields.indexOf(totals[key][i]) >= 0) {
                     if (calcs == null) {
                         calcs = {};
@@ -884,8 +1046,10 @@ class FluentReportsGenerator {
      * @private
      */
     _copyProperties(src, dest, props) {
-        if (src == null) { return; }
-        for (let i=0;i<props.length;i++) {
+        if (src == null) {
+            return;
+        }
+        for (let i = 0; i < props.length; i++) {
             if (typeof src[props[i]] !== 'undefined') {
                 dest[props[i]] = src[props[i]];
             }
@@ -946,7 +1110,7 @@ class FluentReportsGenerator {
         this._frame = document.createElement("div");
         this._frame.style.position = "relative";
 
-        this._frame.style.height = (this._parentElement.clientHeight < 300 ? 300 : this._parentElement.clientHeight)+"px";
+        this._frame.style.height = (this._parentElement.clientHeight < 300 ? 300 : this._parentElement.clientHeight) + "px";
 
         // Prefix the entire sub-tree with our name space for CSS resolution
         this._frame.classList.add("fluentReports");
@@ -967,8 +1131,13 @@ class FluentReportsGenerator {
             let hasShadow = false;
 
             while (parent != null) {
-                if (parent instanceof ShadowRoot) { hasShadow = true; break; }
-                if (parent instanceof HTMLBodyElement || parent instanceof HTMLHeadElement) { break; }
+                if (parent instanceof ShadowRoot) {
+                    hasShadow = true;
+                    break;
+                }
+                if (parent instanceof HTMLBodyElement || parent instanceof HTMLHeadElement) {
+                    break;
+                }
                 parent = parent.parentNode;
             }
 
@@ -1012,17 +1181,21 @@ class FluentReportsGenerator {
         this._propertiesLayout = document.createElement("div");
         this._propertiesLayout.className = "frProperties";
         this._propertiesLayout.id = "frProperties";
-        this._propertiesLayout.style.minHeight = (this._frame.clientHeight-51)+"px"; // TODO: Get actual size of toolBarLayout instead of hardcoding it...
+        this._propertiesLayout.style.minHeight = (this._frame.clientHeight - 51) + "px"; // TODO: Get actual size of toolBarLayout instead of hard coding it...
         this._propertiesScroller.appendChild(this._propertiesLayout);
         this._frame.appendChild(this._propertiesScroller);
 
+        // All Key Combo's
+        this._frame.tabIndex = 0;
+        this._frame.addEventListener("keydown", this._reportLayoutKeyed.bind(this));
+        this._frame.focus();
 
         this._reportScroller = document.createElement("div");
         this._reportScroller.id = "frReport";
         this._reportScroller.className = "frReport";
         this._reportLayout = document.createElement("div");
         this._reportLayout.className = "frReportInner";
-        this._reportLayout.style.minHeight = (this._frame.clientHeight-51)+"px"; // TODO: Get actual size of toolBarLayout instead of hardcoding it...
+        this._reportLayout.style.minHeight = (this._frame.clientHeight - 51) + "px"; // TODO: Get actual size of toolBarLayout instead of hard coding it...
         this._reportLayout.addEventListener("click", this._reportLayoutClicked.bind(this));
         this._reportScroller.appendChild(this._reportLayout);
         this._sectionConstrainer = document.createElement("div");
@@ -1046,32 +1219,105 @@ class FluentReportsGenerator {
      * @private
      */
     _resetPaperSizeLocation() {
-        if (!this._frame) { return; }
+        if (!this._frame) {
+            return;
+        }
         const topRect = this._frame.getBoundingClientRect();
 
         const rect = this._reportLayout.getBoundingClientRect();
-        this._paperWidthLayout.style.top = (rect.top-topRect.top)+"px";
-        const left = (((((this._paperDims[0]-this.marginLeft)-this.marginRight)*this.scale)+rect.left+6)-topRect.left);
+        this._paperWidthLayout.style.top = (rect.top - topRect.top) + "px";
+        const left = (((((this._paperDims[0] - this.marginLeft) - this.marginRight) * this.scale) + rect.left + 6) - topRect.left);
         this._paperWidthLayout.style.left = left + "px";
-        this._paperWidthLayout.style.height = rect.height+"px";
-        if (rect.width-16 < (left-(rect.left-topRect.left))) {
+        this._paperWidthLayout.style.height = rect.height + "px";
+        if (rect.width - 16 < (left - (rect.left - topRect.left))) {
             this._paperWidthLayout.style.display = "none";
         } else {
             this._paperWidthLayout.style.display = "";
         }
     }
 
+    _updateSectionIn(Y) {
+        const bounding = this._toolBarLayout.getBoundingClientRect();
+        const offset = 1 + bounding.height + bounding.top;
+        const y = (Y - offset) + this._reportScroller.scrollTop;
+        this._sectionIn = this._getSectionIn(y);
+    }
+
     _reportLayoutClicked(args) {
         if (this._currentSelected) {
             this._currentSelected.blur();
         }
-
-        const bounding = this._toolBarLayout.getBoundingClientRect();
-        const offset = 1 + bounding.height + bounding.top;
-        const y = (args.clientY - offset) + this._reportScroller.scrollTop;
-
-        this._sectionIn = this._getSectionIn(y);
+        this._updateSectionIn(args.clientY);
         this.showProperties(this._getSection(this._sectionIn), true);
+    }
+
+    _clearCopyBuffer() {
+        this._copiedElementClass = null;
+    }
+
+    _reportLayoutKeyed(args) {
+
+        // Check to see if we are in a editing a value
+        if (document.activeElement && ["INPUT", "TEXTAREA"].indexOf(document.activeElement.tagName) >= 0) {
+            return;
+        }
+
+        // Check to see if a dialog is open
+        if (_frDialogCounter > 0) { return; }
+
+        // Check for a ContentEditable control...  At this point they are all tied to a _text value...
+        if (this._currentSelected && this._currentSelected._text && this._currentSelected._text.isContentEditable) {
+            // Content Editable is editing...
+            if (document.activeElement === this._currentSelected._text) {
+                return;
+            }
+        }
+
+        // Which/KeyCode is depreciated; but still valid in many browsers
+        if (args.which === 46 && args.keyCode === 46 || (args.code === "NumpadDecimal" && args.key !== '.') || args.key.toLowerCase() === 'delete' || args.key.toLowerCase() === "backspace") {
+            if (this._currentSelected) {
+                this._currentSelected.delete();
+            }
+            return;
+        }
+
+        if (args.ctrlKey) {
+            if (args.key.toLowerCase() === 'c') {
+                if (this._currentSelected) {
+                    if (!this._currentSelected.canCopy) {
+                        this._clearCopyBuffer();
+                        return;
+                    }
+                    this._copiedElementClass = this._currentSelected.constructor;
+                    let options = {copy: true};
+                    this._currentSelected._saveProperties(options);
+                    this._copiedElementOptions = options;
+                }
+            } else if (args.key.toLowerCase() === 'v') {
+                if (this._copiedElementClass) {
+                    let duplicate = new this._copiedElementClass(this, this._getSection(this._sectionIn), this._copiedElementOptions);
+                    if (typeof duplicate._parseElement === "function") {
+                        duplicate._parseElement(this._copiedElementOptions);
+                    }
+                    // We only allow one paste of a cut item.
+                    if (this._copiedElementOptions.cut) {
+                        this._clearCopyBuffer();
+                    }
+                }
+            } else if (args.key.toLowerCase() === 'x') {
+                if (this._currentSelected) {
+                    if (!this._currentSelected.canCopy) {
+                        this._clearCopyBuffer();
+                        return;
+                    }
+                    this._copiedElementClass = this._currentSelected.constructor;
+                    let options = {cut: true};
+                    this._currentSelected._saveProperties(options);
+                    this._copiedElementOptions = options;
+                    this._currentSelected.delete();
+                }
+            }
+        }
     }
 
     _generateInterface() {
@@ -1089,7 +1335,7 @@ class FluentReportsGenerator {
 
     _openGroupings() {
         //groupBy
-        this.UIBuilder.groupsBrowse(this._groupBys,  this,    (groups) => {
+        this.UIBuilder.groupsBrowse(this._groupBys, this, (groups) => {
             let changed = false;
             if (this._groupBys.length === groups.length) {
                 for (let i = 0; i < this._groupBys.length; i++) {
@@ -1115,7 +1361,7 @@ class FluentReportsGenerator {
         let currentReport = this._generateSave();
         this.UIBuilder.sectionBrowse(this, currentReport, (updateReport) => {
             this._parseReport(updateReport);
-        } );
+        });
     }
 
     _addNewElementFromToolBar(classType, overrideOptions) {
@@ -1149,7 +1395,7 @@ class FluentReportsGenerator {
                         options.top = 1;
                         new frNewLine(this, this._getSection(this._sectionIn), options ); // jshint ignore:line */
         }));
-        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue81e", "Page Break", () => {
+        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue835", "Page Break", () => {
             this._addNewElementFromToolBar(frPageBreak, {top: 1});
         }));
         this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
@@ -1330,7 +1576,7 @@ class FluentReportsGenerator {
         topLayer.appendChild(iFrame);
         topLayer.appendChild(close);
 
-        const reportData =  options.report || this._generateSave();
+        const reportData = options.report || this._generateSave();
         reportData.formatterFunctions = this._formatterFunctions;
         const data = options.data || this._data;
 
@@ -1392,9 +1638,9 @@ class FluentReportsGenerator {
         if (typeof data.groupBy !== 'undefined') {
             for (let i = 0; i < data.groupBy.length; i++) {
                 let found = false;
-                for (let j=0;j<this._groupBys.length;j++) {
+                for (let j = 0; j < this._groupBys.length; j++) {
                     if (this._groupBys[j].dataUUID === reportUUID && this._groupBys[j].name === groupName) {
-                        found=true;
+                        found = true;
                     }
                 }
                 if (!found) {
@@ -1486,7 +1732,7 @@ class FluentReportsGenerator {
         let report = this._parsedData.findByUUID(dataUUID);
         if (report === null) {
             console.log("Report DATA does not match report layout!");
-            Dialog.notice("Report DATA does not match report layout, ignoring section: "+groupName, "#FF0000", this._frame);
+            Dialog.notice("Report DATA does not match report layout, ignoring section: " + groupName, "#FF0000", this._frame);
             return;
         }
 
@@ -1497,13 +1743,13 @@ class FluentReportsGenerator {
             this._mergeTotals(report.calcs);
         }
         this._generateReportHeaderSectionLayout(data, height, groupName, false, report.dataUUID);
-        this._generateReportDetailSectionLayout(data, height, groupName,false, report.dataUUID);
+        this._generateReportDetailSectionLayout(data, height, groupName, false, report.dataUUID);
         this._generateReportFooterSectionLayout(data, height, groupName, false, report.dataUUID);
     }
 
     _mergeTotals(totals) {
         const totalsTypes = ['sum', 'min', 'max', 'average', 'count'];
-        for (let i=0;i<totalsTypes.length;i++) {
+        for (let i = 0; i < totalsTypes.length; i++) {
             if (totals[totalsTypes[i]]) {
 
                 if (!this._totals[totalsTypes[i]]) {
@@ -1515,7 +1761,7 @@ class FluentReportsGenerator {
         }
     }
 
-    _generateSection(title, height, type, groupName, sectionData, reportUUID, data=null, fromGroup=false) {
+    _generateSection(title, height, type, groupName, sectionData, reportUUID, data = null, fromGroup = false) {
         let section;
         section = new frSection(this, {
             title: title,
@@ -1530,14 +1776,16 @@ class FluentReportsGenerator {
         }
 
 
-        if (sectionData == null) { return; }
+        if (sectionData == null) {
+            return;
+        }
         if (Array.isArray(sectionData)) {
-            for (let i=0;i<sectionData.length;i++) {
+            for (let i = 0; i < sectionData.length; i++) {
                 section._parseSection(sectionData[i]);
             }
         } else if (sectionData.children) {
             section._parseSelf(sectionData);
-            for (let i=0;i<sectionData.children.length;i++) {
+            for (let i = 0; i < sectionData.children.length; i++) {
                 section._parseSection(sectionData.children[i]);
             }
         } else {
@@ -1547,7 +1795,7 @@ class FluentReportsGenerator {
         }
     }
 
-    showProperties(obj, refresh=false) {
+    showProperties(obj, refresh = false) {
         this.UIBuilder.showProperties(obj, this._propertiesLayout, refresh);
     }
 
@@ -1602,6 +1850,7 @@ class frReportData { // jshint ignore:line
     get data() {
         return this._data;
     }
+
     set data(val) {
         this._data = val;
     }
@@ -1623,13 +1872,16 @@ class frReportData { // jshint ignore:line
     get primary() {
         let current = this;
         // Go up to the top
-        while (current.parent != null) { current = current.parent; }
+        while (current.parent != null) {
+            current = current.parent;
+        }
         return current;
     }
 
     get linkedToReport() {
         return this._linkedToReport;
     }
+
     set linkedToReport(val) {
         this._linkedToReport = !!val;
     }
@@ -1639,9 +1891,11 @@ class frReportData { // jshint ignore:line
         this._linkedToReport = true;
     }
 
-    findMatchingLayoutInfo(layoutData, checkDataUUID=null) {
+    findMatchingLayoutInfo(layoutData, checkDataUUID = null) {
         const curDataUUID = checkDataUUID || this.dataUUID;
-        if (layoutData.dataUUID === curDataUUID) { return layoutData; }
+        if (layoutData.dataUUID === curDataUUID) {
+            return layoutData;
+        }
         if (Array.isArray(layoutData.subReports)) {
             for (let i = 0; i < layoutData.subReports.length; i++) {
                 const result = this.findMatchingLayoutInfo(layoutData.subReports[i], curDataUUID);
@@ -1652,7 +1906,6 @@ class frReportData { // jshint ignore:line
         }
         return null;
     }
-
 
 
     /* _findDataSet(name) {
@@ -1677,7 +1930,9 @@ class frReportData { // jshint ignore:line
      * @returns {null|*}
      */
     findExactChildDataSet(name) {
-        if (this._children[name]) { return this._children[name]; }
+        if (this._children[name]) {
+            return this._children[name];
+        }
         return null;
     }
 
@@ -1688,7 +1943,9 @@ class frReportData { // jshint ignore:line
     }
 
     _findByUUID(uuid) {
-        if (this._uuid === uuid) { return this; }
+        if (this._uuid === uuid) {
+            return this;
+        }
         let result = null;
         for (let key in this._children) {
             if (this._children.hasOwnProperty(key)) {
@@ -1702,16 +1959,17 @@ class frReportData { // jshint ignore:line
     }
 
 
-
     parseArray(rows) {
-        for (let i=0;i<rows.length;i++) {
+        for (let i = 0; i < rows.length; i++) {
             this.parseRow(rows[i]);
         }
     }
 
     parseRow(rowOfData) {
         for (let key in rowOfData) {
-            if (!rowOfData.hasOwnProperty(key)) { continue; }
+            if (!rowOfData.hasOwnProperty(key)) {
+                continue;
+            }
             if (Array.isArray(rowOfData[key])) {
                 if (!this._children[key]) {
                     this._children[key] = new frReportData(rowOfData[key], this, key);
@@ -1727,8 +1985,10 @@ class frReportData { // jshint ignore:line
     }
 
     _copyProperties(src, dest, props) {
-        if (src == null) { return; }
-        for (let i=0;i<props.length;i++) {
+        if (src == null) {
+            return;
+        }
+        for (let i = 0; i < props.length; i++) {
             if (typeof src[props[i]] !== 'undefined') {
                 dest[props[i]] = src[props[i]];
             }
@@ -1753,8 +2013,9 @@ class frSection { // jshint ignore:line
     get top() {
         return parseInt(this._html.style.top, 10);
     }
+
     set top(val) {
-        this._html.style.top = parseInt(val,10) + "px";
+        this._html.style.top = parseInt(val, 10) + "px";
     }
 
     get height() {
@@ -1763,10 +2024,12 @@ class frSection { // jshint ignore:line
 
     set height(valIn) {
         const val = parseInt(valIn, 10);
-        if (this.height === val) { return; }
+        if (this.height === val) {
+            return;
+        }
 
-        this._html.style.height = (val)+"px";
-        this._frLine.style.top = (val-2)+"px";
+        this._html.style.height = (val) + "px";
+        this._frLine.style.top = (val - 2) + "px";
         this._resetTops(this._sectionId);
         this._draggable.position();
     }
@@ -1775,11 +2038,12 @@ class frSection { // jshint ignore:line
         const x = this._titleTD.getBoundingClientRect();
         return this.height - x.height;
     }
+
     set elementContainerHeight(val) {
         // We have to actually resize the entire outer container,
         // so we get the titles height to be able to track this...
         const x = this._titleTD.getBoundingClientRect();
-        this.height = val+x.height;
+        this.height = val + x.height;
     }
 
     get elementContainerTop() {
@@ -1788,23 +2052,38 @@ class frSection { // jshint ignore:line
     }
 
     get bottom() {
-        return (parseInt(this._html.style.top, 10) +  parseInt(this._html.style.height, 10));
+        return (parseInt(this._html.style.top, 10) + parseInt(this._html.style.height, 10));
     }
 
     get elementContainer() {
         return this._elementDiv;
     }
 
-    get fixedHeight() { return this._fixedHeight; }
-    set fixedHeight(val) { this._fixedHeight = !!val; }
+    get fixedHeight() {
+        return this._fixedHeight;
+    }
 
-    get sectionId() { return this._sectionId; }
-    get uuid() { return this._uuid; }
+    set fixedHeight(val) {
+        this._fixedHeight = !!val;
+    }
 
-    get type() { return this._type; }
+    get sectionId() {
+        return this._sectionId;
+    }
+
+    get uuid() {
+        return this._uuid;
+    }
+
+    get type() {
+        return this._type;
+    }
 
     // noinspection JSUnusedGlobalSymbols
-    get hasStockElement() { return this._stockElement != null; }
+    get hasStockElement() {
+        return this._stockElement != null;
+    }
+
     set usingStock(val) {
         this._usingStock = !!val;
         if (this._usingStock) {
@@ -1814,15 +2093,27 @@ class frSection { // jshint ignore:line
             this._stockElement = null;
         }
     }
-    get usingStock() { return this._usingStock; }
-    get elementTitle() { return this._title; } // Used by Layout Engine
-    get title() { return this._title; }
+
+    get usingStock() {
+        return this._usingStock;
+    }
+
+    get elementTitle() {
+        return this._title;
+    } // Used by Layout Engine
+    get title() {
+        return this._title;
+    }
+
     set title(val) {
         this._title = val;
         this._titleSpan = this._generateTitle();
     }
 
-    get groupName() { return this._groupName; }
+    get groupName() {
+        return this._groupName;
+    }
+
     set groupName(val) {
         this._groupName = val;
         this._properties[0].skip = (this._type === 3 /* Detail */ || this._groupName === '');
@@ -1831,18 +2122,26 @@ class frSection { // jshint ignore:line
     }
 
     createStockElement() {
-        if (this._stockElement) { return this._stockElement; }
+        if (this._stockElement) {
+            return this._stockElement;
+        }
         // noinspection JSCheckFunctionSignatures
-        let left = (parseInt( (this._report.pageWidth * this.scale), 10) / 2) - 45;
+        let left = (parseInt((this._report.pageWidth * this.scale), 10) / 2) - 45;
         switch (this._type) {
             case 1: // Header
-                this._stockElement = new frStandardHeader(this._report, this, {top: parseInt(this._html.style.top,10), left: left });
+                this._stockElement = new frStandardHeader(this._report, this, {
+                    top: parseInt(this._html.style.top, 10),
+                    left: left
+                });
                 break;
             case 3: // Details
                 console.error("CreateStockElement called on a Detail section....");
                 break;
             case 2: // Footer
-                this._stockElement = new frStandardFooter(this._report, this, {top: parseInt(this._html.style.top,10), left: left});
+                this._stockElement = new frStandardFooter(this._report, this, {
+                    top: parseInt(this._html.style.top, 10),
+                    left: left
+                });
                 break;
             default:
                 if (this.debugging) {
@@ -1852,26 +2151,26 @@ class frSection { // jshint ignore:line
         return this._stockElement;
     }
 
-    _resetTops(startId=0) {
+    _resetTops(startId = 0) {
         // We need to temporarily increase the report layout so we can move sections without shrinking any of them...
-        let curHeight = parseInt(this._report.reportLayout.clientHeight,10);
-        this._report.reportLayout.style.height = (curHeight+1000)+"px";
+        let curHeight = parseInt(this._report.reportLayout.clientHeight, 10);
+        this._report.reportLayout.style.height = (curHeight + 1000) + "px";
 
         // Lets start moving sections since we grew one of them...
         let top = this.frSections[startId].bottom;
         const len = this.frSections.length;
-        for (let i=startId+1;i<len;i++) {
+        for (let i = startId + 1; i < len; i++) {
             this.frSections[i].top = top;
             top += this.frSections[i].height;
             this.frSections[i]._draggable.position();
         }
 
         // Fix the report layout height back to a real number
-        let btm = this.frSections[len-1].bottom;
+        let btm = this.frSections[len - 1].bottom;
         if (curHeight < btm) {
-            this._report.reportLayout.style.height = btm+"px";
+            this._report.reportLayout.style.height = btm + "px";
         } else {
-            this._report.reportLayout.style.height = curHeight+"px";
+            this._report.reportLayout.style.height = curHeight + "px";
         }
     }
 
@@ -1958,7 +2257,7 @@ class frSection { // jshint ignore:line
             results[type] = {children: []};
         }
         if (!Array.isArray(results[type].children)) {
-            results[type].children =  [];
+            results[type].children = [];
         }
 
         // Save any Properties needed
@@ -1966,7 +2265,7 @@ class frSection { // jshint ignore:line
             results[type].fixedHeight = true;
             results[type].height = this.height;
         }
-        if(this.pageBreak !== "auto"){
+        if (this.pageBreak !== "auto") {
             results[type].pageBreak = this.pageBreak;
         }
 
@@ -1976,16 +2275,16 @@ class frSection { // jshint ignore:line
 
     _saveSectionInfo(results) {
         if (this._calculations.length) {
-            for (let i=0;i<this._calculations.length;i++) {
+            for (let i = 0; i < this._calculations.length; i++) {
                 results.push(shallowClone(this._calculations[i]));
             }
         }
         if (this._functions.length) {
-            for (let i=0;i<this._functions.length; i++) {
+            for (let i = 0; i < this._functions.length; i++) {
                 results.push(shallowClone(this._functions[i]));
             }
         }
-        for (let i=0;i<this._children.length;i++) {
+        for (let i = 0; i < this._children.length; i++) {
             let child = {};
             results.push(child);
             if (this._children[i] instanceof frStandardHeader || this._children[i] instanceof frStandardFooter) {
@@ -2000,14 +2299,18 @@ class frSection { // jshint ignore:line
     _parseSelf(data) {
         if (data.fixedHeight) {
             this.fixedHeight = data.fixedHeight;
+            this.pageBreak = data.pageBreak;
             this.height = data.height != null ? data.height : this.height;
         }
     }
 
     _parseSection(data) {
-        let top = (this._children.length * 32) + 6;
-        if (top+50 >= this.height) { this.height = top + 50; }
-
+        if (data && data.settings && data.settings.absoluteY) {
+            let top = data.settings.absoluteY + (data.settings.height || 32);//Some elements have height, others use the default 32.
+            if (top >= this.height) {
+                this.height = top;
+            }
+        }
         // Depreciation notice...
         if (data.type === "text") {
             console.log("FluentReports: type=text, depreciated, proper type=print."); // jshint ignore:line
@@ -2096,9 +2399,9 @@ class frSection { // jshint ignore:line
 
     _generateTitle() {
         if (this._type === 3 /* Detail */) {
-            return this._title + (this._groupName !== '' ? " (" + this._groupName +")" : '');
+            return this._title + (this._groupName !== '' ? " (" + this._groupName + ")" : '');
         }
-        return this._title + (this._groupName !== '' ? " [" + this._groupName +"]" : '');
+        return this._title + (this._groupName !== '' ? " [" + this._groupName + "]" : '');
     }
 
     appendChild(child) {
@@ -2115,7 +2418,7 @@ class frSection { // jshint ignore:line
     }
 
     clickFunctions() {
-        this.UIBuilder.functionBrowse(this._functions, ( funcs ) => {
+        this.UIBuilder.functionBrowse(this._functions, (funcs) => {
             this._functions = funcs;
             this.hasFunctions = funcs.length > 0;
             this._refreshProperties();
@@ -2123,7 +2426,7 @@ class frSection { // jshint ignore:line
     }
 
     clickCalcs() {
-        this.UIBuilder.calculationBrowse(this._calculations, ( calcs ) => {
+        this.UIBuilder.calculationBrowse(this._calculations, (calcs) => {
             this._calculations = calcs;
             this.hasCalculations = calcs.length > 0;
             this._refreshProperties();
@@ -2193,8 +2496,16 @@ class frSection { // jshint ignore:line
             {type: 'number', field: 'height', functionable: false, default: 0},
             {type: 'boolean', field: 'fixedHeight', functionable: false, default: false},
             {type: 'select', field: "pageBreak", display: this.createPageSelect.bind(this), destination: 'settings'},
-            {type: 'display', field: 'hasFunctions', title: 'Functions', display: () => { return this._createSpan(this._hasFunctions, "\ue81f", this.clickFunctions.bind(this)); }},
-            {type: 'display', field: 'hasCalculations', title: 'Calculations', display: () => { return this._createSpan(this._hasCalculations, "\uE824", this.clickCalcs.bind(this)); }}
+            {
+                type: 'display', field: 'hasFunctions', title: 'Functions', display: () => {
+                    return this._createSpan(this._hasFunctions, "\ue81f", this.clickFunctions.bind(this));
+                }
+            },
+            {
+                type: 'display', field: 'hasCalculations', title: 'Calculations', display: () => {
+                    return this._createSpan(this._hasCalculations, "\uE824", this.clickCalcs.bind(this));
+                }
+            }
         ];
         if (this._type === 1 || this._type === 2) {
             this._properties.push({
@@ -2277,7 +2588,7 @@ class frSection { // jshint ignore:line
         if (this.frSections.length > 1) {
 //            this.frSections[this.frSections.length-2]._frLine.style.display = 'none';
 
-            this.frSections[this.frSections.length-2]._draggable.handle = this._titleTD;
+            this.frSections[this.frSections.length - 2]._draggable.handle = this._titleTD;
         }
 
         this._draggable.autoScroll = {target: this._report.reportLayout.parentElement};
@@ -2288,10 +2599,10 @@ class frSection { // jshint ignore:line
         this._draggable.onDragEnd = this._onDragEnd.bind(this);
         this._draggable.onMove = () => {
             const rect = this._html.getBoundingClientRect();
-            this._html.style.height = (this._draggable.rect.bottom - (rect.top + window.pageYOffset) )+ 'px';
-            let top = (parseInt(this._html.style.height,10)+parseInt(this._html.style.top, 10));
+            this._html.style.height = (this._draggable.rect.bottom - (rect.top + window.pageYOffset)) + 'px';
+            let top = (parseInt(this._html.style.height, 10) + parseInt(this._html.style.top, 10));
             this._draggable.position();
-            for (let i=this._sectionId+1;i<this.frSections.length;i++) {
+            for (let i = this._sectionId + 1; i < this.frSections.length; i++) {
                 let next = this.frSections[i];
                 next._html.style.top = top + "px";
                 top += next.height;
@@ -2301,15 +2612,15 @@ class frSection { // jshint ignore:line
         };
     }
 
-    get pageBreak(){
+    get pageBreak() {
         return this._pageBreak;
     }
-    set pageBreak(val){
-        if(typeof val === "string") {
+
+    set pageBreak(val) {
+        if (typeof val === "string") {
             this._pageBreak = val;
-        }
-        else if(typeof val === "number"){
-            switch(val) {
+        } else if (typeof val === "number") {
+            switch (val) {
                 case 0:
                     this._pageBreak = "before";
                     break;
@@ -2328,7 +2639,7 @@ class frSection { // jshint ignore:line
         let selectGroup = document.createElement('select');
 
         let item = new Option("Before", "before");
-        if (currentSelection === "before"){
+        if (currentSelection === "before") {
             item.selected = true;
         }
         selectGroup.appendChild(item);
@@ -2386,6 +2697,7 @@ class frSection { // jshint ignore:line
     get hasCalculations() {
         return this._hasCalculations;
     }
+
     set hasCalculations(val) {
         this._hasCalculations = !!val;
         this._resetLabelView();
@@ -2434,16 +2746,24 @@ class frSection { // jshint ignore:line
 
     _getProps() {
         let results = [];
-        if (!this._usingStock) { return results; }
-        results.push({type: 'button', title: 'Edit Standard ' + (this._type === 1 ? 'Header' : 'Footer'), click: () => {
+        if (!this._usingStock) {
+            return results;
+        }
+        results.push({
+            type: 'button', title: 'Edit Standard ' + (this._type === 1 ? 'Header' : 'Footer'), click: () => {
                 this._stockElement.select();
-            }});
+            }
+        });
         return results;
     }
 
-    _onDragStart() {
+    _onDragStart(e) {
+        // Only allow left-mouse button dragging
+        if (typeof e.button !== 'undefined' && e.button !== 0) {
+            return false;
+        }
 
-        let pageEnd = parseInt(this._report.reportScroller.clientHeight,10);
+        let pageEnd = parseInt(this._report.reportScroller.clientHeight, 10);
         if (this.frSections.length) {
             pageEnd = this.frSections[this.frSections.length - 1].bottom;
         }
@@ -2453,12 +2773,14 @@ class frSection { // jshint ignore:line
         let top = 22;
         if (this._sectionId) {
             // Bottom of Prior section
-            top = this.frSections[this._sectionId-1].bottom+22;
+            top = this.frSections[this._sectionId - 1].bottom + 22;
         }
         // Let top be to bottom of any children elements...
-        for (let i=0;i<this._children.length;i++) {
+        for (let i = 0; i < this._children.length; i++) {
             let newTop = this.top + this._children[i].top + this._children[i].elementHeight;
-            if (newTop >= top) { top = newTop+5; }
+            if (newTop >= top) {
+                top = newTop + 5;
+            }
         }
 
         // Now attempt to figure out the max size
@@ -2470,12 +2792,12 @@ class frSection { // jshint ignore:line
             this._report.reportLayout.style.height = currentHeight + "px";
         }
 
-        let end = currentHeight-22 - this.top;
-        for (let i=this._sectionId+1;i<this.frSections.length;i++) {
+        let end = currentHeight - 22 - this.top;
+        for (let i = this._sectionId + 1; i < this.frSections.length; i++) {
             end -= this.frSections[i].height;
         }
-        this._report.sectionConstrainer.style.top = top+"px";
-        this._report.sectionConstrainer.style.height = end+"px";
+        this._report.sectionConstrainer.style.top = top + "px";
+        this._report.sectionConstrainer.style.height = end + "px";
 
         // View the Section Containment
         //this._report.sectionConstrainer.style.left = "1px";
@@ -2491,7 +2813,9 @@ class frSection { // jshint ignore:line
         // Reset bottom of report to be where the last section is at...
         if (this.frSections.length) {
             let bottom = this.frSections[this.frSections.length - 1].bottom;
-            if (bottom < this._report._reportScroller.clientHeight) { bottom = this._report._reportScroller.clientHeight; }
+            if (bottom < this._report._reportScroller.clientHeight) {
+                bottom = this._report._reportScroller.clientHeight;
+            }
             this._report.reportLayout.style.height = bottom + "px";
         }
 
@@ -2513,31 +2837,74 @@ class frSection { // jshint ignore:line
 // ----------------------------------------- [ Elements ] ----------------------------------------------
 
 
-
 /**
  * FluentReports Base Element
  */
 class frElement { // jshint ignore:line
-    isFunction(value){
-        if(typeof value === "object"){
-            if(value.type === "function"){
+
+    isFunction(value) {
+        if (typeof value === "object") {
+            if (value.type === "function") {
                 return true;
             }
         }
         return false;
     }
-    getNumeralOrFunction(value){
-        if(this.isFunction(value)){
+
+    getNumeralOrFunction(value) {
+        if (this.isFunction(value)) {
             return value;
         }
-        return parseInt(value,10);
+        return parseInt(value, 10);
     }
-    getBooleanOrFunction(value){
-        if(this.isFunction(value)){
+
+    getBooleanOrFunction(value) {
+        if (this.isFunction(value)) {
             return value;
         }
         return !!value;
     }
+
+    /**
+     * Runs a user Function -- currently only used for Width/Height calculations...
+     * @param func
+     * @return {*}
+     * @private
+     */
+    _runFunction(func) {
+        // TODO: We might want to reprogram this to support Async functions...
+
+        const _func = new Function('report', 'data', 'state', 'vars', 'done', func);   // jshint ignore:line
+        let data = {};
+
+        // TODO: We need to tie this to the proper datafields for this section...
+        const fields = this._report.reportFields;
+
+        for (let i = 0; i < fields.primary.length; i++) {
+            data[fields.primary[i]] = "data." + fields.primary[i];
+        }
+
+        for (let i = 1; i <= fields.levels; i++) {
+            if (fields['level' + i].length > 0) {
+                for (let j = 0; j < fields['level' + i].length; j++) {
+                    data[fields['level' + i][j]] = "data." + fields['level' + i][j];
+                }
+            }
+        }
+
+        let vars = {};
+        const variables = this._report.reportVariables;
+        if (variables != null) {
+            for (let key in variables) {
+                if (!variables.hasOwnProperty(key)) {
+                    continue;
+                }
+                vars[key] = "vars." + key;
+            }
+        }
+        return (_func({}, data, {}, vars));
+    }
+
     constructor(report, parent /* , options */) {
         this._uuid = _frItemUUID++;
         this._report = report;
@@ -2558,10 +2925,18 @@ class frElement { // jshint ignore:line
         this.frElements.push(this);
     }
 
-    get uuid() { return this._uuid; }
+    get canCopy() {
+        return true;
+    }
+
+    get uuid() {
+        return this._uuid;
+    }
+
     get frElements() {
         return this._report.frElements;
     }
+
     get UIBuilder() {
         return this._report.UIBuilder;
     }
@@ -2595,44 +2970,101 @@ class frElement { // jshint ignore:line
         this.frElements.splice(idx, 1);
     }
 
-    get properties() { return this._properties; }
+    /**
+     * Duplicate this Element
+     */
+    duplicate() {
+        if (this._report.currentSelected === this) {
+            this.blur();
+            this._report.showProperties(null);
+        }
+        let options = {};
+        this._saveProperties(options);
+        if (options.settings.absoluteY) {
+            options.settings.absoluteY += 20;
+        } else {
+            options.settings.absoluteY = 20;
+        }
+        let duplicate = new this.constructor(this._report, this._parent, options);
+        if (typeof duplicate._parseElement === "function") {
+            duplicate._parseElement(options);
+        }
+        duplicate.focus();
+    }
 
-    get draggable() { return this._draggable; }
-    get html() { return this._html; }
 
-    get absoluteX() { return this.left; }
-    set absoluteX(val) { this.left = this.getNumeralOrFunction(val); }
+    get properties() {
+        return this._properties;
+    }
 
-    get absoluteY() { return this.top; }
-    set absoluteY(val) { this.top = this.getNumeralOrFunction(val); }
+    get draggable() {
+        return this._draggable;
+    }
 
-    get top() { return parseInt(this._html.style.top,10); }
+    get html() {
+        return this._html;
+    }
+
+    get absoluteX() {
+        return this.left;
+    }
+
+    set absoluteX(val) {
+        this.left = this.getNumeralOrFunction(val);
+    }
+
+    get absoluteY() {
+        return this.top;
+    }
+
+    set absoluteY(val) {
+        this.top = this.getNumeralOrFunction(val);
+    }
+
+    get top() {
+        return parseInt(this._html.style.top, 10);
+    }
+
     set top(val) {
         // We have to be below the header area
-        this._html.style.top = parseInt(val,10)+"px";
+        this._html.style.top = parseInt(val, 10) + "px";
         this._resizeParentContainer(this.top);
     }
 
     get left() { // noinspection JSCheckFunctionSignatures
         return parseInt(parseInt(this._html.style.left, 10) / this.scale, 10);
     }
-    set left(val) { this._html.style.left = (parseInt(val,10) * this.scale)+"px"; }
 
-    get width() { return parseInt(this._width, 10); }
+    set left(val) {
+        this._html.style.left = (parseInt(val, 10) * this.scale) + "px";
+    }
+
+    get width() {
+        return parseInt(this._width, 10);
+    }
+
     set width(val) {
-        if (val == null || val === "" || val === "auto" || val === "0px") { val = 0; }
-        val = this._report._parseSize(val,"width");
+        if (val == null || val === "" || val === "auto" || val === "0px") {
+            val = 0;
+        }
+        if (typeof val === "object" && val.type === "function") {
+            val = this._runFunction(val.function);
+        }
+        val = this._report._parseSize(val, "width");
         this._width = val;
         if (val === 0 || val === "0") {
             this._html.style.width = "";
         } else if (val < 10) {
             this._html.style.width = "10px";
         } else {
-            this._html.style.width = (val * this.scale)+"px";
+            this._html.style.width = (val * this.scale) + "px";
         }
     }
 
-    get locked() { return this._locked; }
+    get locked() {
+        return this._locked;
+    }
+
     set locked(val) {
         this._locked = !!val;
         this._draggable.disabled = this._locked | this._readonly; // jshint ignore:line
@@ -2648,15 +3080,24 @@ class frElement { // jshint ignore:line
         this._draggable.disabled = this._locked | this._readonly; // jshint ignore:line
     }
 
-    get height() { return parseInt(this._height, 10); }
+    get height() {
+        return parseInt(this._height, 10);
+    }
+
     set height(val) {
-        if (val == null || val === "undefinedpx" || val === "" || val === "auto" || val === "0px") { val = 0;}
-        val = this._report._parseSize(val,"height");
-        this._height = parseInt(val,10);
+        if (val == null || val === "undefinedpx" || val === "" || val === "auto" || val === "0px") {
+            val = 0;
+        }
+        if (typeof val === "object" && val.type === "function") {
+            val = this._runFunction(val.function);
+        } else {
+            val = this._report._parseSize(val, "height");
+        }
+        this._height = parseInt(val, 10);
         if (val === 0 || val === "0") {
             this._html.style.height = "";
         } else {
-            this._html.style.height = (val * this.scale)+"px";
+            this._html.style.height = (val * this.scale) + "px";
         }
 
         // Resize Section in case it is too small
@@ -2664,16 +3105,14 @@ class frElement { // jshint ignore:line
     }
 
     get elementHeight() {
-        let clientHeight = parseInt(this._html.clientHeight,10) / this.scale;
+        let clientHeight = parseInt(this._html.clientHeight, 10) / this.scale;
         return this._height > clientHeight ? this._height : clientHeight;
     }
 
-    // noinspection JSUnusedGlobalSymbols
     get elementWidth() {
-        let clientWidth = parseInt(this._html.clientWidth,10) / this.scale;
+        let clientWidth = parseInt(this._html.clientWidth, 10) / this.scale;
         return this._width > clientWidth ? this._width : clientWidth;
     }
-
 
     on(event, handler) {
         if (typeof this._handlers[event] === 'undefined') {
@@ -2686,7 +3125,7 @@ class frElement { // jshint ignore:line
         if (handler == null) {
             this._handlers[event] = [];
         } else {
-            for (let i=0;i<this._handlers[event].length; i++) {
+            for (let i = 0; i < this._handlers[event].length; i++) {
                 if (this._handlers[event][i] === handler) {
                     this._handlers[event].splice(i, 1);
                     break;
@@ -2708,7 +3147,7 @@ class frElement { // jshint ignore:line
         this._selected();
     }
 
-    _refreshProperties(){
+    _refreshProperties() {
         this._report.showProperties(this, true);
     }
 
@@ -2721,7 +3160,9 @@ class frElement { // jshint ignore:line
     }
 
     _copyProperties(src, dest, props) {
-        if (src == null) { return; }
+        if (src == null) {
+            return;
+        }
         let targetX = null;
         let targetY = null;
         if(src.settings){
@@ -2730,7 +3171,8 @@ class frElement { // jshint ignore:line
             targetX = (src.settings.x || src.settings.newX || src.settings.addX || src.settings.left || 0);
             targetY = (src.settings.y || src.settings.newY || src.settings.addY || src.settings.top || 0);
         }
-        for (let i=0;i<props.length;i++) {
+
+        for (let i = 0; i < props.length; i++) {
             if (typeof src[props[i]] !== 'undefined') {
                 dest[props[i]] = src[props[i]];
             }
@@ -2759,30 +3201,34 @@ class frElement { // jshint ignore:line
                 }
             }
         }
-        if (targetX !== null) { dest.absoluteX = targetX; }
-        if (targetY !== null) { dest.absoluteY = targetY; }
+        if (targetX !== null) {
+            dest.absoluteX = targetX;
+        }
+        if (targetY !== null) {
+            dest.absoluteY = targetY;
+        }
 
     }
 
     _notify(eventName, event) {
         if (this._handlers[eventName]) {
-            for (let i=0;i<this._handlers[eventName].length;i++) {
+            for (let i = 0; i < this._handlers[eventName].length; i++) {
                 this._handlers[eventName][i](event);
             }
         }
     }
 
     _generateSnapping() {
-        let targets=[];
+        let targets = [];
         let secs = this._parent.frSections;
-        for (let i=0;i<secs.length;i++) {
+        for (let i = 0; i < secs.length; i++) {
             targets.push({y: secs[i].top, side: 'end'});
-            targets.push({y: secs[i].top+20, side: 'start'});
+            targets.push({y: secs[i].top + 20, side: 'start'});
         }
         if (this._report.gridSnapping.snapping) {
             targets.push({step: this._report.gridSnapping.size});
         }
-        return  {
+        return {
             targets: targets,
             gravity: 5,
         };
@@ -2794,15 +3240,24 @@ class frElement { // jshint ignore:line
         //this._draggable.autoScroll = {target: document.getElementById("frReport")};
         this._draggable.containment = this._parent.elementContainer;
 
-        this._draggable.onDragStart = () => {
-            if (this._locked || this._readonly) { return; }
+        this._draggable.onDragStart = (e) => {
+            // Only allow left-mouse button dragging
+            if (typeof e.button !== 'undefined' && e.button !== 0) {
+                return false;
+            }
+
+            if (this._locked || this._readonly) {
+                return false;
+            }
 
             this._draggable.containment = this._report.reportLayout;
             this._draggable.snap = this._generateSnapping();
         };
 
         this._draggable.onDragEnd = () => {
-            if (this._locked || this._readonly) { return; }
+            if (this._locked || this._readonly) {
+                return;
+            }
             let newSection = this._parent.sectionId;
             if (this.top < 0) {
                 if (this.top < -17) {
@@ -2813,12 +3268,14 @@ class frElement { // jshint ignore:line
                     this.top = 0;
                 }
             } else if (this.top >= this._parent.elementContainerHeight) {
-                newSection = this._report._getSectionIn(this._parent.elementContainerTop + this.top+1);
-                if (newSection === 0) { newSection = this.frSections.length-1; }
+                newSection = this._report._getSectionIn(this._parent.elementContainerTop + this.top + 1);
+                if (newSection === 0) {
+                    newSection = this.frSections.length - 1;
+                }
             }
             if (newSection !== this._parent.sectionId) {
                 // We are grabbing the original _parent.top
-                let top = this._parent.top +  this.top;
+                let top = this._parent.top + this.top;
 
                 this._parent.removeChild(this);
                 let sec = this._report._getSection(newSection);
@@ -2829,7 +3286,9 @@ class frElement { // jshint ignore:line
                 top -= this._parent.top;
 
                 // In case dropped in header
-                if (top < 0) { top = 0;}
+                if (top < 0) {
+                    top = 0;
+                }
 
                 // Position the element
                 this.top = top;
@@ -2875,7 +3334,12 @@ class frElement { // jshint ignore:line
         }
     }
 
-    _mouseDown() {
+    _mouseDown(e) {
+        // Only allow Left mouse button to select items...
+        if (e.button !== 0) {
+            return;
+        }
+
         this._selected();
     }
 
@@ -2897,6 +3361,7 @@ class frElement { // jshint ignore:line
     }
 
     _clickHandler(args) {
+        this._report._updateSectionIn(args.clientY);
         if (this._handlers.click && this._handlers.click.length) {
             this._notify('click', args);
         } else {
@@ -2921,8 +3386,7 @@ class frElement { // jshint ignore:line
         this._html.classList.add("frSelected");
     }
 
-
-    _addProperties(arr, insert=true) {
+    _addProperties(arr, insert = true) {
         if (insert === true) {
             if (Array.isArray(arr)) {
                 this._properties = arr.concat(this._properties);
@@ -2938,23 +3402,31 @@ class frElement { // jshint ignore:line
         }
     }
 
-    _saveProperties(props, ignore=[]) {
-        for (let i=0;i<this._properties.length;i++) {
+    _saveProperties(props, ignore = []) {
+        for (let i = 0; i < this._properties.length; i++) {
             const curProp = this._properties[i];
             if (curProp.field) {
                 // Check to see if we passed in this field to be ignored by a descendant
-                if (ignore && ignore.indexOf(curProp.field) >= 0) { continue; }
+                if (ignore && ignore.indexOf(curProp.field) >= 0) {
+                    continue;
+                }
 
                 // If the item is undefined, then we don't bother saving it.
-                if (typeof this[curProp.field] === 'undefined') { continue; }
+                if (typeof this[curProp.field] === 'undefined') {
+                    continue;
+                }
 
                 // Check to see if the field has the default value
-                if (typeof curProp.default !== 'undefined' && curProp.default === this[curProp.field]) { continue; }
+                if (typeof curProp.default !== 'undefined' && curProp.default === this[curProp.field]) {
+                    continue;
+                }
 
                 // Check to see if we have a destination override
                 if (typeof curProp.destination !== 'undefined') {
                     // Check to see if the destination override is set to false; meaning we don't save it.
-                    if (curProp.destination === false) { continue; }
+                    if (curProp.destination === false) {
+                        continue;
+                    }
 
                     // Ok, use the destination override to save it
                     if (typeof props[curProp.destination] === 'undefined') {
@@ -2969,12 +3441,48 @@ class frElement { // jshint ignore:line
         }
     }
 
+    _createAlignSelect() {
+        const curAlign = this._align;
+        let selectGroup = document.createElement('select');
+
+        let item;
+        if (this._hasAlignNone === true) {
+            item = new Option("None", "none");
+            if (curAlign === "none") {
+                item.selected = true;
+            }
+            selectGroup.appendChild(item);
+        }
+
+        item = new Option("Left", "left");
+        if (curAlign === "left" || curAlign === "0" || curAlign === 0) {
+            item.selected = true;
+        }
+        selectGroup.appendChild(item);
+
+        item = new Option("Center", "center");
+        if (curAlign === "center" || curAlign === "2" || curAlign === 2) {
+            item.selected = true;
+        }
+        selectGroup.appendChild(item);
+
+        item = new Option("Right", "right");
+        if (curAlign === "right" || curAlign === "1" || curAlign === 1) {
+            item.selected = true;
+        }
+        selectGroup.appendChild(item);
+
+
+
+        return selectGroup;
+    }
+
     _deleteProperties(arr) {
         if (Array.isArray(arr)) {
-            for (let i=0;i<arr.length;i++) {
+            for (let i = 0; i < arr.length; i++) {
                 let idx = this._properties.indexOf(arr[i]);
                 if (idx < 0) {
-                    for (let j=0;j<this._properties.length && idx < 0;j++) {
+                    for (let j = 0; j < this._properties.length && idx < 0; j++) {
                         if (this._properties[j].field === arr[i]) {
                             idx = j;
                         }
@@ -2999,13 +3507,15 @@ class frTitledElement extends frElement {
         super(report, parent, options);
 
         this._html = document.createElement("div");
-        this._html.className = "frTitledElement " + (options && options.className  || '');
+        this._html.className = "frTitledElement " + (options && options.className || '');
 
         let top = options && options.top || 0;
-        if (typeof top !== 'number' || top < 0) { top = 0; }
+        if (typeof top !== 'number' || top < 0) {
+            top = 0;
+        }
 
-        this._html.style.top = top+"px";
-        this._html.style.left = (options && options.left+"px") || "0px";
+        this._html.style.top = top + "px";
+        this._html.style.left = (options && options.left + "px") || "0px";
         this._html.style.position = 'absolute';
 
         this._elementTitle = document.createElement("span");
@@ -3023,8 +3533,13 @@ class frTitledElement extends frElement {
         this._assignStandardHandlers(this._html, options && options.handlers);
     }
 
-    get elementTitle() { return this._elementTitle.innerText; }
-    set elementTitle(val) { this._elementTitle.innerText = val; }
+    get elementTitle() {
+        return this._elementTitle.innerText;
+    }
+
+    set elementTitle(val) {
+        this._elementTitle.innerText = val;
+    }
 }
 
 class frSVGElement extends frTitledElement { // jshint ignore:line
@@ -3046,8 +3561,9 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this._svgRoot.style.width = (this.width * this.scale).toString();
         this._svgRoot.style.height = (this.height * this.scale).toString();
         this._html.appendChild(this._svgRoot);
+        this._html.style.minWidth = "0px";
         this.setupShape();
-        this._deleteProperties(['top','left', 'width', 'height']);
+        this._deleteProperties(['top', 'left', 'width', 'height']);
         this._addProperties([
             {type: 'number', field: 'top', default: 0, destination: "settings"},
             {type: 'number', field: 'left', default: 0, destination: "settings"},
@@ -3056,11 +3572,33 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
             {type: 'select', field: "shape", display: this.createSelect.bind(this), destination: 'settings'},
             {type: 'number', field: 'radius', default: 0, destination: 'settings'},
             {type: 'boolean', field: 'usesSpace', default: true, destination: 'settings'},
-            {type: 'string', field: 'borderColor', title:"Border Color", default: "", destination: 'settings', functionable:true},
-            {type: 'string', field: 'fill', title:"Fill Color", default: "", destination: 'settings',functionable:true},
-            {type: 'number', field: 'fillOpacity', title:"Fill Opacity", default: 1.0, destination: 'settings',functionable:true},
+            {
+                type: 'string',
+                field: 'borderColor',
+                title: "Border Color",
+                default: "",
+                destination: 'settings',
+                functionable: true
+            },
+            {
+                type: 'string',
+                field: 'fill',
+                title: "Fill Color",
+                default: "",
+                destination: 'settings',
+                functionable: true
+            },
+            {
+                type: 'number',
+                field: 'fillOpacity',
+                title: "Fill Opacity",
+                default: 1.0,
+                destination: 'settings',
+                functionable: true
+            },
         ]);
     }
+
     _parseElement(data) {
         this.shape = data.settings.shape || "line";
         this.radius = data.settings.radius || 50;
@@ -3073,9 +3611,31 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this.usesSpace = data.settings.usesSpace || true;
         this.fillOpacity = data.settings.fillOpacity || 1.0;
     }
+
     _saveProperties(props, ignore = []) {
         super._saveProperties(props, ignore);
         props.type = 'shape';
+    }
+
+    updateShape() {
+        switch (this._shape) {
+            case 'line':
+                this._svg.setAttribute("x1", "0");
+                this._svg.setAttribute("y1", "3");
+                this._svg.setAttribute("x2", (this.width * this.scale).toString());
+                this._svg.setAttribute("y2", (3 + this.height).toString());
+                break;
+            case 'circle':
+                const offset = this.radius;
+                this._svg.setAttribute("cx", offset);
+                this._svg.setAttribute("cy", offset);
+                this._svg.setAttribute("r", this.radius.toString());
+                break;
+        }
+        this._svgRoot.style.width = (this.width * this.scale).toString();
+        this._svgRoot.style.height = (5 + this.height).toString();
+        this._svg.style.width = (this.width * this.scale).toString();
+        this._svg.style.height = (5 + this.height).toString();
     }
 
     setupShape() {
@@ -3086,25 +3646,16 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         switch (this._shape) {
             case 'line':
                 this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'line');
-                this._svg.setAttribute("x1","0");
-                this._svg.setAttribute("y1","3");
-                this._svg.setAttribute("x2", (this.width * this.scale).toString());
-                this._svg.setAttribute("y2", (3+(this.height * this.scale)).toString());
                 break;
             case 'box':
                 this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
                 break;
             case 'circle':
                 this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
-
-                const midY = Math.floor((this.height * this.scale ) / 2);
-                const midX = Math.floor((this.width * this.scale) / 2);
-                this._svg.setAttribute("cx",midX.toString());
-                this._svg.setAttribute("cy",midY.toString());
-                this._svg.setAttribute("r",this.radius.toString());
                 break;
 
         }
+        this.updateShape();
         if (!this._svg) {
             console.error("fluentReportGenerator: SVG shape is not configured in setupShape, set to: ", this._shape);
             return;
@@ -3122,34 +3673,38 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
     get usesSpace() {
         return this._usesSpace;
     }
+
     set usesSpace(val) {
         this._usesSpace = this.getBooleanOrFunction(val);
     }
 
-    get borderColor(){
+    get borderColor() {
         return this._borderColor;
     }
-    set borderColor(val){
+
+    set borderColor(val) {
         this._borderColor = val;
         this._svg.style.stroke = this.borderColor || "#000000";
     }
-    get fill(){
+
+    get fill() {
         return this._fill;
     }
-    set fill(val){
+
+    set fill(val) {
         this._fill = val;
         this._svg.style.fill = this.fill || "none";
     }
 
-    get fillOpacity(){
+    get fillOpacity() {
         return this._fillOpacity;
     }
-    set fillOpacity(val){
-        if(this.isFunction(val)){
+
+    set fillOpacity(val) {
+        if (this.isFunction(val)) {
             this._fillOpacity = val;
             this._svg.style.fillOpacity = "0.7";
-        }
-        else{
+        } else {
             this._fillOpacity = handleOpacity(val);
             this._svg.style.fillOpacity = minDisplayOpacity(this.fillOpacity);
         }
@@ -3162,7 +3717,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
     set radius(val) {
         this._radius = val;
         if (this._svg && this._shape === "circle") {
-            this._svg.setAttribute("r",this.radius.toString());
+            this._svg.setAttribute("r", this.radius.toString());
         }
     }
 
@@ -3180,35 +3735,30 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
     get width() {
         return super.width;
     }
+
     set width(val) {
         super.width = val;
+        this._html.style.width = (this.width * this.scale) + "px";
         if (this._svg) {
-            this._svgRoot.style.width = (this._width * this.scale).toString();
-            this._svg.style.width = (this._width * this.scale).toString();
-            if (this._shape === "line") {
-                this._svg.setAttribute("x2", (this.width * this.scale).toString());
-            }
+            this.updateShape();
         }
     }
 
     get height() {
         return super.height;
     }
+
     set height(val) {
         super.height = val;
-        this._html.style.height = (5+(this.height * this.scale))+"px";
+        this._html.style.height = (5 + (this.height)) + "px";
         if (this._svg) {
-            this._svgRoot.style.height = (5 + (this.height * this.scale)).toString();
-            this._svg.style.height = (5 + (this.height * this.scale)).toString();
-            if (this._shape === "line") {
-                this._svg.setAttribute("y2", (3 + (this.height * this.scale)).toString());
-            }
+            this.updateShape();
         }
     }
 
     // SVG has extra 5 pixels, see height setter...
     get elementHeight() {
-        return this.height+5;
+        return this.height + 5;
     }
 
     createSelect() {
@@ -3250,6 +3800,7 @@ class frTitledLabel extends frTitledElement { // jshint ignore:line
     get width() {
         return super.width;
     }
+
     set width(val) {
         super.width = val;
         this._text.style.width = this._html.style.width;
@@ -3258,13 +3809,19 @@ class frTitledLabel extends frTitledElement { // jshint ignore:line
     get height() {
         return super.height;
     }
+
     set height(val) {
         super.height = val;
         this._text.style.height = this._html.style.height;
     }
 
-    get label() { return this._text.innerText; }
-    set label(val) { this._text.innerText = val; }
+    get label() {
+        return this._text.innerText;
+    }
+
+    set label(val) {
+        this._text.innerText = val;
+    }
 }
 
 class frStandardHeader extends frTitledLabel { // jshint ignore:line
@@ -3275,26 +3832,36 @@ class frStandardHeader extends frTitledLabel { // jshint ignore:line
         super(report, parent, options);
         this._title = 'Report';
         this._addProperties({type: 'string', field: 'title'});
-        this._deleteProperties(['top', 'left', 'width', 'height']);
+        this._deleteProperties(['top','left', 'width', 'height']);
 //        this._draggable.containment = parent._html;
         this.locked = true;
     }
 
-    get title() { return this._title; }
+    get canCopy() {
+        return false;
+    }
+
+    get title() {
+        return this._title;
+    }
+
     set title(val) {
         this._title = val;
-        this.label = "[ "+val+" ]";
+        this.label = "[ " + val + " ]";
     }
 
     _saveProperties(props) {
         props.values = [this.title];
     }
+
     _parseElement(data) {
         this.title = data.values[0] || "Report";
     }
 
     delete() {
-        if (this._inDelete) { return; }
+        if (this._inDelete) {
+            return;
+        }
         this._inDelete = true;
         super.delete();
         this._parent.usingStock = false;
@@ -3302,7 +3869,6 @@ class frStandardHeader extends frTitledLabel { // jshint ignore:line
     }
 }
 
-// TODO: Maybe Footer should be a descendant of Band?
 class frStandardFooter extends frTitledLabel { // jshint ignore:line
     constructor(report, parent, options = {}) {
         options.elementTitle = "Standard Footer";
@@ -3312,24 +3878,42 @@ class frStandardFooter extends frTitledLabel { // jshint ignore:line
         this._title = "Report";
         this._totals = [];
         this._addProperties([{type: 'string', field: 'title'}]);
-        this._addProperties(  {type: 'button', field: 'totals', title: 'Totals', click: this._setTotals.bind(this), destination: false}, false);
+        this._addProperties({
+            type: 'button',
+            field: 'totals',
+            title: 'Totals',
+            click: this._setTotals.bind(this),
+            destination: false
+        }, false);
         this._deleteProperties(['top', 'left', 'width', 'height']);
+
         this.locked = true;
-//        this._draggable.containment = parent._html;
     }
 
     _setTotals() {
         console.log("Set Totals");
     }
 
-    get title() { return this._title; }
-    set title(val) {
-        this._title = val;
-        this.label = "[ "+val+" ]";
+    get title() {
+        return this._title;
     }
 
-    get totals() { return this._totals; }
-    set totals(val) { this._totals = val;}
+    set title(val) {
+        this._title = val;
+        this.label = "[ " + val + " ]";
+    }
+
+    get totals() {
+        return this._totals;
+    }
+
+    set totals(val) {
+        this._totals = val;
+    }
+
+    get canCopy() {
+        return false;
+    }
 
     _saveProperties(props) {
         if (this.title === "Band") {
@@ -3354,7 +3938,9 @@ class frStandardFooter extends frTitledLabel { // jshint ignore:line
     }
 
     delete() {
-        if (this._inDelete) { return; }
+        if (this._inDelete) {
+            return;
+        }
         this._inDelete = true;
         super.delete();
         this._parent.usingStock = false;
@@ -3363,18 +3949,57 @@ class frStandardFooter extends frTitledLabel { // jshint ignore:line
 
 }
 
-class frNewLine extends  frTitledLabel { // jshint ignore:line
-    get count() { return this._count; }
-    set count(val) {
-        this._count = parseInt(val, 10);
-        this.label = "Lines: ("+this._count+")";
+
+class frPageBreak extends frTitledLabel { // jshint ignore:line
+    get active() {
+        return this._active;
     }
 
-    constructor(report, parent, options={}) {
+    set active(val) {
+        this._active = this.getBooleanOrFunction(val);
+        if (this.isFunction(val)) {
+            this.label = "Page Break: {FUNC}";
+        } else {
+            this.label = "Page Break: (" + (this._active ? "active" : "inactive") + ")";
+        }
+    }
+
+    constructor(report, parent, options = {}) {
+        super(report, parent, options);
+        this.active = true;
+        this.elementTitle = "Page Breaking Point";
+        this._deleteProperties(["left", "width", "height"]);
+        this._addProperties({type: 'boolean', field: "active", default: false, functionable: true});
+    }
+
+    _saveProperties(props) {
+        super._saveProperties(props);
+        props.type = "newPage";
+    }
+
+    _parseElement(data) {
+        if(data){
+            this._copyProperties(data, this, ["top"]);
+            this.active = data.active;
+        }
+    }
+}
+
+class frNewLine extends frTitledLabel { // jshint ignore:line
+    get count() {
+        return this._count;
+    }
+
+    set count(val) {
+        this._count = parseInt(val, 10);
+        this.label = "Lines: (" + this._count + ")";
+    }
+
+    constructor(report, parent, options = {}) {
         super(report, parent, options);
         this.count = 1;
         this.elementTitle = "New/Blank Line";
-        this._deleteProperties(["top", "left", "width", "height"]);
+        this._deleteProperties(["left", "width", "height"]);
         this._addProperties({type: 'number', field: "count", default: 1});
     }
 
@@ -3384,33 +4009,47 @@ class frNewLine extends  frTitledLabel { // jshint ignore:line
     }
 
     _parseElement(data) {
-        if (data.count > 0) { this.count = data.count; }
+        if (data) {
+            this._copyProperties(data, this, ["top"]);
+            this.count = (typeof data.count === "number" && data.count > 0) ? data.count : 1;
+        }
     }
 }
 
-class frBandLine extends  frTitledLabel { // jshint ignore:line
+class frBandLine extends frTitledLabel { // jshint ignore:line
 
-    get thickness() { return this._thickness; }
+    get thickness() {
+        return this._thickness;
+    }
+
     set thickness(val) {
         this._thickness = parseFloat(val);
-        if (isNaN(this._thickness)) { this._thickness = 1.0; }
-        this.label = "----(auto-sized to prior printed band, thickness: "+this._thickness+"px)----";
+        if (isNaN(this._thickness)) {
+            this._thickness = 1.0;
+        }
+        this.label = "--- (auto-sized/placed to prior printed band, thickness: " + this._thickness + "px) ---";
     }
 
-    get gap() { return this._verticalGap; }
+    get gap() {
+        return this._verticalGap;
+    }
+
     set gap(val) {
-        this._verticalGap = parseInt(val,10);
+        this._verticalGap = parseInt(val, 10);
     }
 
-
-    constructor(report, parent, options={}) {
+    constructor(report, parent, options = {}) {
         super(report, parent, options);
         this._thickness = 1.0;
         this._verticalGap = 0;
         this.elementTitle = "Band Line";
-        this.label = "----(auto-width to prior printed band, thickness: 1.0px)----";
-        this._deleteProperties(["top", "left", "width", "height"]);
-        this._addProperties([{type: 'number', field: "thickness", default: 0},{type: 'number', field: "gap", default: 0}]);
+        this.label = "--- (auto-sized/placed to prior printed band, thickness: 1.0px) ---";
+        this._deleteProperties(["left", "width", "height"]);
+        this._addProperties([{type: 'number', field: "thickness", default: 0}, {
+            type: 'number',
+            field: "gap",
+            default: 0
+        }]);
 
         super.width = "120px";
     }
@@ -3421,12 +4060,15 @@ class frBandLine extends  frTitledLabel { // jshint ignore:line
     }
 
     _parseElement(data) {
-        if (data.thickness > 0) { this.thickness = data.thickness; }
+        if (data) {
+            this._copyProperties(data, this, ["top"]);
+            this.thickness = (typeof data.thickness === "number" && data.thickness > 0) ? data.thickness : 1;
+        }
     }
 }
 
 class frImage extends frTitledElement { // jshint ignore:line
-    constructor(report, parent, options={}) {
+    constructor(report, parent, options = {}) {
         super(report, parent, options);
 
         this._image = null;
@@ -3443,11 +4085,42 @@ class frImage extends frTitledElement { // jshint ignore:line
         this.width = (options && options.width) || 50;
         this.height = (options && options.height) || 50;
 
-        this._addProperties([{type: 'file', click: this._dblClickHandler.bind(this), title: "Set image", field: "image", default: null},
-            {type: 'select', field: "aspect", default: "none", display: this._createFitSelect.bind(this), destination: 'settings'},
-            {type: 'select', field: "align", default: "left", display: this._createAlignSelect.bind(this), destination: 'settings'},
-            {type: 'select', field: "valign", default: "top", display: this._createVAlignSelect.bind(this), destination: 'settings'},
-            {type: 'number', title: 'scale', field: 'imgScale', propType: "string", default: 0, destination: 'settings'},
+        this._addProperties([{
+            type: 'file',
+            click: this._dblClickHandler.bind(this),
+            title: "Set image",
+            field: "image",
+            default: null
+        },
+            {
+                type: 'select',
+                field: "aspect",
+                default: "none",
+                display: this._createFitSelect.bind(this),
+                destination: 'settings'
+            },
+            {
+                type: 'select',
+                field: "align",
+                default: "left",
+                display: this._createAlignSelect.bind(this),
+                destination: 'settings'
+            },
+            {
+                type: 'select',
+                field: "valign",
+                default: "top",
+                display: this._createVAlignSelect.bind(this),
+                destination: 'settings'
+            },
+            {
+                type: 'number',
+                title: 'scale',
+                field: 'imgScale',
+                propType: "string",
+                default: 0,
+                destination: 'settings'
+            },
             {type: 'boolean', field: 'usesSpace', default: true, destination: 'settings'}
         ]);
     }
@@ -3455,6 +4128,7 @@ class frImage extends frTitledElement { // jshint ignore:line
     get usesSpace() {
         return this._usesSpace;
     }
+
     set usesSpace(val) {
         this._usesSpace = !!val;
     }
@@ -3463,6 +4137,7 @@ class frImage extends frTitledElement { // jshint ignore:line
     get imgScale() {
         return this._imgScale;
     }
+
     set imgScale(val) {
         this._imgScale = parseFloat(val);
         this._fixSizing();
@@ -3471,13 +4146,16 @@ class frImage extends frTitledElement { // jshint ignore:line
     get aspect() {
         return this._aspect;
     }
+
     set aspect(val) {
         this._aspect = val;
         this._fixSizing();
     }
 
     _fixSizing() {
-        if (this._inFixSizing) { return; }
+        if (this._inFixSizing) {
+            return;
+        }
         this._inFixSizing = true;
         if (this._image !== null) {
             switch (this._aspect) {
@@ -3500,6 +4178,7 @@ class frImage extends frTitledElement { // jshint ignore:line
     get align() {
         return this._align;
     }
+
     set align(val) {
         this._align = val;
     }
@@ -3507,27 +4186,9 @@ class frImage extends frTitledElement { // jshint ignore:line
     get valign() {
         return this._valign;
     }
+
     set valign(val) {
         this._valign = val;
-    }
-
-    _createAlignSelect() {
-        const curAlign = this._align;
-        let selectGroup = document.createElement('select');
-
-        let item = new Option("Left", "left");
-        if (curAlign === "left") { item.selected = true; }
-        selectGroup.appendChild(item);
-
-        item = new Option("Right", "right");
-        if (curAlign === "right") { item.selected = true; }
-        selectGroup.appendChild(item);
-
-        item = new Option("Center", "center");
-        if (curAlign === "center") { item.selected = true; }
-        selectGroup.appendChild(item);
-
-        return selectGroup;
     }
 
     _createVAlignSelect() {
@@ -3535,15 +4196,21 @@ class frImage extends frTitledElement { // jshint ignore:line
         let selectGroup = document.createElement('select');
 
         let item = new Option("Top", "top");
-        if (curAlign === "top") { item.selected = true; }
+        if (curAlign === "top") {
+            item.selected = true;
+        }
         selectGroup.appendChild(item);
 
         item = new Option("Center", "center");
-        if (curAlign === "center") { item.selected = true; }
+        if (curAlign === "center") {
+            item.selected = true;
+        }
         selectGroup.appendChild(item);
 
         item = new Option("Bottom", "bottom");
-        if (curAlign === "bottom") { item.selected = true; }
+        if (curAlign === "bottom") {
+            item.selected = true;
+        }
         selectGroup.appendChild(item);
 
         return selectGroup;
@@ -3554,30 +4221,40 @@ class frImage extends frTitledElement { // jshint ignore:line
         let selectGroup = document.createElement('select');
 
         let item = new Option("None", "none");
-        if (curAlign === "none") { item.selected = true; }
+        if (curAlign === "none") {
+            item.selected = true;
+        }
         selectGroup.appendChild(item);
 
         item = new Option("Size", "size");
-        if (curAlign === "size") { item.selected = true; }
+        if (curAlign === "size") {
+            item.selected = true;
+        }
         selectGroup.appendChild(item);
 
         item = new Option("Scale", "scale");
-        if (curAlign === "scale") { item.selected = true; }
+        if (curAlign === "scale") {
+            item.selected = true;
+        }
         selectGroup.appendChild(item);
 
         item = new Option("Fit", "fit");
-        if (curAlign === "fit") { item.selected = true; }
+        if (curAlign === "fit") {
+            item.selected = true;
+        }
         selectGroup.appendChild(item);
 
         item = new Option("Cover", "cover");
-        if (curAlign === "cover") { item.selected = true; }
+        if (curAlign === "cover") {
+            item.selected = true;
+        }
         selectGroup.appendChild(item);
 
         return selectGroup;
     }
 
     _dblClickHandler() {
-        this.UIBuilder.fileEditor(this._image, [".jpg",".jpeg",".png"], false,(val) => {
+        this.UIBuilder.fileEditor(this._image, [".jpg", ".jpeg", ".png"], false, (val) => {
             this.image = val;
         });
     }
@@ -3589,13 +4266,16 @@ class frImage extends frTitledElement { // jshint ignore:line
     get width() {
         return super.width;
     }
+
     set width(val) {
         super.width = val;
         this._imgRoot.style.width = (super.width * this.scale) + "px";
     }
+
     get height() {
         return super.height;
     }
+
     set height(val) {
         super.height = val;
         this._imgRoot.style.height = (super.height * this.scale) + "px";
@@ -3604,6 +4284,7 @@ class frImage extends frTitledElement { // jshint ignore:line
     get image() {
         return this._image;
     }
+
     set image(val) {
         this._image = val;
         this._imgRoot.src = val;
@@ -3623,7 +4304,7 @@ class frImage extends frTitledElement { // jshint ignore:line
 
 class frPrint extends frTitledLabel {
 
-    constructor(report, parent, options={}) {
+    constructor(report, parent, options = {}) {
         super(report, parent, options);
         this._x = 0;
         this._y = 0;
@@ -3633,7 +4314,7 @@ class frPrint extends frTitledLabel {
         this._textColor = '';
         this._link = "";
         this._rotate = 0;
-        this._align = "left";
+        this._align = (this._hasAlignNone === true ? "none" : "left");
         this._font = "times";
         this._formatFunction = "none";
 
@@ -3657,8 +4338,8 @@ class frPrint extends frTitledLabel {
 
         this._addProperties(
             [
-                {type: 'number', field: "absoluteX", title:"X", default: null, destination: "settings"},
-                {type: 'number', field: "absoluteY", title:"Y", default: null, destination: "settings"},
+                {type: 'number', field: "absoluteX", title: "X", default: null, destination: "settings"},
+                {type: 'number', field: "absoluteY", title: "Y", default: null, destination: "settings"},
                 {
                     type: 'select',
                     field: "font",
@@ -3685,7 +4366,14 @@ class frPrint extends frTitledLabel {
                     default: false,
                     destination: 'settings'
                 },
-                {type: 'string', field: "fill",title:"Fill Color",functionable: true, default: "", destination: "settings"},
+                {
+                    type: 'string',
+                    field: "fill",
+                    title: "Fill Color",
+                    functionable: true,
+                    default: "",
+                    destination: "settings"
+                },
                 {type: 'string', field: "textColor", functionable: true, default: "", destination: "settings"},
                 {type: 'string', field: "link", functionable: true, default: "", destination: "settings"},
                 {type: 'number', field: "border", default: 0, destination: "settings"},
@@ -3697,14 +4385,14 @@ class frPrint extends frTitledLabel {
                 {
                     type: 'select',
                     field: "align",
-                    default: "left",
+                    default: (this._hasAlignNone === true ? "none" : "left"),
                     display: this._createAlignSelect.bind(this),
                     destination: 'settings'
                 },
 
                 // Wrapping isn't actually supported in the engine on Prints
                 // {type: 'boolean', field: "wrap", default: false, destination: "settings"}
-                ]);
+            ]);
 
         // Only add formatter functions, if we pass some in...
         if (this._report._hasFormatterFunctions()) {
@@ -3721,6 +4409,10 @@ class frPrint extends frTitledLabel {
 
     }
 
+    get _hasAlignNone() {
+        return true;
+    }
+
     _createFontSelect() {
         return this.UIBuilder.createFontSelect(this.font);
     }
@@ -3734,7 +4426,9 @@ class frPrint extends frTitledLabel {
         let formatters = this._report.formatterFunctions;
 
         for (let key in formatters) {
-            if (!formatters.hasOwnProperty(key)) { continue; }
+            if (!formatters.hasOwnProperty(key)) {
+                continue;
+            }
             item = new Option(key, key);
             if (key === formatFunction) {
                 item.selected = true;
@@ -3745,28 +4439,10 @@ class frPrint extends frTitledLabel {
         return selectGroup;
     }
 
-    _createAlignSelect() {
-        const curAlign = this._align;
-        let selectGroup = document.createElement('select');
-
-        let item = new Option("Left", "left");
-        if (curAlign === "left" || curAlign === "0" || curAlign === 0) { item.selected = true; }
-        selectGroup.appendChild(item);
-
-        item = new Option("Right", "right");
-        if (curAlign === "right" || curAlign === "1" || curAlign === 1) { item.selected = true; }
-        selectGroup.appendChild(item);
-
-        item = new Option("Center", "center");
-        if (curAlign === "center" || curAlign === "2" || curAlign === 2) { item.selected = true; }
-        selectGroup.appendChild(item);
-
-        return selectGroup;
-    }
-
     get opacity() {
         return this._opacity;
     }
+
     set opacity(val) {
         this._opacity = handleOpacity(val);
     }
@@ -3774,58 +4450,113 @@ class frPrint extends frTitledLabel {
     get wordSpacing() {
         return this._wordSpacing;
     }
+
     set wordSpacing(val) {
         this._wordSpacing = parseInt(val, 10);
     }
 
-    get fontSize() { return this._fontSize; }
-    set fontSize(val) { this._fontSize = this.getNumeralOrFunction(val); }
+    get fontSize() {
+        return this._fontSize;
+    }
+
+    set fontSize(val) {
+        this._fontSize = this.getNumeralOrFunction(val);
+    }
 
     get characterSpacing() {
         return this._characterSpacing;
     }
+
     set characterSpacing(val) {
         this._characterSpacing = parseInt(val, 10);
     }
 
-    get x() { return this._x; }
-    set x(val) { this._x = parseInt(val, 10); }
+    get x() {
+        return this._x;
+    }
 
-    get y() { return this._y; }
-    set y(val) { this._y = parseInt(val, 10); }
+    set x(val) {
+        this._x = parseInt(val, 10);
+        this.left = this._x;
+    }
 
+    get y() {
+        return this._y;
+    }
 
-    get absoluteX() { return this.left; }
-    set absoluteX(val) { this.left = val; }
+    set y(val) {
+        this._y = parseInt(val, 10);
+        this.top = this._y;
+    }
 
-    get absoluteY() { return this.top; }
-    set absoluteY(val) { this.top = val; }
+    get underline() {
+        return this._underline;
+    }
 
-    get underline() { return this._underline; }
-    set underline(val) { this._underline = this.getBooleanOrFunction(val); }
+    set underline(val) {
+        this._underline = this.getBooleanOrFunction(val);
+    }
 
-    get strike() { return this._strike; }
-    set strike(val) { this._strike = this.getBooleanOrFunction(val); }
+    get strike() {
+        return this._strike;
+    }
 
-    get fontBold() { return this._fontBold; }
-    set fontBold(val) { this._fontBold = this.getBooleanOrFunction(val); }
+    set strike(val) {
+        this._strike = this.getBooleanOrFunction(val);
+    }
 
-    get fontItalic() { return this._fontItalic; }
-    set fontItalic(val) { this._fontItalic = this.getBooleanOrFunction(val); }
+    get fontBold() {
+        return this._fontBold;
+    }
 
-    get fill() { return this._fill; }
-    set fill(val) { this._fill = val; }
+    set fontBold(val) {
+        this._fontBold = this.getBooleanOrFunction(val);
+    }
 
-    get textColor() { return this._textColor; }
-    set textColor(val) { this._textColor = val; }
+    get fontItalic() {
+        return this._fontItalic;
+    }
 
-    get link() { return this._link; }
-    set link(val) { this._link = val; }
+    set fontItalic(val) {
+        this._fontItalic = this.getBooleanOrFunction(val);
+    }
 
-    get border() { return this._border; }
-    set border(val) { this._border = parseInt(val, 10); }
+    get fill() {
+        return this._fill;
+    }
 
-    get wrap() { return this._wrap; }
+    set fill(val) {
+        this._fill = val;
+    }
+
+    get textColor() {
+        return this._textColor;
+    }
+
+    set textColor(val) {
+        this._textColor = val;
+    }
+
+    get link() {
+        return this._link;
+    }
+
+    set link(val) {
+        this._link = val;
+    }
+
+    get border() {
+        return this._border;
+    }
+
+    set border(val) {
+        this._border = parseInt(val, 10);
+    }
+
+    get wrap() {
+        return this._wrap;
+    }
+
     set wrap(val) {
         this._wrap = !!val;
         if (this._text) {
@@ -3833,33 +4564,53 @@ class frPrint extends frTitledLabel {
         }
     }
 
-    get rotate() { return this._rotate; }
-    set rotate(val) { this._rotate = !!val;}
+    get rotate() {
+        return this._rotate;
+    }
 
-    get align() { return this._align; }
+    set rotate(val) {
+        this._rotate = !!val;
+    }
+
+    get align() {
+        return this._align;
+    }
+
     set align(val) {
         switch (val) {
             case 0:
             case "left":
                 this._align = "left";
+                this.absoluteX = 0;
                 break;
 
             case 1:
             case 'right':
                 this._align = "right";
+                this.absoluteX = (parseInt((this.pageWidth * this.scale), 10)) - (this.elementWidth * this.scale);
                 break;
 
             case 2:
             case "center":
                 this._align = "center";
+                this.absoluteX = (parseInt((this.pageWidth ), 10) / 2) - (this.elementWidth / 2);
+                break;
+
+            case 3:
+            case "none":
+                this._align = "none";
                 break;
 
             default:
                 console.error("fluentReports: Unknown alignment", val);
         }
+
     }
 
-    get formatFunction() { return this._formatFunction; }
+    get formatFunction() {
+        return this._formatFunction;
+    }
+
     set formatFunction(val) {
         this._formatFunction = val;
     }
@@ -3872,7 +4623,6 @@ class frPrint extends frTitledLabel {
     _saveProperties(props, ignore) {
         super._saveProperties(props, ignore);
         props.type = 'print';
-
     }
 
 
@@ -3920,26 +4670,24 @@ class frPageBreak extends  frTitledLabel { // jshint ignore:line
     }
 }
 
-class frPrintLabel extends frPrint  { // jshint ignore:line
+class frPrintLabel extends frPrint { // jshint ignore:line
     constructor(report, parent, options = {}) {
+
         if (typeof options.elementTitle === 'undefined') {
             options.elementTitle = "Label";
         }
         super(report, parent, options);
         this._text.contentEditable = options && typeof options.contentEditable === 'undefined' ? "true" : options.contentEditable || "true";
         this.label = (options && options.label) || "Label";
-        this._addProperties({type: "string", field: 'text', title: "label", lined:true});
+        this._addProperties({type: "string", field: 'text', title: "label", lined: true});
     }
 
     get text() {
         return this.label;
     }
+
     set text(val) {
         this.label = val;
-    }
-
-    _saveProperties(props) {
-        super._saveProperties(props);
     }
 
     _parseElement(data) {
@@ -3961,10 +4709,11 @@ class frPrintLabel extends frPrint  { // jshint ignore:line
         window.getSelection().removeAllRanges();
         const test = this.label;
         let reset = true;
-        for (let i=0;i<test.length;i++) {
+        for (let i = 0; i < test.length; i++) {
             const code = test.charCodeAt(i);
             if (code !== 13 && code !== 10 && code !== 32 && code !== 160) {
-                reset = false; break;
+                reset = false;
+                break;
             }
         }
 
@@ -3990,80 +4739,47 @@ class frPrintFunction extends frPrint { // jshint ignore:line
         this._addProperties(
             [{type: 'boolean', field: "async", default: false}, {type: 'string', field: "name"}]
         );
-        this._addProperties({type: 'button', field: 'function', title: "Function Editor", click: this._dblClickHandler.bind(this)}, false);
+        this._addProperties({
+            type: 'button',
+            field: 'function',
+            title: "Function Editor",
+            click: this._dblClickHandler.bind(this)
+        }, false);
     }
 
     get name() {
         return this._name;
     }
+
     set name(val) {
         this._name = val;
         if (this._function) {
-            this.label = "{ FUNCTION: "+this._name+" }";
+            this.label = "{ FUNCTION: " + this._name + " }";
         } else {
-            this.label = "{ function: "+this._name+" }";
+            this.label = "{ function: " + this._name + " }";
         }
     }
 
-    get function() { return this._function; }
+    get function() {
+        return this._function;
+    }
+
     set function(val) {
         this._function = val;
         if (val == null || val.length === 0) {
             this._function = '';
-            this.label = "{ function: "+this._name+" }";
+            this.label = "{ function: " + this._name + " }";
         } else {
-            this.label = "{ FUNCTION: "+this._name+" }";
+            this.label = "{ FUNCTION: " + this._name + " }";
         }
     }
 
     get async() {
         return this._async;
     }
+
     set async(val) {
         this._async = !!val;
-    }
-
-    // noinspection JSUnusedGlobalSymbols
-    _runFunction() {
-        try {
-            const func = new Function('report', 'data', 'state', 'vars', 'done', this._function);   // jshint ignore:line
-            let data = {};
-
-            // TODO: We need to tie this to the proper datafields for this section...
-            const fields = this._report.reportFields;
-
-            for (let i=0;i<fields.primary.length;i++) {
-                data[fields.primary[i]] = "data."+fields.primary[i];
-            }
-
-            for (let i=1;i<=fields.levels;i++) {
-                if (fields['level'+i].length > 0) {
-                    for (let j = 0; j < fields['level' + i].length; j++) {
-                        data[fields['level'+i][j]] = "data."+fields['level'+i][j];
-                    }
-                }
-            }
-
-            let vars = {};
-            const variables = this._report.reportVariables;
-            if (variables != null) {
-                for (let key in variables) {
-                    if (!variables.hasOwnProperty(key)) { continue; }
-                    vars[key] = "vars."+key;
-                }
-            }
-
-            if (!this._async) {
-                this.label = "{ FUNCTION: " + func({}, data, {}, vars);
-            } else {
-                func({}, data, {}, vars, (val) => {
-                    this.label = "{ FUNCTION: " + val + " }";
-                });
-            }
-        } catch (err) {
-            console.error("fluentReports: Error in runFunction", err);
-            this.label = "{ FUNCTION }";
-        }
     }
 
     _dblClickHandler() {
@@ -4109,7 +4825,13 @@ class frPrintField extends frPrint { // jshint ignore:line
         super(report, parent, options);
         this.field = options && options.field || 'Unknown';
         this._dataUUID = options && options.dataUUID || null;
-        this._addProperties({type: 'select', title: 'field', field: 'field', field2: 'dataUUID', display: this._generateDataFieldSelection.bind(this)});
+        this._addProperties({
+            type: 'select',
+            title: 'field',
+            field: 'field',
+            field2: 'dataUUID',
+            display: this._generateDataFieldSelection.bind(this)
+        });
     }
 
     _generateDataFieldSelection() {
@@ -4119,7 +4841,10 @@ class frPrintField extends frPrint { // jshint ignore:line
         return this.UIBuilder.createDataSelect(this._report, this._field, 3);
     }
 
-    get field() { return this._field; }
+    get field() {
+        return this._field;
+    }
+
     set field(val) {
         this._field = val;
         this.label = val;
@@ -4128,10 +4853,10 @@ class frPrintField extends frPrint { // jshint ignore:line
     get dataUUID() {
         return this._dataUUID;
     }
+
     set dataUUID(val) {
         this._dataUUID = val;
     }
-
 
     _dblClickHandler() {
         this.UIBuilder.dataFieldEditor(this._generateDataFieldSelection(), (value, idx, dataUUID) => {
@@ -4161,11 +4886,15 @@ class frPrintPageNumber extends frPrintLabel { // jshint ignore:line
         super(report, parent, options);
         this.header = options && options.header;
         this.footer = options && options.footer;
-        this.page = (options && options.page) || "Page {0} or {1}";
+        this.page = (options && options.page) || "Page {0} of {1}";
         this._addProperties({type: "string", field: 'page'});
-        this._deleteProperties(["label"]);
+        this._deleteProperties(["label", "text"]);
 
-        this._addProperties([{type: 'boolean', field: 'header', default: false}, {type: 'boolean', field: 'footer', default: false}]);
+        this._addProperties([{type: 'boolean', field: 'header', default: false}, {
+            type: 'boolean',
+            field: 'footer',
+            default: false
+        }]);
     }
 
     get page() {
@@ -4176,23 +4905,21 @@ class frPrintPageNumber extends frPrintLabel { // jshint ignore:line
         this.label = val;
     }
 
-    _saveProperties(props) {
-        super._saveProperties(props);
-    }
-
     _parseElement(data) {
-        if (data.page) {
-            this.page = data.page;
+        if(data){
+            if(data.page) {
+                this.page = data.page;
+            }
+            if (data.header) {
+                this.header = data.header;
+            }
+            if (data.footer) {
+                this.footer = data.footer;
+            }
+            super._parseElement(data);
         }
-        if (data.header) {
-            this.header = data.header;
-        }
-        if (data.footer) {
-            this.footer = data.footer;
-        }
-        super._parseElement(data);
-    }
 
+    }
 
 }
 
@@ -4204,7 +4931,13 @@ class frPrintDynamic extends frPrint { // jshint ignore:line
         this.other = options && options[this._type] || '-unset-';
 
         this._addProperties([
-            {type: 'select', title: 'type', field: 'type', onchange: this._refreshProperties.bind(this), display: this._generateTypeSelection.bind(this)},
+            {
+                type: 'select',
+                title: 'type',
+                field: 'type',
+                onchange: this._refreshProperties.bind(this),
+                display: this._generateTypeSelection.bind(this)
+            },
             {type: 'select', title: 'field', field: 'other', display: this._generateDataFieldSelection.bind(this)}
         ]);
     }
@@ -4215,13 +4948,19 @@ class frPrintDynamic extends frPrint { // jshint ignore:line
         super._refreshProperties();
     }
 
-    get type() { return this._type; }
+    get type() {
+        return this._type;
+    }
+
     set type(val) {
         this._type = val;
         this._elementTitle.innerText = val;
     }
 
-    get other() { return this._other; }
+    get other() {
+        return this._other;
+    }
+
     set other(val) {
         this._other = val;
         this.label = val;
@@ -4257,11 +4996,14 @@ class frPrintDynamic extends frPrint { // jshint ignore:line
         let dataSets = 4;
         switch (this._type) {
             case 'variable':
-                dataSets = 4; break;
+                dataSets = 4;
+                break;
             case 'calculation':
-                dataSets = 8; break;
+                dataSets = 8;
+                break;
             case 'total':
-                dataSets = 16; break;
+                dataSets = 16;
+                break;
         }
         return this.UIBuilder.createDataSelect(this._report, this._other, dataSets);
     }
@@ -4285,12 +5027,10 @@ class frPrintDynamic extends frPrint { // jshint ignore:line
         if (data.calculation) {
             this.type = "calculation";
             this.other = data.calculation;
-        }
-        else if (data.variable) {
+        } else if (data.variable) {
             this.type = "variable";
             this.other = data.variable;
-        }
-        else if (data.total) {
+        } else if (data.total) {
             this.type = "total";
             this.other = data.total;
         }
@@ -4300,13 +5040,23 @@ class frPrintDynamic extends frPrint { // jshint ignore:line
 }
 
 class frBandElement extends frPrint { // jshint ignore:line
-    get columns() { return this._columns; }
+    get columns() {
+        return this._columns;
+    }
+
+    get _hasAlignNone() {
+        return true;
+    }
+
     set columns(val) {
         this._columns = parseInt(val, 10);
         this._fixColumns();
     }
 
-    get suppression() { return this._suppression; }
+    get suppression() {
+        return this._suppression;
+    }
+
     set suppression(val) {
         this._suppression = !!val;
         if (this._suppression) {
@@ -4319,6 +5069,7 @@ class frBandElement extends frPrint { // jshint ignore:line
     get fillOpacity() {
         return this._fillOpacity;
     }
+
     set fillOpacity(val) {
         this._fillOpacity = handleOpacity(val);
     }
@@ -4327,12 +5078,20 @@ class frBandElement extends frPrint { // jshint ignore:line
         return this._bands;
     }
 
-    get padding() {return this._padding;}
-    set padding(val) {this._padding = parseInt(val,10);}
+    get padding() {
+        return this._padding;
+    }
 
-    get gutter() {return this._gutter;}
+    set padding(val) {
+        this._padding = parseInt(val, 10);
+    }
+
+    get gutter() {
+        return this._gutter;
+    }
+
     set gutter(val) {
-        this._gutter = parseInt(val,10);
+        this._gutter = parseInt(val, 10);
         if (this._gutter > 0) {
             this.collapse = false;
         } else if (this._gutter <= 0) {
@@ -4340,13 +5099,18 @@ class frBandElement extends frPrint { // jshint ignore:line
         }
     }
 
-    get collapse() { return this._collapse; }
-    set collapse(val) { this._collapse = !!val; }
+    get collapse() {
+        return this._collapse;
+    }
+
+    set collapse(val) {
+        this._collapse = !!val;
+    }
 
     constructor(report, parent, options = {}) {
         options.elementTitle = "Band";
         super(report, parent, options);
-        this._text.style.display="none";
+        this._text.style.display = "none";
         this._columns = 4;
         this._gridColumns = [];
         this._bands = [];
@@ -4368,17 +5132,21 @@ class frBandElement extends frPrint { // jshint ignore:line
 
         this._html.appendChild(this._table);
 
-        this._deleteProperties(['rotate','width']);
+        this._deleteProperties(['rotate', 'width', 'align']);
         this._addProperties([{type: 'boolean', field: 'suppression', default: false},
             {type: 'number', field: 'columns', destination: false},
             {type: 'number', field: 'fillOpacity', destination: 'settings'},
         ]);
         this._addProperties([
-            {type: 'number', field: 'gutter', destination: 'settings',default:0},
+            {type: 'number', field: 'gutter', destination: 'settings', default: 0},
             {type: 'boolean', field: 'collapse', destination: 'settings', default: true},
             {type: 'boolean', field: "wrap", default: false, destination: "settings"},
             {type: 'number', field: 'padding', destination: 'settings', default: 1},
-            {type: 'button', title: 'Band Editor', click: () => { this._bandEditor(); }}], false);
+            {
+                type: 'button', title: 'Band Editor', click: () => {
+                    this._bandEditor();
+                }
+            }], false);
     }
 
     _dblClickHandler() {
@@ -4387,15 +5155,17 @@ class frBandElement extends frPrint { // jshint ignore:line
 
     _bandEditor() {
         this.UIBuilder.bandBrowse(this._report, this._bands, (value) => {
-            for (let i =0;i<value.length;i++){
-                if(value[i].text){
-                    if(value[i].text.includes("\n") || value[i].text.includes("\r")) { this.wrap = true; }
+            for (let i = 0; i < value.length; i++) {
+                if (value[i].text) {
+                    if (value[i].text.includes("\n") || value[i].text.includes("\r")) {
+                        this.wrap = true;
+                    }
                 }
             }
             this._bands = value;
             this._columns = value.length;
             this._fixColumns();
-            for (let i=0;i<this._bands.length;i++) {
+            for (let i = 0; i < this._bands.length; i++) {
                 const td = this._getCell(i);
                 td.innerText = this._getBandTitle(i);
                 this._fixCellProps(td, this._bands[i]);
@@ -4404,7 +5174,9 @@ class frBandElement extends frPrint { // jshint ignore:line
     }
 
     _fixColumns() {
-        if (this._columns === this._gridColumns) { return;}
+        if (this._columns === this._gridColumns) {
+            return;
+        }
         if (this._columns > this._gridColumns.length) {
             for (let i = this._gridColumns.length; i < this._columns; i++) {
                 let td = document.createElement("td");
@@ -4422,14 +5194,28 @@ class frBandElement extends frPrint { // jshint ignore:line
     }
 
     _getBandTitle(index) {
-        if (this._bands.length <= index || index < 0) { return "?????"; }
+        if (this._bands.length <= index || index < 0) {
+            return "?????";
+        }
         let bnd = this._bands[index];
-        if (bnd.text != null) { return bnd.text; }
-        if (bnd.field != null) { return "data."+bnd.field; }
-        if (bnd.calculation != null) { return "calc."+bnd.calculation; }
-        if (bnd.variable != null) { return "var."+bnd.variable; }
-        if (bnd.total != null) { return "total."+bnd.total; }
-        if (bnd.function != null) { return "{ FUNCTION }"; }
+        if (bnd.text != null) {
+            return bnd.text;
+        }
+        if (bnd.field != null) {
+            return "data." + bnd.field;
+        }
+        if (bnd.calculation != null) {
+            return "calc." + bnd.calculation;
+        }
+        if (bnd.variable != null) {
+            return "var." + bnd.variable;
+        }
+        if (bnd.total != null) {
+            return "total." + bnd.total;
+        }
+        if (bnd.function != null) {
+            return "{ FUNCTION }";
+        }
         return "-???-";
     }
 
@@ -4440,7 +5226,7 @@ class frBandElement extends frPrint { // jshint ignore:line
 
         // Save only what the minimum number of columns selected, or the minimum number of columns that exist...
         let count = Math.min(this.columns, this._bands.length);
-        for (let i=0;i<count;i++) {
+        for (let i = 0; i < count; i++) {
             props.fields.push(this._bands[i]);
         }
     }
@@ -4449,13 +5235,10 @@ class frBandElement extends frPrint { // jshint ignore:line
     _parseElement(data) {
         const len = data.fields.length;
         this.columns = len;
-        for (let i=0;i<len;i++) {
+        for (let i = 0; i < len; i++) {
             this._handleBandCell(data.fields[i]);
         }
         this._copyProperties(data, this, ["gutter", "fillOpacity", "suppression", "padding", "collapse"]);
-        /*        this._copyProperties(data, this, ["absoluteX", "absoluteY", "font", "fontSize", "fontBold", "fontItalic", "underline",
-                    "strike", "fill", "textColor", "link", "border", "characterSpacing", "wordSpacing", "rotate", "align", "wrap", "gutter", "fillOpacity"]);
-          */
         super._parseElement(data);
     }
 
@@ -4463,20 +5246,15 @@ class frBandElement extends frPrint { // jshint ignore:line
         return this._tr.children[id];
     }
 
-    _handleBandCell(field) {
-        const cellId = this._bands.length;
-        this._bands.push(field);
-        const td = this._getCell(cellId);
-        td.innerText = this._getBandTitle(cellId);
-
-        this._fixCellProps(td, field);
-    }
-
     _fixCellProps(td, field) {
-        td.style.width = (this._report._parseSize(field.width,"width") * this.scale || 80) + "px";
+        let val = field.width;
+        if (typeof val === "object" && val.type === "function") {
+            val = this._runFunction(val.function);
+        }
+        td.style.width = (this._report._parseSize(val, "width") * this.scale || 80) + "px";
         td.style.maxWidth = td.style.width;
         if (field.align != null) {
-            switch(field.align) {
+            switch (field.align) {
                 case 1: // LEFT
                     td.style.textAlign = "left";
                     break;
@@ -4491,10 +5269,20 @@ class frBandElement extends frPrint { // jshint ignore:line
         // TODO: Handle rest of properties
     }
 
+    _handleBandCell(field) {
+        const cellId = this._bands.length;
+        this._bands.push(field);
+        const td = this._getCell(cellId);
+        td.innerText = this._getBandTitle(cellId);
+
+        this._fixCellProps(td, field);
+    }
+
 }
 
-
-
+/**
+ * UI Class, can be overridden to have custom UI
+ */
 class UI { // jshint ignore:line
 
     constructor(parent) {
@@ -4596,7 +5384,7 @@ class UI { // jshint ignore:line
         });
 
 
-        let addButtons =this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
+        let addButtons = this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
         let addBtnContainer = document.createElement('div');
         //addBtnContainer.style.display = ''
         addBtnContainer.style.padding = "5px";
@@ -4648,7 +5436,6 @@ class UI { // jshint ignore:line
         });
 
 
-
         let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
@@ -4688,7 +5475,9 @@ class UI { // jshint ignore:line
         select.style.width = "200px";
         select.size = 10;
         let resultVariables = [];
-
+        for (let i = 0; i < groups.length; i++) {
+            resultVariables.push(shallowClone(groups[i]));
+        }
         let tempFields = report.reportFields;
         const tempOptGroups = {};
 
@@ -4701,14 +5490,18 @@ class UI { // jshint ignore:line
         // TODO: Do we want to allow us to go more than two levels deep, this makes it a lot more confusing...
         // We can change this to a recursive function, if we need more than two levels...
         for (let key in tempFields.children) {
-            if (!tempFields.children.hasOwnProperty(key)) { continue; }
+            if (!tempFields.children.hasOwnProperty(key)) {
+                continue;
+            }
             const group = document.createElement("optgroup");
             group.label = tempFields.children[key].name;
             tempOptGroups[tempFields.children[key].dataUUID] = group;
             tempOptUUIDS.push(tempFields.children[key].dataUUID);
             select.appendChild(group);
             for (let key2 in tempFields.children[key].children) {
-                if (!tempFields.children[key].children.hasOwnProperty(key2)) { continue; }
+                if (!tempFields.children[key].children.hasOwnProperty(key2)) {
+                    continue;
+                }
                 const group2 = document.createElement("optgroup");
                 group2.label = group.label + ">" + tempFields.children[key].children[key2].name;
                 tempOptGroups[tempFields.children[key].children[key2].dataUUID] = group2;
@@ -4719,7 +5512,7 @@ class UI { // jshint ignore:line
 
         const rebuildGroups = () => {
             // Clear all Select->Options
-            for (let key in  tempOptGroups) {
+            for (let key in tempOptGroups) {
                 if (tempOptGroups.hasOwnProperty(key)) {
                     while (tempOptGroups[key].children.length) {
                         tempOptGroups[key].removeChild(tempOptGroups[key].children[0]);
@@ -4728,7 +5521,7 @@ class UI { // jshint ignore:line
             }
 
             // Recreate all Select Options
-            for (let i=0;i<resultVariables.length;i++) {
+            for (let i = 0; i < resultVariables.length; i++) {
                 let dUUID = resultVariables[i].dataUUID;
                 const optGroup = tempOptGroups[dUUID];
                 const option = new Option(resultVariables[i].name);
@@ -4744,7 +5537,10 @@ class UI { // jshint ignore:line
         body.appendChild(selectDiv);
 
 
-        let addButtons =this.createButtons(["Add", "Edit", "Delete", "\uE83B", "\uE83C"], {width: "100px", marginTop: "5px"});
+        let addButtons = this.createButtons(["Add", "Edit", "Delete", "\uE83B", "\uE83C"], {
+            width: "100px",
+            marginTop: "5px"
+        });
         let addBtnContainer = document.createElement('div');
         //addBtnContainer.style.display = ''
         addBtnContainer.style.padding = "5px";
@@ -4759,7 +5555,7 @@ class UI { // jshint ignore:line
         addBtnContainer.appendChild(document.createElement('br'));
         addBtnContainer.appendChild(document.createElement('br'));
 
-        for (let i=0;i<3;i++) {
+        for (let i = 0; i < 3; i++) {
             addBtnContainer.appendChild(addButtons[i]);
             addBtnContainer.appendChild(document.createElement('br'));
         }
@@ -4769,10 +5565,12 @@ class UI { // jshint ignore:line
 
         // Move Up
         addButtons[3].addEventListener("click", () => {
-            if (select.selectedIndex <= 0) { return; }
+            if (select.selectedIndex <= 0) {
+                return;
+            }
             let curIndex = select.selectedIndex;
             let curGroup = resultVariables[curIndex];
-            let priorGroup = resultVariables[curIndex-1];
+            let priorGroup = resultVariables[curIndex - 1];
             if (priorGroup.dataUUID !== curGroup.dataUUID) {
                 return;
             }
@@ -4783,18 +5581,22 @@ class UI { // jshint ignore:line
             curGroup.name = temp;
 
             rebuildGroups();
-            select.selectedIndex = curIndex-1;
+            select.selectedIndex = curIndex - 1;
         });
 
         // Move Down
         addButtons[4].addEventListener("click", () => {
             const curIndex = select.selectedIndex;
-            if (curIndex < 0) { return; }
+            if (curIndex < 0) {
+                return;
+            }
 
-            if (curIndex >= resultVariables.length-1) { return; }
+            if (curIndex >= resultVariables.length - 1) {
+                return;
+            }
 
             let curGroup = resultVariables[curIndex];
-            let nextGroup = resultVariables[curIndex+1];
+            let nextGroup = resultVariables[curIndex + 1];
             if (nextGroup.dataUUID !== curGroup.dataUUID) {
                 return;
             }
@@ -4805,15 +5607,15 @@ class UI { // jshint ignore:line
             curGroup.name = temp;
 
             rebuildGroups();
-            select.selectedIndex = curIndex+1;
+            select.selectedIndex = curIndex + 1;
         });
 
 
         // Add
         addButtons[0].addEventListener("click", () => {
 
-            const fields =this.createDataSelect(report, null , 3);
-            this.dataFieldEditor(fields,(name, idx, dataUUID) => {
+            const fields = this.createDataSelect(report, null, 3);
+            this.dataFieldEditor(fields, (name, idx, dataUUID) => {
                 if (name != null && name !== '') {
 
                     for (let i = 0; i < resultVariables.length; i++) {
@@ -4864,15 +5666,20 @@ class UI { // jshint ignore:line
 
         // Edit
         addButtons[1].addEventListener("click", () => {
-            if (select.selectedIndex < 0) { return; }
+            if (select.selectedIndex < 0) {
+                return;
+            }
             const curIndex = select.selectedIndex;
-            const fields = this.createDataSelect(report, {value: select.value, dataUUID: select.options[curIndex].dataUUID} , 3);
+            const fields = this.createDataSelect(report, {
+                value: select.value,
+                dataUUID: select.options[curIndex].dataUUID
+            }, 3);
 
             this.dataFieldEditor(fields, (name, idx, dataUUID) => {
                 let curGroup = resultVariables[curIndex];
 
                 // Check to see if already exists; if so -- we cancel the change...
-                for (let i=0;i<resultVariables.length;i++) {
+                for (let i = 0; i < resultVariables.length; i++) {
                     if (resultVariables[i].dataUUID === dataUUID && resultVariables[i].name === name) {
                         return;
                     }
@@ -4919,8 +5726,7 @@ class UI { // jshint ignore:line
         });
 
 
-
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -5014,11 +5820,11 @@ class UI { // jshint ignore:line
             if (reportLayout && reportLayout[elementKey]) {
                 tracking.Report[elementKey] = true;
                 tracking[elementKey].style.display = "";
-                tracking["add"+elementKey].style.display = "none";
+                tracking["add" + elementKey].style.display = "none";
             } else {
                 tracking.Report[elementKey] = false;
                 tracking[elementKey].style.display = "none";
-                tracking["add"+elementKey].style.display = "";
+                tracking["add" + elementKey].style.display = "";
             }
         };
 
@@ -5027,7 +5833,7 @@ class UI { // jshint ignore:line
             const finish = [];
             for (let i = 0; i < reportLayout.groupBy.length; i++) {
                 let gbk = {name: reportLayout.groupBy[i].groupOn, Report: {}};
-                let pd = LI("Group on <b>" + gbk.name+"</b>", parent);
+                let pd = LI("Group on <b>" + gbk.name + "</b>", parent);
                 tracking.groupBy.push(gbk);
                 gbk.addheader = A("(Add Header)", pd, "header", gbk);
                 gbk.adddetail = A("(Add Detail)", pd, "detail", gbk);
@@ -5035,7 +5841,7 @@ class UI { // jshint ignore:line
                 let ndg = document.createElement("ul");
                 pd.appendChild(ndg);
                 createSection("Header", "header", ndg, gbk, reportLayout.groupBy[i]);
-                createSection("Detail: <b>"+gbk.name+"</b>", "detail", ndg, gbk, reportLayout.groupBy[i]);
+                createSection("Detail: <b>" + gbk.name + "</b>", "detail", ndg, gbk, reportLayout.groupBy[i]);
                 finish.push({title: "Footer", key: "footer", parent: ndg, data: gbk, report: reportLayout.groupBy[i]});
 //                createSection("Footer", "footer", ndg, gbk, reportData.groupBy[i]);
             }
@@ -5044,8 +5850,10 @@ class UI { // jshint ignore:line
 
 
         const finishFooters = (finish) => {
-            if (!finish || finish.length === 0) { return; }
-            for (let i=0;i<finish.length;i++) {
+            if (!finish || finish.length === 0) {
+                return;
+            }
+            for (let i = 0; i < finish.length; i++) {
                 createSection(finish[i].title, finish[i].key, finish[i].parent, finish[i].data, finish[i].report);
             }
         };
@@ -5055,7 +5863,7 @@ class UI { // jshint ignore:line
             if (tracking.subReports.indexOf(rbk) < 0) {
                 tracking.subReports.push(rbk);
             }
-            let pd = LI("SubReport: <b>"+rbk.name+"</b>", parent);
+            let pd = LI("SubReport: <b>" + rbk.name + "</b>", parent);
             rbk.addheader = A("(Add Header)", pd, "header", rbk);
             rbk.adddetail = A("(Add Detail)", pd, "detail", rbk);
             rbk.addfooter = A("(Add Footer)", pd, "footer", rbk);
@@ -5067,19 +5875,21 @@ class UI { // jshint ignore:line
             if (reportLayout.groupBy) {
                 finish = buildGroupings(subLayout, rbk, ndg);
             }
-            createSection( "Detail: <b>"+rbk.name+"</b>", "detail", ndg, rbk, subLayout);
+            createSection("Detail: <b>" + rbk.name + "</b>", "detail", ndg, rbk, subLayout);
             handleSubReports(reportLayout.childrenIndexed, rbk, ndg);
 
             finishFooters(finish);
-            createSection( "Footer", "footer", ndg, rbk, subLayout);
+            createSection("Footer", "footer", ndg, rbk, subLayout);
         };
 
         const handleSubReports = (subReports, tracking, parentElement) => { // jshint ignore:line
-            if (!subReports.length) { return; }
+            if (!subReports.length) {
+                return;
+            }
             if (!Array.isArray(tracking.subReports)) {
                 tracking.subReports = [];
             }
-            for (let i=0;i<subReports.length;i++) {
+            for (let i = 0; i < subReports.length; i++) {
                 const subLayout = subReports[i].findMatchingLayoutInfo(reportLayout);
                 buildSubReport(subReports[i], subLayout, tracking, parentElement);
             }
@@ -5090,30 +5900,30 @@ class UI { // jshint ignore:line
         elements.addtitleHeader = A("(Add Title Header)", pd, "titleHeader", elements);
         elements.addpageHeader = A("(Add Page Header)", pd, "pageHeader", elements);
         elements.adddetail = A("(Add Detail)", pd, "detail", elements);
-        elements.addpageFooter = A( "(Add Page Footer)", pd, "pageFooter", elements);
+        elements.addpageFooter = A("(Add Page Footer)", pd, "pageFooter", elements);
         elements.addfinalSummary = A("(Add Final Summary)", pd, "finalSummary", elements);
 
         let pdg = document.createElement("ul");
         pd.appendChild(pdg);
 
         createSection("Title Header", "titleHeader", pdg, elements, reportLayout);
-        createSection( "Page Header", "pageHeader", pdg, elements, reportLayout);
+        createSection("Page Header", "pageHeader", pdg, elements, reportLayout);
         let finish;
         if (reportLayout.groupBy) {
             finish = buildGroupings(reportLayout, elements, pdg);
         }
-        createSection( "Page Details", "detail", pdg, elements, reportLayout);
+        createSection("Page Details", "detail", pdg, elements, reportLayout);
 
         handleSubReports(report.reportFields.childrenIndexed, elements, pdg);
 
         finishFooters(finish);
 
         createSection("Page Footer", "pageFooter", pdg, elements, reportLayout);
-        createSection( "Final Summary", "finalSummary", pdg, elements, reportLayout);
+        createSection("Final Summary", "finalSummary", pdg, elements, reportLayout);
 
         body.appendChild(group);
 
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -5123,7 +5933,9 @@ class UI { // jshint ignore:line
 
         const rebuildReportSection = (reportInfo, data) => {
             for (let key in reportInfo) {
-                if (!reportInfo.hasOwnProperty(key)) { continue; }
+                if (!reportInfo.hasOwnProperty(key)) {
+                    continue;
+                }
                 if (reportInfo[key] === true) {
                     if (typeof data[key] === 'undefined') {
                         data[key] = [];
@@ -5153,7 +5965,7 @@ class UI { // jshint ignore:line
                 }
             }
             if (tracking.subReports) {
-                for (let i=0;i<tracking.subReports.length;i++) {
+                for (let i = 0; i < tracking.subReports.length; i++) {
                     rebuildReport(tracking.subReports[i], reportData.subReports[i]);
                 }
             }
@@ -5207,16 +6019,23 @@ class UI { // jshint ignore:line
             let selectGroup = document.createElement('select');
 
             let item = new Option("Left", "1");
-            if (curAlign === "1" || curAlign === 1) { item.selected = true; }
-            selectGroup.appendChild(item);
-
-            item = new Option("Right", "3");
-            if (curAlign === "3" || curAlign === 3) { item.selected = true; }
+            if (curAlign === "1" || curAlign === 1) {
+                item.selected = true;
+            }
             selectGroup.appendChild(item);
 
             item = new Option("Center", "2");
-            if (curAlign === "2" || curAlign === 2) { item.selected = true; }
+            if (curAlign === "2" || curAlign === 2) {
+                item.selected = true;
+            }
             selectGroup.appendChild(item);
+
+            item = new Option("Right", "3");
+            if (curAlign === "3" || curAlign === 3) {
+                item.selected = true;
+            }
+            selectGroup.appendChild(item);
+
 
             return selectGroup;
         };
@@ -5230,7 +6049,9 @@ class UI { // jshint ignore:line
             let formatters = report.formatterFunctions;
 
             for (let key in formatters) {
-                if (!formatters.hasOwnProperty(key)) { continue; }
+                if (!formatters.hasOwnProperty(key)) {
+                    continue;
+                }
                 item = new Option(key, key);
                 if (key === formatFunction) {
                     item.selected = true;
@@ -5242,11 +6063,15 @@ class UI { // jshint ignore:line
         };
 
 
-        const toInt = (val) => { return parseInt(val, 10); };
-        const toOpacity = (val) => { return handleOpacity(val); };
+        const toInt = (val) => {
+            return parseInt(val, 10);
+        };
+        const toOpacity = (val) => {
+            return handleOpacity(val);
+        };
 
         let properties = [];
-        if(report._hasFormatterFunctions()) {
+        if (report._hasFormatterFunctions()) {
             properties.push({
                 type: 'select',
                 field: "formatFunction",
@@ -5259,13 +6084,13 @@ class UI { // jshint ignore:line
             {type: 'number', field: "width", functionable: true},
             {type: 'select', field: "align", translate: toInt, default: "left", display: createAlignSelect},
             {type: 'string', field: "textColor", default: "", functionable: true},
-            {type: 'string', field: "fill","title":"Fill Color", default: "", functionable: true},
-            {type: 'boolean', field: "fontBold", title:"bold", default: false, functionable: true},
-            {type: 'boolean', field: "fontItalic", title:"italic", default: false, functionable: true},
+            {type: 'string', field: "fill", "title": "Fill Color", default: "", functionable: true},
+            {type: 'boolean', field: "fontBold", title: "bold", default: false, functionable: true},
+            {type: 'boolean', field: "fontItalic", title: "italic", default: false, functionable: true},
             {type: 'boolean', field: "underline", default: false, functionable: true},
-            {type: 'boolean', field: "strike", title:"strikethrough", default: false, functionable: true},
-            {type: 'number', field: "characterSpacing", title: 'Char Spacing', default: 0, translate: toInt },
-            {type: 'number', field: 'wordSpacing', default: 0, translate: toInt },
+            {type: 'boolean', field: "strike", title: "strikethrough", default: false, functionable: true},
+            {type: 'number', field: "characterSpacing", title: 'Char Spacing', default: 0, translate: toInt},
+            {type: 'number', field: 'wordSpacing', default: 0, translate: toInt},
             {type: 'number', field: 'opacity', default: 1.0, translate: toOpacity},
             {type: 'boolean', field: "fontBold", default: false},
             {type: 'boolean', field: "fontItalic", default: false}
@@ -5292,7 +6117,9 @@ class UI { // jshint ignore:line
         valueDiv.appendChild(propDiv);
 
         select.addEventListener("change", () => {
-            if (select.selectedIndex < 0) { return; }
+            if (select.selectedIndex < 0) {
+                return;
+            }
             currentBand = resultVariables[select.selectedIndex];
             currentBand.properties = properties;
             this.showProperties(currentBand, propDiv, true);
@@ -5300,10 +6127,10 @@ class UI { // jshint ignore:line
 
 
         const rebuildOptions = () => {
-            while(select.children.length) {
+            while (select.children.length) {
                 select.removeChild(select.children[0]);
             }
-            for (let i=0;i<resultVariables.length;i++) {
+            for (let i = 0; i < resultVariables.length; i++) {
                 let option;
                 if (typeof resultVariables[i].text !== 'undefined') {
                     option = new Option("TEXT - " + resultVariables[i].text, i.toString());
@@ -5314,7 +6141,7 @@ class UI { // jshint ignore:line
                 } else if (typeof resultVariables[i].calculation !== 'undefined') {
                     option = new Option("CALC - " + resultVariables[i].calculation, i.toString());
                 } else if (typeof resultVariables[i].variable !== 'undefined') {
-                    option = new Option( "VAR - " + resultVariables[i].variable, i.toString());
+                    option = new Option("VAR - " + resultVariables[i].variable, i.toString());
                 } else if (resultVariables[i].function) {
                     option = new Option("FUNC - " + (resultVariables[i].function.name || "function"), i.toString());
                 } else {
@@ -5329,8 +6156,10 @@ class UI { // jshint ignore:line
         rebuildOptions();
 
 
-
-        let addButtons =this.createButtons(["Add", "Edit", "Delete", "\uE83B", "\uE83C"], {width: "100px", marginTop: "5px"});
+        let addButtons = this.createButtons(["Add", "Edit", "Delete", "\uE83B", "\uE83C"], {
+            width: "100px",
+            marginTop: "5px"
+        });
         let addBtnContainer = document.createElement('div');
         addBtnContainer.style.padding = "5px";
         addBtnContainer.style.display = 'inline-block';
@@ -5355,13 +6184,15 @@ class UI { // jshint ignore:line
 
         // Move Up
         addButtons[3].addEventListener("click", () => {
-            if (select.selectedIndex <= 0) { return; }
+            if (select.selectedIndex <= 0) {
+                return;
+            }
             let idx = select.selectedIndex;
             let currentBand = resultVariables.splice(idx, 1);
-            if (idx-1 === 0) {
+            if (idx - 1 === 0) {
                 resultVariables.unshift(currentBand[0]);
             } else {
-                let temp = resultVariables.splice(0, idx-1);
+                let temp = resultVariables.splice(0, idx - 1);
                 temp.push(currentBand[0]);
                 resultVariables = temp.concat(resultVariables);
             }
@@ -5387,7 +6218,7 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-            this.bandValueEditor(report, {text: "", type:"print", width: 100}, (value) => {
+            this.bandValueEditor(report, {text: "", type: "print", width: 100}, (value) => {
                 resultVariables.push(value);
                 rebuildOptions();
             });
@@ -5395,7 +6226,9 @@ class UI { // jshint ignore:line
 
         // Edit
         addButtons[1].addEventListener("click", () => {
-            if (select.selectedIndex < 0) { return; }
+            if (select.selectedIndex < 0) {
+                return;
+            }
             this.bandValueEditor(report, resultVariables[select.selectedIndex], (value) => {
                 resultVariables[select.selectedIndex] = value;
                 rebuildOptions();
@@ -5411,7 +6244,7 @@ class UI { // jshint ignore:line
         });
 
 
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -5423,7 +6256,7 @@ class UI { // jshint ignore:line
             d.hide();
             if (typeof ok === 'function') {
                 // Eliminate the temporary properties object
-                for (let i=0;i<resultVariables.length;i++) {
+                for (let i = 0; i < resultVariables.length; i++) {
                     delete resultVariables[i].properties;
                 }
                 ok(resultVariables);
@@ -5459,8 +6292,8 @@ class UI { // jshint ignore:line
             field = fields.total;
             isTotal = true;
         }
-        let select =this.createDataSelect(report, field, 63, isTotal);
-        let newField =  shallowClone(fields);
+        let select = this.createDataSelect(report, field, 63, isTotal);
+        let newField = shallowClone(fields);
         if (newField.function) {
             newField.function = shallowClone(fields.function);
         }
@@ -5486,7 +6319,7 @@ class UI { // jshint ignore:line
         });
         body.appendChild(textArea);
 
-        const functionButton =this.createButtons(["Edit Function"])[0];
+        const functionButton = this.createButtons(["Edit Function"])[0];
         functionButton.style.display = "none";
         functionButton.style.marginLeft = "5px";
         functionButton.addEventListener("click", () => {
@@ -5509,7 +6342,9 @@ class UI { // jshint ignore:line
 
 
         const setupSubFields = () => {
-            if (select.selectedIndex < 0) { return; }
+            if (select.selectedIndex < 0) {
+                return;
+            }
             let option = select.selectedOptions[0];
             if (select.selectedIndex === 0) {
                 textSpan.style.display = "";
@@ -5524,7 +6359,7 @@ class UI { // jshint ignore:line
                 textArea.style.display = "none";
                 functionButton.style.display = "";
                 if (typeof newField.function === 'undefined') {
-                    newField.function = {type: "function", async: false, function: "", name: "Band Function" };
+                    newField.function = {type: "function", async: false, function: "", name: "Band Function"};
                 }
             } else {
                 textSpan.style.display = "none";
@@ -5555,7 +6390,7 @@ class UI { // jshint ignore:line
 
         select.addEventListener("change", setupSubFields);
 
-        const buttons =this.createButtons(["Ok", "Cancel"]);
+        const buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -5647,7 +6482,7 @@ class UI { // jshint ignore:line
         select.style.height = "200px";
         select.style.width = "200px";
         select.size = 10;
-        const resultVariables = {average: [], count:[], min:[], max:[], sum: []};
+        const resultVariables = {average: [], count: [], min: [], max: [], sum: []};
         const groups = {sum: null, average: null, count: null, min: null, max: null};
 
         for (let key in resultVariables) { // jshint ignore:line
@@ -5659,9 +6494,11 @@ class UI { // jshint ignore:line
             group.label = key;
             groups[key] = group;
             select.appendChild(group);
-            if (!totals.hasOwnProperty(key)) { continue; }
+            if (!totals.hasOwnProperty(key)) {
+                continue;
+            }
 
-            for (let i=0;i<totals[key].length;i++) {
+            for (let i = 0; i < totals[key].length; i++) {
                 const option = new Option(totals[key][i]);
                 group.appendChild(option);
                 // Copy variables
@@ -5674,7 +6511,7 @@ class UI { // jshint ignore:line
         selectDiv.style.display = 'inline-block';
         body.appendChild(selectDiv);
 
-        let addButtons =this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
+        let addButtons = this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
         let addBtnContainer = document.createElement('div');
         //addBtnContainer.style.display = ''
         addBtnContainer.style.padding = "5px";
@@ -5694,7 +6531,9 @@ class UI { // jshint ignore:line
                 if (name != null && name !== '') {
 
                     // Check to see if total in type already exists
-                    if (resultVariables[type].indexOf(name) >= 0) { return; }
+                    if (resultVariables[type].indexOf(name) >= 0) {
+                        return;
+                    }
 
                     // Add new Total
                     groups[type].appendChild(new Option(name));
@@ -5705,18 +6544,25 @@ class UI { // jshint ignore:line
 
         // Edit
         addButtons[1].addEventListener("click", () => {
-            if (select.selectedIndex < 0) { return; }
+            if (select.selectedIndex < 0) {
+                return;
+            }
 
-            let value = select.value, type = "sum", counter=-1;
+            let value = select.value, type = "sum", counter = -1;
             for (let key in resultVariables) {
-                if (!resultVariables.hasOwnProperty(key)) { continue; }
+                if (!resultVariables.hasOwnProperty(key)) {
+                    continue;
+                }
                 counter += resultVariables[key].length;
                 if (select.selectedIndex <= counter) {
-                    type = key; break;
+                    type = key;
+                    break;
                 }
             }
             this.totalFieldEditor(report, value, type, (name, newType) => {
-                if (name == null || name === '') { return; }
+                if (name == null || name === '') {
+                    return;
+                }
 
                 // Find old index location
                 const idx = resultVariables[type].indexOf(value);
@@ -5764,8 +6610,7 @@ class UI { // jshint ignore:line
         });
 
 
-
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -5799,7 +6644,7 @@ class UI { // jshint ignore:line
         title.innerText = "Total type ";
         body.appendChild(title);
         const selectType = document.createElement("select");
-        for (let i=0;i<types.length;i++) {
+        for (let i = 0; i < types.length; i++) {
             let option = new Option(types[i]);
             if (types[i] === type) {
                 option.selected = true;
@@ -5813,12 +6658,11 @@ class UI { // jshint ignore:line
         title = document.createElement("span");
         title.innerText = " on field ";
         body.appendChild(title);
-        const select =this.createDataSelect(report, selected, 3);
+        const select = this.createDataSelect(report, selected, 3);
         body.appendChild(select);
 
 
-
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -5851,7 +6695,7 @@ class UI { // jshint ignore:line
         body.appendChild(title);
         const select = fields;
         body.appendChild(select);
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -5878,7 +6722,7 @@ class UI { // jshint ignore:line
     }
 
     _processFile(file, regEx, callback) {
-        if ( regEx == null || regEx.test(file.name) ) {
+        if (regEx == null || regEx.test(file.name)) {
             const reader = new FileReader();
             reader.addEventListener("load", function () {
                 callback(reader.result);
@@ -5889,7 +6733,7 @@ class UI { // jshint ignore:line
         }
     }
 
-    fileEditor(value, acceptable=[], autoClose=false, ok=null, cancel=null) {
+    fileEditor(value, acceptable = [], autoClose = false, ok = null, cancel = null) {
         const body = document.createElement('div');
         const title = document.createElement("span");
         title.style.marginLeft = "5px";
@@ -5908,15 +6752,17 @@ class UI { // jshint ignore:line
         body.appendChild(error);
 
         let accept = "";
-        for (let i=0;i<acceptable.length;i++) {
-            if (i>0) { accept += ","; }
-            accept+= acceptable[i];
+        for (let i = 0; i < acceptable.length; i++) {
+            if (i > 0) {
+                accept += ",";
+            }
+            accept += acceptable[i];
         }
         if (accept.length) {
             file.accept = accept;
         }
 
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         buttons[0].disabled = true;
         let newValue = value;
         let fileName = '';
@@ -5936,13 +6782,13 @@ class UI { // jshint ignore:line
             if (file.files.length) {
                 if (acceptable.length) {
                     found = false;
-                    for (let i=0;i<acceptable.length;i++) {
-                        if (file.files[0].name.indexOf(acceptable[i]) > 0 ) {
+                    for (let i = 0; i < acceptable.length; i++) {
+                        if (file.files[0].name.indexOf(acceptable[i]) > 0) {
                             found = true;
                             break;
                         }
                     }
-                    acceptableRegEx = new RegExp('(\\'+acceptable.join("|\\")+')$', "i");
+                    acceptableRegEx = new RegExp('(\\' + acceptable.join("|\\") + ')$', "i");
                 }
                 if (!found) {
                     error.innerText = "Please choose a valid file!";
@@ -5954,7 +6800,7 @@ class UI { // jshint ignore:line
                 file.disabled = true;
                 buttons[1].disabled = true;
                 fileName = file.files[0].name;
-                this._processFile(file.files[0],  acceptableRegEx, (val) => {
+                this._processFile(file.files[0], acceptableRegEx, (val) => {
                     buttons[1].disabled = false;
                     if (val !== null) {
                         buttons[0].disabled = false;
@@ -6009,7 +6855,7 @@ class UI { // jshint ignore:line
         select.size = 10;
         const resultFunctions = [];
 
-        for (let i=0;i<functions.length;i++) {
+        for (let i = 0; i < functions.length; i++) {
             let temp = shallowClone(functions[i]);
             resultFunctions.push(temp);
             const option = new Option(functions[i].name, i.toString());
@@ -6080,8 +6926,7 @@ class UI { // jshint ignore:line
         });
 
 
-
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -6091,7 +6936,7 @@ class UI { // jshint ignore:line
 
         buttons[0].addEventListener('click', () => {
             d.hide();
-            for (let i=0;i<resultFunctions.length;i++) {
+            for (let i = 0; i < resultFunctions.length; i++) {
                 if (resultFunctions[i] === null) {
                     resultFunctions.splice(i, 1);
                     i--;
@@ -6153,7 +6998,9 @@ class UI { // jshint ignore:line
             label.appendChild(span);
             asyncCheckbox = document.createElement('input');
             asyncCheckbox.type = 'checkbox';
-            if (async) { asyncCheckbox.checked = true; }
+            if (async) {
+                asyncCheckbox.checked = true;
+            }
             asyncCheckbox.addEventListener('change', () => {
                 if (asyncCheckbox.checked) {
                     functionText.innerText = "function (report, data, state, vars, done) {";
@@ -6178,7 +7025,7 @@ class UI { // jshint ignore:line
             label.appendChild(skipCheckbox);
             body.appendChild(label);
         }
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -6195,7 +7042,7 @@ class UI { // jshint ignore:line
                         text += "; done();";
                     }
                 }
-                ok(text, nameValue ? nameValue.value : null, async == null ? null : asyncCheckbox.checked, disabled == null ? null : skipCheckbox.checked );
+                ok(text, nameValue ? nameValue.value : null, async == null ? null : asyncCheckbox.checked, disabled == null ? null : skipCheckbox.checked);
             }
         });
         buttons[1].addEventListener('click', () => {
@@ -6215,7 +7062,7 @@ class UI { // jshint ignore:line
         textArea.style.height = "200px";
         textArea.style.width = "475px";
         textArea.style.maxWidth = "475px";
-        textArea.value = JSON.stringify(data, null,2);
+        textArea.value = JSON.stringify(data, null, 2);
         let includeCheckbox;
         // Add Text Area
         body.appendChild(textArea);
@@ -6228,12 +7075,14 @@ class UI { // jshint ignore:line
             label.appendChild(span);
             includeCheckbox = document.createElement('input');
             includeCheckbox.type = 'checkbox';
-            if (include) { includeCheckbox.checked = true; }
+            if (include) {
+                includeCheckbox.checked = true;
+            }
             label.appendChild(includeCheckbox);
             body.appendChild(label);
         }
 
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -6245,15 +7094,14 @@ class UI { // jshint ignore:line
             let data;
             try {
                 data = JSON.parse(textArea.value);
-            }
-            catch (err) {
+            } catch (err) {
                 alert("Unable to parse the data, please fix!");
                 return;
             }
 
             d.hide();
             if (typeof ok === 'function') {
-                ok(data, include == null ? null : includeCheckbox.checked );
+                ok(data, include == null ? null : includeCheckbox.checked);
             }
         });
         buttons[1].addEventListener('click', () => {
@@ -6278,7 +7126,7 @@ class UI { // jshint ignore:line
         body.appendChild(textArea);
         body.appendChild(document.createElement("br"));
 
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -6317,7 +7165,7 @@ class UI { // jshint ignore:line
         select.size = 10;
         const resultFonts = [];
 
-        for (let i=0;i<fonts.length;i++) {
+        for (let i = 0; i < fonts.length; i++) {
             let temp = shallowClone(fonts[i]);
             resultFonts.push(temp);
             const option = new Option(fonts[i].name, i.toString());
@@ -6328,7 +7176,7 @@ class UI { // jshint ignore:line
         selectDiv.style.display = 'inline-block';
         body.appendChild(selectDiv);
 
-        let addButtons =this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
+        let addButtons = this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
         let addBtnContainer = document.createElement('div');
         addBtnContainer.style.padding = "5px";
         addBtnContainer.style.display = 'inline-block';
@@ -6371,7 +7219,7 @@ class UI { // jshint ignore:line
             }
         });
 
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -6381,7 +7229,7 @@ class UI { // jshint ignore:line
 
         buttons[0].addEventListener('click', () => {
             d.hide();
-            for (let i=0;i<resultFonts.length;i++) {
+            for (let i = 0; i < resultFonts.length; i++) {
                 if (resultFonts[i] === null) {
                     resultFonts.splice(i, 1);
                     i--;
@@ -6420,12 +7268,12 @@ class UI { // jshint ignore:line
             this.fileEditor(data, [".ttf", ".otf"], true, (data, fileName) => {
                 const idx = data.indexOf("base64,");  // strip data:font/ttf;base64,
                 if (idx > 0) {
-                    newData = data.substring(idx+7);
+                    newData = data.substring(idx + 7);
                 } else {
                     newData = data;
                 }
                 if (fileName && fileName.length) {
-                    variableName.value = fileName.replace(".ttf", "").replace(".otf","");
+                    variableName.value = fileName.replace(".ttf", "").replace(".otf", "");
                 }
             });
         });
@@ -6435,7 +7283,7 @@ class UI { // jshint ignore:line
         body.appendChild(valueDiv);
         body.appendChild(nameDiv);
 
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -6475,7 +7323,7 @@ class UI { // jshint ignore:line
         select.size = 10;
         const resultFunctions = [];
 
-        for (let i=0;i<calculations.length;i++) {
+        for (let i = 0; i < calculations.length; i++) {
             let temp = shallowClone(calculations[i]);
             resultFunctions.push(temp);
             const option = new Option(calculations[i].name, i.toString());
@@ -6486,7 +7334,7 @@ class UI { // jshint ignore:line
         selectDiv.style.display = 'inline-block';
         body.appendChild(selectDiv);
 
-        let addButtons =this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
+        let addButtons = this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
         let addBtnContainer = document.createElement('div');
         //addBtnContainer.style.display = ''
         addBtnContainer.style.padding = "5px";
@@ -6501,7 +7349,7 @@ class UI { // jshint ignore:line
 
         // Add
         addButtons[0].addEventListener("click", () => {
-            this.calculationEditor("", "concat", [],  (name, op, fields) => {
+            this.calculationEditor("", "concat", [], (name, op, fields) => {
                 let obj = {};
                 obj.type = 'calculation';
                 obj.name = name;
@@ -6535,7 +7383,7 @@ class UI { // jshint ignore:line
             }
         });
 
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -6545,7 +7393,7 @@ class UI { // jshint ignore:line
 
         buttons[0].addEventListener('click', () => {
             d.hide();
-            for (let i=0;i<resultFunctions.length;i++) {
+            for (let i = 0; i < resultFunctions.length; i++) {
                 if (resultFunctions[i] === null) {
                     resultFunctions.splice(i, 1);
                     i--;
@@ -6595,11 +7443,16 @@ class UI { // jshint ignore:line
         label.appendChild(opValue);
         body.appendChild(label);
 
-        const getOptionsTitle = function(resultFields) {
-            if (resultFields.field) { return "Field: " + resultFields.field; }
-            else if (resultFields.text) { return "Text: " + resultFields.text; }
-            else if (resultFields.total) { return "Total: " + resultFields.total; }
-            else if (resultFields.function) { return "Function: "+ resultFields.function.name; }
+        const getOptionsTitle = function (resultFields) {
+            if (resultFields.field) {
+                return "Field: " + resultFields.field;
+            } else if (resultFields.text) {
+                return "Text: " + resultFields.text;
+            } else if (resultFields.total) {
+                return "Total: " + resultFields.total;
+            } else if (resultFields.function) {
+                return "Function: " + resultFields.function.name;
+            }
             return "Unknown";
         };
 
@@ -6622,7 +7475,7 @@ class UI { // jshint ignore:line
         body.appendChild(label);
 
         const resultFields = [];
-        for (let i=0;i<fields.length;i++) {
+        for (let i = 0; i < fields.length; i++) {
             let temp = shallowClone(fields[i]);
             if (fields[i].function) {
                 temp.function = shallowClone(fields[i].function);
@@ -6633,7 +7486,7 @@ class UI { // jshint ignore:line
         }
 
 
-        let addButtons =this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
+        let addButtons = this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
         let addBtnContainer = document.createElement('div');
         addBtnContainer.style.padding = "5px";
         addBtnContainer.style.display = 'inline-block';
@@ -6646,13 +7499,12 @@ class UI { // jshint ignore:line
         body.appendChild(addBtnContainer);
 
 
-
         addButtons[0].addEventListener("click", () => {
             this.calculationValueEditor("Text value", {text: ""}, (name, value) => {
                 if (name != null && name !== '') {
                     if (!resultFields.hasOwnProperty(name)) {
                         let option = new Option(name);
-                        option.innerText = name[0].toUpperCase() + name.substring(1,name.length)+": " + value[name];
+                        option.innerText = name[0].toUpperCase() + name.substring(1, name.length) + ": " + value[name];
                         option.value = fieldSelect.childElementCount.toString();
                         fieldSelect.appendChild(option);
                     }
@@ -6664,8 +7516,8 @@ class UI { // jshint ignore:line
         // Edit
         addButtons[1].addEventListener("click", () => {
             let key = fieldSelect.value;
-           this.calculationValueEditor(key, resultFields[key], (name, value) => {
-                fieldSelect.options[fieldSelect.selectedIndex].text = name[0].toUpperCase() + name.substring(1,name.length)+": " + value[name];
+            this.calculationValueEditor(key, resultFields[key], (name, value) => {
+                fieldSelect.options[fieldSelect.selectedIndex].text = name[0].toUpperCase() + name.substring(1, name.length) + ": " + value[name];
 
                 //valueValue.innerText = value;
                 resultFields[key] = value;
@@ -6676,19 +7528,17 @@ class UI { // jshint ignore:line
         addButtons[2].addEventListener("click", () => {
             if (fieldSelect.selectedIndex >= 0) {
                 let key = fieldSelect.value;
-                resultFields.splice(key,1);
+                resultFields.splice(key, 1);
                 fieldSelect.options[fieldSelect.selectedIndex] = null;
                 //valueValue.innerText = '';
             }
         });
 
 
-
-
         // TODO: valid ops: concat, add, minus, multiply, divide
         // TODO: Fields, "Add Static", "Add Data Element", "Add Total", "Add Function"
 
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -6710,10 +7560,10 @@ class UI { // jshint ignore:line
         });
     }
 
-    createCalculationTypeSelect(){
+    createCalculationTypeSelect() {
         let select = document.createElement('select');
-        let validOptions = ["Text","Field","Total","Function"];
-        for(let i =0;i<validOptions.length;i++){
+        let validOptions = ["Text", "Field", "Total", "Function"];
+        for (let i = 0; i < validOptions.length; i++) {
             let option = document.createElement('option');
             option.value = validOptions[i].toLowerCase();
             option.innerText = validOptions[i];
@@ -6739,10 +7589,14 @@ class UI { // jshint ignore:line
         const value1 = document.createElement('span');
         value1.innerText = "Variable value:";
         const variableValue = document.createElement('input');
-        if(typeof value === "object"){
-            for (let i in value){
-                if(!value.hasOwnProperty(i)) { continue; }
-                if (!value[i]) { continue; }
+        if (typeof value === "object") {
+            for (let i in value) {
+                if (!value.hasOwnProperty(i)) {
+                    continue;
+                }
+                if (!value[i]) {
+                    continue;
+                }
                 variableValue.value = value[i];
                 break;
             }
@@ -6753,7 +7607,7 @@ class UI { // jshint ignore:line
         valueDiv.appendChild(variableValue);
         body.appendChild(valueDiv);
 
-        let buttons =this.createButtons(["Ok", "Cancel"]);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
@@ -6783,16 +7637,18 @@ class UI { // jshint ignore:line
      * @returns {HTMLSelectElement}
      */
     createFontSelect(selected) {
-        let builtInFonts=['Times','Helvetica','Courier','Symbol','Dingbats'];
+        let builtInFonts = ['Times', 'Helvetica', 'Courier', 'Symbol', 'Dingbats'];
         const selectList = document.createElement('select');
         selectList.className = "frSelect";
-        for (let i=0;i<builtInFonts.length;i++) {
+        for (let i = 0; i < builtInFonts.length; i++) {
             let option = new Option(builtInFonts[i]);
-            if (builtInFonts[i] === selected) { option.selected = true; }
+            if (builtInFonts[i] === selected) {
+                option.selected = true;
+            }
             selectList.appendChild(option);
         }
         let additionalFonts = this._parent.additionalFonts;
-        for (let i=0;i<additionalFonts.length;i++) {
+        for (let i = 0; i < additionalFonts.length; i++) {
             // Only add fonts that have data associated with them...
             if (additionalFonts[i].data && additionalFonts[i].data.length) {
                 let option = new Option(this._fixShowPropertyTitle(additionalFonts[i].name), additionalFonts[i].name);
@@ -6814,7 +7670,7 @@ class UI { // jshint ignore:line
      * @param isTotal <boolean>
      * @returns {HTMLSelectElement}
      */
-    createDataSelect(report, field=null, dataSets=31, isTotal = false) {
+    createDataSelect(report, field = null, dataSets = 31, isTotal = false) {
         const selectList = document.createElement("select");
         selectList.className = "frSelect";
         const fields = report.reportFields;
@@ -6958,7 +7814,7 @@ class UI { // jshint ignore:line
 
             const totals = report.reportTotals;
             let totalTypes = ['sum', 'min', 'max', 'count', 'average'];
-            for (let s = 0; s < totalTypes.length;s++) {
+            for (let s = 0; s < totalTypes.length; s++) {
                 if (totals[totalTypes[s]] && totals[totalTypes[s]].length) {
                     let group = document.createElement("optgroup");
                     group.label = "- total " + totalTypes[s] + " -";
@@ -6981,9 +7837,11 @@ class UI { // jshint ignore:line
         return selectList;
     }
 
-    showProperties(obj, layout, refresh=false, overrideProps=null) {
+    showProperties(obj, layout, refresh = false, overrideProps = null) {
         if (obj === layout.trackProperties) {
-            if (refresh !== true) { return; }
+            if (refresh !== true) {
+                return;
+            }
         } else {
             // set refresh if we don't match type...
             refresh = true;
@@ -6993,7 +7851,9 @@ class UI { // jshint ignore:line
             this.clearArea(layout);
         }
         layout.trackProperties = obj;
-        if (obj == null) { return; }
+        if (obj == null) {
+            return;
+        }
 
         let table = null;
         const tableCollection = layout.getElementsByClassName("frTableProps");
@@ -7024,6 +7884,7 @@ class UI { // jshint ignore:line
                 let deleteIcon = document.createElement('span');
                 deleteIcon.innerText = "\uE80B";
                 deleteIcon.className = "frIcon frIconClickableNB";
+                deleteIcon.title = "Delete";
                 deleteIcon.style.position = "absolute";
                 deleteIcon.style.right = "5px";
                 deleteIcon.style.top = "3px";
@@ -7031,17 +7892,29 @@ class UI { // jshint ignore:line
                     obj.delete();
                 });
                 div.appendChild(deleteIcon);
+                if (obj.canCopy) {
+                    let duplicateIcon = document.createElement('span');
+                    duplicateIcon.innerText = "\ue822";
+                    duplicateIcon.title = "Duplicate";
+                    duplicateIcon.className = "frIcon frIconClickableNB";
+                    duplicateIcon.style.position = "absolute";
+                    duplicateIcon.style.right = "25px";
+                    duplicateIcon.style.top = "3px";
+                    duplicateIcon.addEventListener("click", () => {
+                        obj.duplicate();
+                    });
+                    div.appendChild(duplicateIcon);
+                }
             }
 
         }
         const props = overrideProps || obj.properties;
         this._handleShowProperties(props, obj, table, layout);
         layout.appendChild(table);
-
         // Might be able to scan the TR children
         let children = table.children[0].children;
         // Skip first row because it is our "Title" row....
-        for (let i=1;i<children.length;i++) {
+        for (let i = 1; i < children.length; i++) {
             if (layout.trackCreated.indexOf(children[i].id) < 0) {
                 children[i].style.display = 'none';
             } else {
@@ -7054,7 +7927,7 @@ class UI { // jshint ignore:line
 
     _fixShowPropertyTitle(name) {
         // TODO: Split on Upper case to add spaces
-        return name.charAt(0).toUpperCase()+name.slice(1).split(/(?=[A-Z])/).join(' ');
+        return name.charAt(0).toUpperCase() + name.slice(1).split(/(?=[A-Z])/).join(' ');
     }
 
     _getShowPropertyId(prop, obj) {
@@ -7066,12 +7939,12 @@ class UI { // jshint ignore:line
         } else {
             name += prop.field.replace(/\s/g, '');
         }
-        return name + "_"+obj.uuid;
+        return name + "_" + obj.uuid;
     }
 
     _handleShowProperties(props, obj, table, layout) {
         let propertyToSkip = -1;
-        if(obj.text !== undefined || obj.function !== undefined){
+        if (obj.text !== undefined) {
             for (let i = 0; i < props.length; i++) {
                 if (props[i].field === "formatFunction") {
                     propertyToSkip = i;
@@ -7079,10 +7952,14 @@ class UI { // jshint ignore:line
             }
         }
         for (let i = 0; i < props.length; i++) {
-            if (props[i] && props[i].skip === true) { continue; }
-            if(propertyToSkip === i) { continue; }
-            let name =this._getShowPropertyId(props[i],obj);
-            let tr = layout.querySelector("#"+name);
+            if (props[i] && props[i].skip === true) {
+                continue;
+            }
+            if (propertyToSkip === i) {
+                continue;
+            }
+            let name = this._getShowPropertyId(props[i], obj);
+            let tr = layout.querySelector("#" + name);
             if (!tr) {
                 tr = table.insertRow(-1);
                 tr.id = name;
@@ -7094,8 +7971,7 @@ class UI { // jshint ignore:line
 
     _handleShowProperty(prop, obj, name, tr, layout) {
         layout.trackCreated.push(name);
-
-        let td1, td2, created=true, input;
+        let td1, td2, created = true, input;
         if (tr.children.length) {
             if (tr.children.length === 1) {
                 td1 = td2 = tr.children[0];
@@ -7121,8 +7997,10 @@ class UI { // jshint ignore:line
                     // Do we have proper type
                     if (prop.type) {
                         let propType = prop.type;
-                        td1.innerText =this._fixShowPropertyTitle(prop.title || prop.field);
-                        if (prop.field && obj[prop.field] && obj[prop.field].function) { propType = 'function'; }
+                        td1.innerText = this._fixShowPropertyTitle(prop.title || prop.field);
+                        if (prop.field && obj[prop.field] && obj[prop.field].function) {
+                            propType = 'function';
+                        }
 
                         switch (propType) {
                             case 'file':
@@ -7141,7 +8019,7 @@ class UI { // jshint ignore:line
                             case 'selection':
                                 const tempField = obj[prop.field];
                                 input = document.createElement("select");
-                                for (let i=0;i<prop.values.length;i++) {
+                                for (let i = 0; i < prop.values.length; i++) {
                                     let opt = new Option(prop.values[i]);
                                     if (prop.values[i] === tempField) {
                                         opt.selected = true;
@@ -7156,7 +8034,9 @@ class UI { // jshint ignore:line
                                     } else {
                                         obj[prop.field] = input.value;
                                     }
-                                    if (prop.onchange) { prop.onchange(input.value); }
+                                    if (prop.onchange) {
+                                        prop.onchange(input.value);
+                                    }
                                 });
                                 td2.appendChild(input);
                                 break;
@@ -7174,7 +8054,9 @@ class UI { // jshint ignore:line
                                     if (prop.field2) {
                                         obj[prop.field2] = input.options[input.selectedIndex][prop.field2];
                                     }
-                                    if (prop.onchange) { prop.onchange(input.value); }
+                                    if (prop.onchange) {
+                                        prop.onchange(input.value);
+                                    }
                                 });
                                 td2.appendChild(input);
                                 break;
@@ -7210,8 +8092,8 @@ class UI { // jshint ignore:line
                                 if (prop.handlePercentage) {
                                     input.type = 'text';
                                     input.addEventListener('blur', () => {
-                                        if(input.value.endsWith("%")){
-                                            input.value = this._parent._parseSize(input.value,prop.field);
+                                        if (input.value.endsWith("%")) {
+                                            input.value = this._parent._parseSize(input.value, prop.field);
                                             obj[prop.field] = input.value;
                                         }
                                     });
@@ -7228,8 +8110,8 @@ class UI { // jshint ignore:line
                                     } else {
                                         obj[prop.field] = input.value;
                                     }
-                                    if(prop.handlePercentage) {
-                                        if(obj[prop.field].toString().endsWith("%")){
+                                    if (prop.handlePercentage) {
+                                        if (obj[prop.field].toString().endsWith("%")) {
                                             obj[prop.field] = this._parent._parseSize(obj[prop.field], prop.field);
                                         }
                                     }
@@ -7238,13 +8120,11 @@ class UI { // jshint ignore:line
                                 td2.appendChild(input);
                                 if (prop.functionable === true) {
                                     td2.appendChild(this._createFunctionSpan(obj, prop, layout));
-                                }
-                                else if (prop.lined === true){
+                                } else if (prop.lined === true) {
                                     td2.appendChild(this._createTextEditorSpan(obj, prop, layout));
                                 }
                                 input.value = obj[prop.field] || "";
                                 break;
-
                             case 'function':
                                 input = document.createElement('span');
                                 input.innerText = "{FUNC}";
@@ -7256,7 +8136,7 @@ class UI { // jshint ignore:line
                                 innerSpan.innerText = "\ue81f";
                                 innerSpan.style.border = "solid black 1px";
                                 innerSpan.addEventListener("click", () => {
-                                    this.functionEditor(obj[prop.field].function, null,null, null, (result) => {
+                                    this.functionEditor(obj[prop.field].function, null, null, null, (result) => {
                                         if (obj[prop.field].function !== result) {
                                             obj[prop.field].function = result;
                                             // Clear any cached Preview func object
@@ -7298,7 +8178,7 @@ class UI { // jshint ignore:line
                                 let p = prop.properties();
                                 for (let i = 0; i < lastProps.length; i++) {
                                     if (p.indexOf(lastProps[i]) < 0) {
-                                        let name =this._getShowPropertyId(lastProps[i], obj) + "_sub";
+                                        let name = this._getShowPropertyId(lastProps[i], obj) + "_sub";
                                         let h = layout.querySelector("#" + name);
                                         if (h) {
 
@@ -7333,12 +8213,18 @@ class UI { // jshint ignore:line
                                 }
                                 break;
 
-                            case 'button': break;
-                            case 'display': break;
-                            case 'totals': break;
-                            case 'boolean': break;
-                            case 'string': break;
-                            case 'number': break;
+                            case 'button':
+                                break;
+                            case 'display':
+                                break;
+                            case 'totals':
+                                break;
+                            case 'boolean':
+                                break;
+                            case 'string':
+                                break;
+                            case 'number':
+                                break;
                             // These don't have anything to update...
 
                             default:
@@ -7371,13 +8257,13 @@ class UI { // jshint ignore:line
         functionSpan.style.border = "solid black 1px";
         functionSpan.addEventListener("click", () => {
             let defaultSource = 'return ';
-            switch (prop.type){
+            switch (prop.type) {
                 case 'boolean':
                 case 'number':
                     defaultSource += obj[prop.field] || prop.default;
                     break;
                 default:
-                    defaultSource += "'"+(obj[prop.field] || prop.default || null)+"'";
+                    defaultSource += "'" + (obj[prop.field] || prop.default || null) + "'";
                     break;
             }
             this.functionEditor(defaultSource + ";", null, null, null, (result) => {
@@ -7387,6 +8273,7 @@ class UI { // jshint ignore:line
         });
         return functionSpan;
     }
+
     _createTextEditorSpan(obj, prop, layout) {
         const EditorSpan = document.createElement('span');
         EditorSpan.style.position = "absolute";
@@ -7396,8 +8283,10 @@ class UI { // jshint ignore:line
         EditorSpan.innerText = "Tt";
         EditorSpan.style.border = "solid black 1px";
         EditorSpan.addEventListener("click", () => {
-            this.stringEditor(obj[prop.field],  (result) => {
-                if (obj[prop.field] !== result) { obj[prop.field] = result; }
+            this.stringEditor(obj[prop.field], (result) => {
+                if (obj[prop.field] !== result) {
+                    obj[prop.field] = result;
+                }
                 this.showProperties(layout.trackProperties, layout, true);
             });
         });
@@ -7406,7 +8295,7 @@ class UI { // jshint ignore:line
 
     createButtons(buttons, styles) {
         let results = [];
-        for (let i=0;i<buttons.length;i++) {
+        for (let i = 0; i < buttons.length; i++) {
             //const tempButton = document.createElement("input");
             const tempButton = document.createElement("button");
             tempButton.type = "button";
@@ -7417,7 +8306,9 @@ class UI { // jshint ignore:line
             tempButton.style.marginRight = "5px";
             if (styles) {
                 for (let key in styles) {
-                    if (!styles.hasOwnProperty(key)) { continue; }
+                    if (!styles.hasOwnProperty(key)) {
+                        continue;
+                    }
                     tempButton.style[key] = styles[key];
                 }
             }
@@ -7458,14 +8349,16 @@ class Dialog { // jshint ignore:line
             this._host.dialogCount = 0;
         }
 
-        if (title && body)  {
+        if (title && body) {
             this.show(title, body);
         }
     }
 
     _keyHandler(event) {
         if (event.key === "Escape") {
-            if (this._dialogId !== this._host.dialogCount) { return; }
+            if (this._dialogId !== this._host.dialogCount) {
+                return;
+            }
             this.hide();
             event.stopPropagation();
             return false;
@@ -7479,22 +8372,24 @@ class Dialog { // jshint ignore:line
             return;
         }
         dialogBackground.style.display = "none";
-        let dialog = this._host.querySelector("#frDialog"+this._host.dialogCount);
+        let dialog = this._host.querySelector("#frDialog" + this._host.dialogCount);
         dialog.style.display = "none";
 
         // Do not do this: clearArea(dialog) - Clearing the dialog means the code following a hide has no access to the data the dialog contains...
         this._host.dialogCount--;
+        _frDialogCounter--;
         document.removeEventListener("keydown", this._boundKeyHandler);
     }
 
     show(title, content) {
+        _frDialogCounter++;
         this._host.dialogCount++;
         this._dialogId = this._host.dialogCount;
 
-        let dialogBackground = this._host.querySelector("#frDialogBackground"+this._host.dialogCount);
+        let dialogBackground = this._host.querySelector("#frDialogBackground" + this._host.dialogCount);
         if (!dialogBackground) {
             dialogBackground = document.createElement("div");
-            dialogBackground.id = "frDialogBackground"+this._host.dialogCount;
+            dialogBackground.id = "frDialogBackground" + this._host.dialogCount;
             dialogBackground.style.position = "absolute";
             dialogBackground.className = "frDialogBackground";
             dialogBackground.style.left = "0px";
@@ -7505,13 +8400,13 @@ class Dialog { // jshint ignore:line
             dialogBackground.style.opacity = "0.7";
             this._host.appendChild(dialogBackground);
         } else {
-            dialogBackground.style.display='';
+            dialogBackground.style.display = '';
         }
 
-        let dialog = this._host.querySelector('#frDialog'+this._host.dialogCount);
+        let dialog = this._host.querySelector('#frDialog' + this._host.dialogCount);
         if (!dialog) {
             dialog = document.createElement("div");
-            dialog.id = "frDialog"+this._host.dialogCount;
+            dialog.id = "frDialog" + this._host.dialogCount;
             dialog.className = "frDialog";
             dialog.style.position = "absolute";
 
@@ -7562,7 +8457,9 @@ class Dialog { // jshint ignore:line
     static notice(data, color, frame) {
         let notice = document.getElementById("notice");
         if (!notice) {
-            if (data === false) { return; }
+            if (data === false) {
+                return;
+            }
             notice = document.createElement('div');
             notice.id = 'notice';
             notice.style.background = '#A00';
@@ -7602,11 +8499,15 @@ class Dialog { // jshint ignore:line
  * @param value
  * @param skipValues
  */
-function shallowClone(value, skipValues=[]) { // jshint ignore:line
+function shallowClone(value, skipValues = []) { // jshint ignore:line
     let result = {};
     for (let key in value) {
-        if (!value.hasOwnProperty(key)) { continue; }
-        if (skipValues.indexOf(key) >= 0) { continue; }
+        if (!value.hasOwnProperty(key)) {
+            continue;
+        }
+        if (skipValues.indexOf(key) >= 0) {
+            continue;
+        }
         result[key] = value[key];
     }
     return result;
@@ -7619,9 +8520,15 @@ function shallowClone(value, skipValues=[]) { // jshint ignore:line
  */
 function handleOpacity(value) { // jshint ignore:line
     let opacity = parseFloat(value);
-    if (isNaN(opacity)) { opacity = 1.0; }
-    if (opacity < 0.0) { opacity = 0.0; }
-    if (opacity > 1.0) { opacity = 1.0; }
+    if (isNaN(opacity)) {
+        opacity = 1.0;
+    }
+    if (opacity < 0.0) {
+        opacity = 0.0;
+    }
+    if (opacity > 1.0) {
+        opacity = 1.0;
+    }
     return opacity;
 }
 
@@ -7632,9 +8539,13 @@ function handleOpacity(value) { // jshint ignore:line
  */
 function minDisplayOpacity(value) { // jshint ignore:line
     let opacity = parseFloat(value);
-    if (isNaN(opacity)) { opacity = 1.0; }
-    if (opacity < 0.1) { opacity = 0.1; }
-    return opacity+"";
+    if (isNaN(opacity)) {
+        opacity = 1.0;
+    }
+    if (opacity < 0.1) {
+        opacity = 0.1;
+    }
+    return opacity + "";
 }
 
 window.FluentReportsGenerator = FluentReportsGenerator;
