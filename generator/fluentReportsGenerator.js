@@ -3109,12 +3109,10 @@ class frElement { // jshint ignore:line
         return this._height > clientHeight ? this._height : clientHeight;
     }
 
-    // noinspection JSUnusedGlobalSymbols
     get elementWidth() {
         let clientWidth = parseInt(this._html.clientWidth, 10) / this.scale;
         return this._width > clientWidth ? this._width : clientWidth;
     }
-
 
     on(event, handler) {
         if (typeof this._handlers[event] === 'undefined') {
@@ -3390,7 +3388,6 @@ class frElement { // jshint ignore:line
         this._html.classList.add("frSelected");
     }
 
-
     _addProperties(arr, insert = true) {
         if (insert === true) {
             if (Array.isArray(arr)) {
@@ -3481,7 +3478,6 @@ class frElement { // jshint ignore:line
 
         return selectGroup;
     }
-
 
     _deleteProperties(arr) {
         if (Array.isArray(arr)) {
@@ -3891,10 +3887,9 @@ class frStandardFooter extends frTitledLabel { // jshint ignore:line
             click: this._setTotals.bind(this),
             destination: false
         }, false);
-        this._deleteProperties(['width', 'height']);
+        this._deleteProperties(['top', 'left', 'width', 'height']);
 
         this.locked = true;
-//        this._draggable.containment = parent._html;
     }
 
     _setTotals() {
@@ -3974,10 +3969,8 @@ class frPageBreak extends frTitledLabel { // jshint ignore:line
         super(report, parent, options);
         this.active = true;
         this.elementTitle = "Page Breaking Point";
-        this._deleteProperties(["left","width", "height"]);
+        this._deleteProperties(["left", "width", "height"]);
         this._addProperties({type: 'boolean', field: "active", default: false, functionable: true});
-        this._copyProperties(options, this, ["absoluteX", "absoluteY","top","left","x","y"]);
-
     }
 
     _saveProperties(props) {
@@ -3987,7 +3980,7 @@ class frPageBreak extends frTitledLabel { // jshint ignore:line
 
     _parseElement(data) {
         if(data){
-            this._copyProperties(data, this, ["absoluteX", "absoluteY","top","left","x","y"]);
+            this._copyProperties(data, this, ["top"]);
             this.active = data.active;
         }
     }
@@ -4007,7 +4000,7 @@ class frNewLine extends frTitledLabel { // jshint ignore:line
         super(report, parent, options);
         this.count = 1;
         this.elementTitle = "New/Blank Line";
-        this._deleteProperties(["left","width", "height"]);
+        this._deleteProperties(["left", "width", "height"]);
         this._addProperties({type: 'number', field: "count", default: 1});
     }
 
@@ -4018,8 +4011,8 @@ class frNewLine extends frTitledLabel { // jshint ignore:line
 
     _parseElement(data) {
         if (data) {
-            this._copyProperties(data, this, ["absoluteX", "absoluteY","top","left","x","y"]);
-            this.count = (typeof data.count === "number" && data.count > 0) || 0;
+            this._copyProperties(data, this, ["top"]);
+            this.count = (typeof data.count === "number" && data.count > 0) ? data.count : 1;
         }
     }
 }
@@ -4035,7 +4028,7 @@ class frBandLine extends frTitledLabel { // jshint ignore:line
         if (isNaN(this._thickness)) {
             this._thickness = 1.0;
         }
-        this.label = "----(auto-sized to prior printed band, thickness: " + this._thickness + "px)----";
+        this.label = "--- (auto-sized/placed to prior printed band, thickness: " + this._thickness + "px) ---";
     }
 
     get gap() {
@@ -4046,13 +4039,12 @@ class frBandLine extends frTitledLabel { // jshint ignore:line
         this._verticalGap = parseInt(val, 10);
     }
 
-
     constructor(report, parent, options = {}) {
         super(report, parent, options);
         this._thickness = 1.0;
         this._verticalGap = 0;
         this.elementTitle = "Band Line";
-        this.label = "----(auto-width to prior printed band, thickness: 1.0px)----";
+        this.label = "--- (auto-sized/placed to prior printed band, thickness: 1.0px) ---";
         this._deleteProperties(["left", "width", "height"]);
         this._addProperties([{type: 'number', field: "thickness", default: 0}, {
             type: 'number',
@@ -4070,8 +4062,8 @@ class frBandLine extends frTitledLabel { // jshint ignore:line
 
     _parseElement(data) {
         if (data) {
-            this._copyProperties(data, this, ["absoluteX", "absoluteY","top","left","x","y"]);
-            this.thickness = (typeof data.thickness === "number" && data.thickness > 0) || 1;
+            this._copyProperties(data, this, ["top"]);
+            this.thickness = (typeof data.thickness === "number" && data.thickness > 0) ? data.thickness : 1;
         }
     }
 }
@@ -4343,7 +4335,7 @@ class frPrint extends frTitledLabel {
         this._wrap = false;
 
         // TODO: Do we need width, height?
-        this._deleteProperties(["left", "height"]);
+        this._deleteProperties(["top", "left", "height"]);
 
         this._addProperties(
             [
@@ -4486,6 +4478,7 @@ class frPrint extends frTitledLabel {
 
     set x(val) {
         this._x = parseInt(val, 10);
+        this.left = this._x;
     }
 
     get y() {
@@ -4494,23 +4487,7 @@ class frPrint extends frTitledLabel {
 
     set y(val) {
         this._y = parseInt(val, 10);
-    }
-
-
-    get absoluteX() {
-        return this.left;
-    }
-
-    set absoluteX(val) {
-        this.left = val;
-    }
-
-    get absoluteY() {
-        return this.top;
-    }
-
-    set absoluteY(val) {
-        this.top = val;
+        this.top = this._y;
     }
 
     get underline() {
@@ -4528,9 +4505,6 @@ class frPrint extends frTitledLabel {
     set strike(val) {
         this._strike = this.getBooleanOrFunction(val);
     }
-
-    get underline() { return this._underline; }
-    set underline(val) { this._underline = this.getBooleanOrFunction(val); }
 
     get fontBold() {
         return this._fontBold;
@@ -4603,11 +4577,6 @@ class frPrint extends frTitledLabel {
         return this._align;
     }
 
-    get _htmlWidth() {
-        return this._html.clientWidth;
-    }
-
-
     set align(val) {
         switch (val) {
             case 0:
@@ -4619,13 +4588,13 @@ class frPrint extends frTitledLabel {
             case 1:
             case 'right':
                 this._align = "right";
-                //this.absoluteX = (parseInt((this.pageWidth * this.scale), 10)) - (this._htmlWidth * this.scale);
+                this.absoluteX = (parseInt((this.pageWidth * this.scale), 10)) - (this.elementWidth * this.scale);
                 break;
 
             case 2:
             case "center":
                 this._align = "center";
-                //this.absoluteX = (parseInt((this.pageWidth ), 10) / 2) - (this._htmlWidth / 2);
+                this.absoluteX = (parseInt((this.pageWidth ), 10) / 2) - (this.elementWidth / 2);
                 break;
 
             case 3:
@@ -4678,10 +4647,6 @@ class frPrintLabel extends frPrint { // jshint ignore:line
 
     set text(val) {
         this.label = val;
-    }
-
-    _saveProperties(props) {
-        super._saveProperties(props);
     }
 
     _parseElement(data) {
@@ -4852,7 +4817,6 @@ class frPrintField extends frPrint { // jshint ignore:line
         this._dataUUID = val;
     }
 
-
     _dblClickHandler() {
         this.UIBuilder.dataFieldEditor(this._generateDataFieldSelection(), (value, idx, dataUUID) => {
             if (this.field !== value || this.dataUUID !== dataUUID) {
@@ -4900,10 +4864,6 @@ class frPrintPageNumber extends frPrintLabel { // jshint ignore:line
         this.label = val;
     }
 
-    _saveProperties(props) {
-        super._saveProperties(props);
-    }
-
     _parseElement(data) {
         if(data){
             if(data.page) {
@@ -4915,9 +4875,7 @@ class frPrintPageNumber extends frPrintLabel { // jshint ignore:line
             if (data.footer) {
                 this.footer = data.footer;
             }
-            this._copyProperties(data, this, ["absoluteX", "absoluteY","top","left","x","y"]);
             super._parseElement(data);
-
         }
 
     }
@@ -5046,7 +5004,7 @@ class frBandElement extends frPrint { // jshint ignore:line
     }
 
     get _hasAlignNone() {
-        return false;
+        return true;
     }
 
     set columns(val) {
@@ -5133,7 +5091,7 @@ class frBandElement extends frPrint { // jshint ignore:line
 
         this._html.appendChild(this._table);
 
-        this._deleteProperties(['rotate', 'width']);
+        this._deleteProperties(['rotate', 'width', 'align']);
         this._addProperties([{type: 'boolean', field: 'suppression', default: false},
             {type: 'number', field: 'columns', destination: false},
             {type: 'number', field: 'fillOpacity', destination: 'settings'},
@@ -5240,9 +5198,6 @@ class frBandElement extends frPrint { // jshint ignore:line
             this._handleBandCell(data.fields[i]);
         }
         this._copyProperties(data, this, ["gutter", "fillOpacity", "suppression", "padding", "collapse"]);
-        /*        this._copyProperties(data, this, ["absoluteX", "absoluteY", "font", "fontSize", "fontBold", "fontItalic", "underline",
-                    "strike", "fill", "textColor", "link", "border", "characterSpacing", "wordSpacing", "rotate", "align", "wrap", "gutter", "fillOpacity"]);
-          */
         super._parseElement(data);
     }
 
@@ -5284,7 +5239,9 @@ class frBandElement extends frPrint { // jshint ignore:line
 
 }
 
-
+/**
+ * UI Class, can be overridden to have custom UI
+ */
 class UI { // jshint ignore:line
 
     constructor(parent) {
