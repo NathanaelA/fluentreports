@@ -19,10 +19,13 @@ let _frItemUUID = 10000; // jshint ignore:line
 // Used to track if dialogs are opened, so that global key handler won't interfere
 let _frDialogCounter=0;
 
+const _frScale = 1.5;
+
 class FluentReportsGenerator {
     /*
     * Private Properties
-     */
+    */
+
     get uuid() {
         return this._uuid;
     }
@@ -138,6 +141,10 @@ class FluentReportsGenerator {
     /*
      * Public Properties
      */
+
+    get version() {
+        return this._version;
+    }
 
     /**
      * Enable/Disable auto printing
@@ -328,7 +335,8 @@ class FluentReportsGenerator {
         this._currentSelected = null;
         this._sectionIn = 0;
         this._debugging = false;
-        this._scale = 1.5;
+        this._scale = _frScale;
+        this._version = 2;
 
         /**
          * This tracks all the Elements on the Screen
@@ -409,7 +417,7 @@ class FluentReportsGenerator {
             this.setConfig('scale', options.scale);
         } else {
             // TODO: Maybe determine size of UI layout and scale dynamically?
-            this._scale = 1.5;
+            this._scale = _frScale;
         }
 
         // Allows overriding UI System
@@ -502,7 +510,7 @@ class FluentReportsGenerator {
             case 'scale':
                 this._scale = parseFloat(value);
                 if (isNaN(this._scale)) {
-                    this._scale = 1.5;
+                    this._scale = _frScale;
                 }
                 break;
 
@@ -744,13 +752,14 @@ class FluentReportsGenerator {
      */
     _parseReport(report) {
         if (report && typeof report.version !== "undefined") {
-            if (report.version !== 1) {
-                console.error("This engine only understands version _1_ reports, please upgrade engine to use this report.");
+            if (report.version !== 1 && report.version !== 2) {
+                console.error("This engine only understands version _1 & 2_ reports, please upgrade engine to use this report.");
                 report = {
                     type: "report",
                     detail: {children: [{type: "print", text: "Invalid Report version"}]}
                 };
             }
+            this._version = report.version;
         }
 
         this._reportData = report;
@@ -834,7 +843,7 @@ class FluentReportsGenerator {
         // Setup our temporary data storage
         this._saveTemporaryData = {reports: {}};
 
-        const results = {type: 'report', dataUUID: this._parsedData.dataUUID, version: 1};
+        const results = {type: 'report', dataUUID: this._parsedData.dataUUID, version: 2};
         this._copyProperties(this, results, ["fontSize", "autoPrint", "name", "paperSize", "paperOrientation"]);
         if (this._marginBottom !== 72 || this._marginTop !== 72 || this._marginLeft !== 72 || this._marginRight !== 72) {
             results.margins = {
@@ -3025,6 +3034,14 @@ class frElement { // jshint ignore:line
         return parseInt(this._html.style.top, 10);
     }
 
+    get _saving_top() {
+        return parseInt(parseInt(this._html.style.top, 10) / this.scale, 10);
+    }
+
+    get _saving_absoluteY() {
+        return this._saving_top;
+    }
+
     set top(val) {
         // We have to be below the header area
         this._html.style.top = parseInt(val, 10) + "px";
@@ -3163,6 +3180,7 @@ class frElement { // jshint ignore:line
         if (src == null) {
             return;
         }
+        const version = this._report.version;
         let targetX = null;
         let targetY = null;
         for (let i = 0; i < props.length; i++) {
@@ -3207,7 +3225,7 @@ class frElement { // jshint ignore:line
             dest.absoluteX = targetX;
         }
         if (targetY !== null) {
-            dest.absoluteY = targetY;
+            dest.absoluteY = parseInt( (version === 1 ? targetY : targetY * this.scale), 10);
         }
 
     }
@@ -3434,10 +3452,19 @@ class frElement { // jshint ignore:line
                     if (typeof props[curProp.destination] === 'undefined') {
                         props[curProp.destination] = {};
                     }
-                    props[curProp.destination][curProp.field] = this[curProp.field];
+                    if (typeof this["_saving_"+curProp.field] !== "undefined") {
+                        props[curProp.destination][curProp.field] = this["_saving_"+curProp.field];
+                    } else {
+                        props[curProp.destination][curProp.field] = this[curProp.field];
+
+                    }
                 } else {
                     // Use the normal save location...
-                    props[curProp.field] = this[curProp.field];
+                    if (typeof this["_saving_"+curProp.field] !== "undefined") {
+                        props[curProp.field] = this["_saving_"+curProp.field];
+                    } else {
+                        props[curProp.field] = this[curProp.field];
+                    }
                 }
             }
         }
@@ -3625,7 +3652,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
                 this._svg.setAttribute("x1", "0");
                 this._svg.setAttribute("y1", "3");
                 this._svg.setAttribute("x2", (this.width * this.scale).toString());
-                this._svg.setAttribute("y2", (3 + this.height).toString());
+                this._svg.setAttribute("y2", (3 + this.height * this.scale).toString());
                 break;
             case 'circle':
                 const offset = this.radius;
@@ -3635,9 +3662,9 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
                 break;
         }
         this._svgRoot.style.width = (this.width * this.scale).toString();
-        this._svgRoot.style.height = (5 + this.height).toString();
+        this._svgRoot.style.height = (5 + this.height * this.scale).toString();
         this._svg.style.width = (this.width * this.scale).toString();
-        this._svg.style.height = (5 + this.height).toString();
+        this._svg.style.height = (5 + this.height * this.scale).toString();
     }
 
     setupShape() {
@@ -3752,7 +3779,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
 
     set height(val) {
         super.height = val;
-        this._html.style.height = (5 + (this.height)) + "px";
+        this._html.style.height = (5 + (this.height * this.scale)) + "px";
         if (this._svg) {
             this.updateShape();
         }
