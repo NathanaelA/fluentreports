@@ -201,7 +201,7 @@ const reportData = {
                 "text": "Label",
                 "settings": {
                     "absoluteX": 0,
-                    "absoluteY": 19
+                    "absoluteY": 15
                 },
                 "type": "print"
             },
