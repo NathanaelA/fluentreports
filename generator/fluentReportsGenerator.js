@@ -2860,18 +2860,50 @@ class frElement { // jshint ignore:line
         return false;
     }
 
-    getNumeralOrFunction(value) {
+    _getNumeralOrFunction(value) {
         if (this.isFunction(value)) {
             return value;
         }
         return parseInt(value, 10);
     }
 
-    getBooleanOrFunction(value) {
+    _getBooleanOrFunction(value) {
         if (this.isFunction(value)) {
             return value;
         }
         return !!value;
+    }
+
+    _getFloatOrFunction(value) {
+        if (this.isFunction(value)) {
+            return value;
+        }
+        return parseFloat(value);
+    }
+
+    /**
+     * Get a valid from the options into the native type
+     * @param options - Options {object}
+     * @param key - Key to the value {string}
+     * @param defaultValue - {string|number|null}
+     * @param type typeof the defaultValue - {string}
+     * @return {number|*}
+     * @private
+     */
+    _getValueFromOptions(options, key, defaultValue, type = typeof defaultValue) {
+        if (options == null || typeof options[key] === 'undefined') { return defaultValue; }
+
+        if (type === "float") {
+            return this._getFloatOrFunction(options[key]);
+        } else if (type === "number") {
+            if (Number.isInteger(defaultValue)) {
+                return this._getNumeralOrFunction(options[key]);
+            }
+            return this._getFloatOrFunction(options[key]);
+        } else if (typeof defaultValue === "boolean") {
+            return this._getBooleanOrFunction(options[key]);
+        }
+        return options[key];
     }
 
     /**
@@ -3019,7 +3051,7 @@ class frElement { // jshint ignore:line
     }
 
     set absoluteX(val) {
-        this.left = this.getNumeralOrFunction(val);
+        this.left = this._getNumeralOrFunction(val);
     }
 
     get absoluteY() {
@@ -3027,7 +3059,7 @@ class frElement { // jshint ignore:line
     }
 
     set absoluteY(val) {
-        this.top = this.getNumeralOrFunction(val);
+        this.top = this._getNumeralOrFunction(val);
     }
 
     get top() {
@@ -3577,13 +3609,13 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
             options.elementTitle = "Drawing";
         }
         super(report, parent, options);
-        this.width = (options && options.width) || 50;
-        this.height = (options && options.height) || 50;
-        this._borderColor = (options && options.borderColor) || "";
-        this._fill = (options && options.fill) || "";
-        this._fillOpacity = (options && options.fillOpacity) || 1.0;
-        this._shape = (options && options.shape) || "line";
-        this._radius = (options && options.radius) || 50;
+        this.width = this._getValueFromOptions(options, "width", 50);
+        this.height = this._getValueFromOptions(options, "height", 50);
+        this._borderColor = this._getValueFromOptions(options, "borderColor", "");
+        this._fill = this._getValueFromOptions(options, "fill", "");
+        this._fillOpacity = this._getValueFromOptions(options, "fillOpacity", 1.0, "float");
+        this._shape = this._getValueFromOptions(options, "shape", "line");
+        this._radius = this._getValueFromOptions(options, "radius", 50);
         this._usesSpace = true;
 
         this._svgRoot = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -3596,10 +3628,10 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this._addProperties([
             {type: 'number', field: 'top', default: 0, destination: "settings"},
             {type: 'number', field: 'left', default: 0, destination: "settings"},
-            {type: 'number', field: 'width', default: 50, destination: "settings", handlePercentage: true},
-            {type: 'number', field: 'height', default: 50, destination: "settings", handlePercentage: true},
+            {type: 'number', field: 'width', default: null, destination: "settings", handlePercentage: true},
+            {type: 'number', field: 'height', default: null, destination: "settings", handlePercentage: true},
             {type: 'select', field: "shape", display: this.createSelect.bind(this), destination: 'settings'},
-            {type: 'number', field: 'radius', default: 0, destination: 'settings'},
+            {type: 'number', field: 'radius', default: null, destination: 'settings'},
             {type: 'boolean', field: 'usesSpace', default: true, destination: 'settings'},
             {
                 type: 'string',
@@ -3629,16 +3661,16 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
     }
 
     _parseElement(data) {
-        this.shape = data.settings.shape || "line";
-        this.radius = data.settings.radius || 50;
-        this.width = data.settings.width || 50;
-        this.height = data.settings.height || 50;
-        this.top = data.settings.top || 0;
-        this.left = data.settings.left || 0;
-        this.borderColor = data.settings.borderColor || "";
-        this.fill = data.settings.fill || "";
-        this.usesSpace = data.settings.usesSpace || true;
-        this.fillOpacity = data.settings.fillOpacity || 1.0;
+        this.shape = this._getValueFromOptions(data.settings, "shape", "line");
+        this.radius = this._getValueFromOptions(data.settings, "radius", 50);
+        this.width = this._getValueFromOptions(data.settings, "width", 50);
+        this.height = this._getValueFromOptions(data.settings, "height", 50);
+        this.top = this._getValueFromOptions(data.settings, "top", 0);
+        this.left = this._getValueFromOptions(data.settings, "left", 0);
+        this.borderColor = this._getValueFromOptions(data.settings, "borderColor", "");
+        this.fill = this._getValueFromOptions(data.settings, "fill", "");
+        this.usesSpace = this._getValueFromOptions(data.settings, "usesSpace", true);
+        this.fillOpacity = this._getValueFromOptions(data.settings, "fillOpacity", 1.0, "float");
     }
 
     _saveProperties(props, ignore = []) {
@@ -3704,7 +3736,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
     }
 
     set usesSpace(val) {
-        this._usesSpace = this.getBooleanOrFunction(val);
+        this._usesSpace = this._getBooleanOrFunction(val);
     }
 
     get borderColor() {
@@ -3984,7 +4016,7 @@ class frPageBreak extends frTitledLabel { // jshint ignore:line
     }
 
     set active(val) {
-        this._active = this.getBooleanOrFunction(val);
+        this._active = this._getBooleanOrFunction(val);
         if (this.isFunction(val)) {
             this.label = "Page Break: {FUNC}";
         } else {
@@ -4488,7 +4520,7 @@ class frPrint extends frTitledLabel {
     }
 
     set fontSize(val) {
-        this._fontSize = this.getNumeralOrFunction(val);
+        this._fontSize = this._getNumeralOrFunction(val);
     }
 
     get characterSpacing() {
@@ -4522,7 +4554,7 @@ class frPrint extends frTitledLabel {
     }
 
     set underline(val) {
-        this._underline = this.getBooleanOrFunction(val);
+        this._underline = this._getBooleanOrFunction(val);
     }
 
     get strike() {
@@ -4530,7 +4562,7 @@ class frPrint extends frTitledLabel {
     }
 
     set strike(val) {
-        this._strike = this.getBooleanOrFunction(val);
+        this._strike = this._getBooleanOrFunction(val);
     }
 
     get fontBold() {
@@ -4538,7 +4570,7 @@ class frPrint extends frTitledLabel {
     }
 
     set fontBold(val) {
-        this._fontBold = this.getBooleanOrFunction(val);
+        this._fontBold = this._getBooleanOrFunction(val);
     }
 
     get fontItalic() {
@@ -4546,7 +4578,7 @@ class frPrint extends frTitledLabel {
     }
 
     set fontItalic(val) {
-        this._fontItalic = this.getBooleanOrFunction(val);
+        this._fontItalic = this._getBooleanOrFunction(val);
     }
 
     get fill() {
