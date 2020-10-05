@@ -45,6 +45,7 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.3.3 - FRG: New Page Element, Section PageBreak settings, fixes for boolean/int functionable..
 1.3.4 - FRG: Grouping, Height/Width functions, Page Number fix, Sort elements, Reset values after calc, PageBreak fixes, Band Variables, 
 1.3.5 - FRG: Better match output, Y location is now saved on all objects, align works better, ctrl-c/v copy/paste/duplicate added, band formatter functions
+1.3.6 - FRG: Fix SVG Elements and Zero values on multiple properties
 
 
 Breaking changes or API inconsistencies:
