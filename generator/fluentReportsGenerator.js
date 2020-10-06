@@ -3004,8 +3004,8 @@ class frElement { // jshint ignore:line
     delete() {
         if (this._report.currentSelected === this) {
             this.blur();
-            this._report.showProperties(null);
         }
+        this._report.showProperties(this._report, true);
         this._parent.removeChild(this);
         let idx = this.frElements.indexOf(this);
         this.frElements.splice(idx, 1);
@@ -3017,7 +3017,6 @@ class frElement { // jshint ignore:line
     duplicate() {
         if (this._report.currentSelected === this) {
             this.blur();
-            this._report.showProperties(null);
         }
         let options = {};
         this._saveProperties(options);
@@ -8006,7 +8005,7 @@ class UI { // jshint ignore:line
             td3 = tr.insertCell(2);
             td3.style.borderLeft = "none";
             td2.style.borderRight = "none";
-            //td2.style = "white-space: nowrap;";
+            td3.style.whiteSpace = "nowrap";
         }
 
         if (typeof prop === "string") {
@@ -8090,7 +8089,9 @@ class UI { // jshint ignore:line
 
                             case 'display':
                                 input = prop.display(prop);
+                                td2.colSpan = 2;
                                 td2.appendChild(input);
+                                tr.deleteCell(2);
                                 break;
 
                             case "boolean":
@@ -8186,6 +8187,10 @@ class UI { // jshint ignore:line
                                     obj[prop.field] = '';
                                     this.showProperties(layout.trackProperties, layout, true);
                                 });
+
+                                // TODO: Fix this so that these are in the 3rd cell.
+                                td2.colSpan = 2;
+                                tr.deleteCell(2);
 
                                 input.appendChild(innerSpan);
                                 input.appendChild(deleteSpan);

@@ -140,9 +140,9 @@ function guiHoursReport() {
                     {
                         type: "print",
                         field: 'name',
-                        settings: {fontBold: true, fill: '#6f6f6f', textColor: '#ffffff', link: 'http://www.fluentReports.com/'}
+                        settings: {absoluteX: 0, absoluteY: 15, fontBold: true, fill: '#6f6f6f', textColor: '#ffffff', link: 'http://www.fluentReports.com/'}
                     } ],
-                detail: [],
+                //detail: [],
                 footer: [
                     {type: 'calculation', op: "concat", name: 'totals', fields: [{text: "Totals for "}, {field: "name"}]},
                     {
@@ -151,7 +151,7 @@ function guiHoursReport() {
                             {function: {type: 'function', name: 'Totals for data.name', function: "return `Totals for ${data.name}`", async: false}, width: 180},
                             {total: "hours", width: 100, align: 3}
                         ]},
-                    {type: 'newLine'}
+                    {type: 'newLine', top: 40}
                 ],
             }
             ],
@@ -175,10 +175,7 @@ function guiHoursReport() {
                                     function: {type: 'function', function: 'return `Week Number: ${data.week}`', name: 'Week number: data.week'},
                                     settings: {x: 100, addY: 2}
                                 }],
-                            detail: [],
-                            footer: [ {
-                                type: 'newLine'
-                            }]
+                            //detail: []
                         }
                     ],
                     detail: [
