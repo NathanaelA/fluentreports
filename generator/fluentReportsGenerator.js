@@ -7886,7 +7886,7 @@ class UI { // jshint ignore:line
         if (!table.children.length) {
             let tr = table.insertRow(-1);
             let td = tr.insertCell(0);
-            td.colSpan = 2;
+            td.colSpan = 3;
 
             // TODO: Create list of all elements as a select list to select the element (Quick List at top of elements)
             let div = document.createElement('div');
@@ -7944,7 +7944,6 @@ class UI { // jshint ignore:line
     }
 
     _fixShowPropertyTitle(name) {
-        // TODO: Split on Upper case to add spaces
         return name.charAt(0).toUpperCase() + name.slice(1).split(/(?=[A-Z])/).join(' ');
     }
 
@@ -7989,13 +7988,14 @@ class UI { // jshint ignore:line
 
     _handleShowProperty(prop, obj, name, tr, layout) {
         layout.trackCreated.push(name);
-        let td1, td2, created = true, input;
+        let td1, td2, td3, created = true, input;
         if (tr.children.length) {
             if (tr.children.length === 1) {
-                td1 = td2 = tr.children[0];
+                td1 = td2 = td3 = tr.children[0];
             } else {
                 td1 = tr.children[0];
                 td2 = tr.children[1];
+                td3 = tr.children[2];
             }
             input = td2.children[0];
             created = false;
@@ -8003,6 +8003,10 @@ class UI { // jshint ignore:line
         } else {
             td1 = tr.insertCell(0);
             td2 = tr.insertCell(1);
+            td3 = tr.insertCell(2);
+            td3.style.borderLeft = "none";
+            td2.style.borderRight = "none";
+            //td2.style = "white-space: nowrap;";
         }
 
         if (typeof prop === "string") {
@@ -8028,9 +8032,10 @@ class UI { // jshint ignore:line
                                 input.value = prop.title;
                                 input.className = "frPropButton";
                                 input.addEventListener("click", prop.click);
-                                td2.appendChild(input);
-                                td2.colSpan = 2;
-                                td2.style.textAlign = "center";
+                                td3.appendChild(input);
+                                td3.colSpan = 3;
+                                td3.style.textAlign = "center";
+                                tr.deleteCell(0);
                                 tr.deleteCell(0);
                                 break;
 
@@ -8056,6 +8061,8 @@ class UI { // jshint ignore:line
                                         prop.onchange(input.value);
                                     }
                                 });
+                                td2.colSpan = 2;
+                                tr.deleteCell(2);
                                 td2.appendChild(input);
                                 break;
 
@@ -8076,7 +8083,9 @@ class UI { // jshint ignore:line
                                         prop.onchange(input.value);
                                     }
                                 });
+                                td2.colSpan = 2;
                                 td2.appendChild(input);
+                                tr.deleteCell(2);
                                 break;
 
                             case 'display':
@@ -8098,7 +8107,10 @@ class UI { // jshint ignore:line
                                 td2.appendChild(input);
                                 input.checked = !!obj[prop.field];
                                 if (prop.functionable === true) {
-                                    td2.appendChild(this._createFunctionSpan(obj, prop, layout));
+                                    td3.appendChild(this._createFunctionSpan(obj, prop, layout));
+                                } else {
+                                    td2.colSpan = 2;
+                                    tr.deleteCell(2);
                                 }
 
                                 break;
@@ -8117,9 +8129,6 @@ class UI { // jshint ignore:line
                                     });
                                 }
                                 input.style.margin = "1px";
-                                if (prop.functionable === true || prop.lined) {
-                                    input.style.width = "calc(100% - 20px)";
-                                }
                                 input.className = "frPropInput";
 
                                 input.addEventListener('input', () => {
@@ -8137,12 +8146,16 @@ class UI { // jshint ignore:line
 
                                 td2.appendChild(input);
                                 if (prop.functionable === true) {
-                                    td2.appendChild(this._createFunctionSpan(obj, prop, layout));
+                                    td3.appendChild(this._createFunctionSpan(obj, prop, layout));
                                 } else if (prop.lined === true) {
-                                    td2.appendChild(this._createTextEditorSpan(obj, prop, layout));
+                                    td3.appendChild(this._createTextEditorSpan(obj, prop, layout));
+                                } else {
+                                    td2.colSpan = 2;
+                                    tr.deleteCell(2);
                                 }
                                 input.value = obj[prop.field] || "";
                                 break;
+
                             case 'function':
                                 input = document.createElement('span');
                                 input.innerText = "{FUNC}";
@@ -8267,9 +8280,11 @@ class UI { // jshint ignore:line
 
     _createFunctionSpan(obj, prop, layout) {
         const functionSpan = document.createElement('span');
-        functionSpan.style.position = "absolute";
-        functionSpan.style.right = "4px";
-        functionSpan.style.marginTop = "4px";
+        //functionSpan.style.position = "relative";
+        //functionSpan.style.float = "right";
+        //functionSpan.style.right = "4px";
+        //functionSpan.style.marginTop = "calc";
+        //functionSpan.style.marginTop = "4px";
         functionSpan.className = "frIcon frIconClickable";
         functionSpan.innerText = "\ue81f";
         functionSpan.style.border = "solid black 1px";
