@@ -1264,20 +1264,26 @@ class FluentReportsGenerator {
         this._copiedElementClass = null;
     }
 
-    _reportLayoutKeyed(args) {
+    _isEventFromInputElement(event, additionalElement) {
+        const path = event.composedPath && event.composedPath() || event.path;
+        return path.some(target => {
+            return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || target === additionalElement;
+        });
+    }
 
-        // Check to see if we are in a editing a value
-        if (document.activeElement && ["INPUT", "TEXTAREA"].indexOf(document.activeElement.tagName) >= 0) {
-            return;
-        }
+    _reportLayoutKeyed(args) {
 
         // Check to see if a dialog is open
         if (_frDialogCounter > 0) { return; }
 
         // Check for a ContentEditable control...  At this point they are all tied to a _text value...
         if (this._currentSelected && this._currentSelected._text && this._currentSelected._text.isContentEditable) {
-            // Content Editable is editing...
-            if (document.activeElement === this._currentSelected._text) {
+            if (this._isEventFromInputElement(args, this._currentSelected._text)) {
+                return;
+            }
+        } else {
+            // Check for Input Elements also works inside the Shadow Dom.
+            if (this._isEventFromInputElement(args)) {
                 return;
             }
         }
