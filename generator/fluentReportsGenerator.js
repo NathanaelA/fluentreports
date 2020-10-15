@@ -5130,6 +5130,29 @@ class frBandElement extends frPrint { // jshint ignore:line
         this._collapse = !!val;
     }
 
+    get border(){
+        return this._border;
+    }
+    set border(val){
+        this._border = val;
+        //A hack implemented, since FluentReports doesn't support border objects on the band, just the cells.
+        for(let i =0;i<this._bands.length;i++){
+            if(this._bands[i].border && !this._bands[i].border.hacked) {
+                continue;//Skip all naturally given border objects.
+            }
+            this._bands[i].border = {
+                "type":"object",
+                "hacked":true,//used to tell if this object was given naturally or via the hack.
+                "object":{
+                    "left":(i === 0) ? val.object.left : 0,
+                    "right":(i+1 === this._bands.length) ? val.object.right : 0,
+                    "top":val.object.top,
+                    "bottom":val.object.bottom,
+                }
+            }
+        }
+    }
+
     constructor(report, parent, options = {}) {
         options.elementTitle = "Band";
         super(report, parent, options);
@@ -5155,12 +5178,12 @@ class frBandElement extends frPrint { // jshint ignore:line
 
         this._html.appendChild(this._table);
 
-        this._deleteProperties(['rotate', 'width', 'align']);
-        this._addProperties([{type: 'boolean', field: 'suppression', default: false},
+        this._deleteProperties(['rotate', 'width', 'align',"border"]);
+        this._addProperties([
+            {type: 'boolean', field: 'suppression', default: false},
             {type: 'number', field: 'columns', destination: false},
             {type: 'number', field: 'fillOpacity', destination: 'settings'},
-        ]);
-        this._addProperties([
+            {type: 'object', field: 'border',destination: 'settings',default: {left:0,right:0,top:0,bottom:0},fields:{left:"number",right:"number",top:"number",bottom:"number"}},
             {type: 'number', field: 'gutter', destination: 'settings', default: 0},
             {type: 'boolean', field: 'collapse', destination: 'settings', default: true},
             {type: 'boolean', field: "wrap", default: false, destination: "settings"},
@@ -6108,6 +6131,7 @@ class UI { // jshint ignore:line
             {type: 'select', field: "align", translate: toInt, default: "left", display: createAlignSelect},
             {type: 'string', field: "textColor", default: "", functionable: true},
             {type: 'string', field: "fill", "title": "Fill Color", default: "", functionable: true},
+            {type: 'object', field:'border', default:{left:0,right:0,top:0,bottom:0},fields:{left:"number",right:"number",top:"number",bottom:"number"}},
             {type: 'boolean', field: "fontBold", title: "bold", default: false, functionable: true},
             {type: 'boolean', field: "fontItalic", title: "italic", default: false, functionable: true},
             {type: 'boolean', field: "underline", default: false, functionable: true},
@@ -6968,6 +6992,97 @@ class UI { // jshint ignore:line
 
             if (typeof ok === 'function') {
                 ok(resultFunctions);
+            }
+        });
+        buttons[1].addEventListener('click', () => {
+            d.hide();
+            if (typeof cancel === 'function') {
+                cancel();
+            }
+        });
+    }
+
+    objectEditor(object, property, ok, cancel) {
+        const body = document.createElement('div');
+        const nameplate = document.createElement('span');
+        nameplate.innerText = (property.title || property.field) + " = {";
+
+        body.appendChild(nameplate);
+        body.appendChild(document.createElement("br"));
+
+        let valueHolders = [];
+        let keys = Object.keys(property.fields);
+        let table = document.createElement('table');
+        for(let i = 0; i < keys.length; i++){
+            let col1 = document.createElement("td");
+            let key = document.createElement("span");
+            key.innerText = keys[i]+":";
+            col1.appendChild(key);
+
+            let col2 = document.createElement("td");
+            let editor = document.createElement('input');
+            switch(property.fields[keys[i]]){
+                case "number":
+                    editor.type = "number";
+                    editor.value = object[keys[i]] || ((property.default && property.default[keys[i]]) || 0);
+                    break;
+                case "string":
+                    editor.type = "text";
+                    editor.value = object[keys[i]] || ((property.default && property.default[keys[i]]) || "");
+                    break;
+                case "boolean":
+                    editor.type = "checkbox";
+                    editor.value = object[keys[i]] || ((property.default && property.default[keys[i]]) || false);
+                    break;
+                default:
+                    editor.value = "null";
+                    editor.disabled = true;
+                    console.error("ObjectEditor doesn't know how to handle: [ "+property.fields[keys[i]]+" ].")
+                    break;
+            }
+            valueHolders.push(editor);
+            col2.appendChild(editor);
+
+            let row = document.createElement("tr");
+            row.style.marginLeft = "15px";
+            row.appendChild(col1);
+            row.appendChild(col2);
+            table.appendChild(row);
+        }
+        body.appendChild(table);
+
+        const closeBracket = document.createElement('span');
+        closeBracket.innerText = "}";
+        body.appendChild(closeBracket);
+        body.appendChild(document.createElement("br"));
+
+        let buttons = this.createButtons(["Ok", "Cancel"]);
+        let btnContainer = document.createElement('div');
+        btnContainer.appendChild(buttons[0]);
+        btnContainer.appendChild(buttons[1]);
+        body.appendChild(btnContainer);
+        let d = new Dialog("Object Editor", body, this.hostElement);
+
+        buttons[0].addEventListener('click', () => {
+            d.hide();
+            if (typeof ok === 'function') {
+                let returnedObject = {};
+                for(let i =0;i<keys.length;i++){
+                    if(valueHolders[i].type === "checkbox"){
+                        returnedObject[keys[i]] = !!valueHolders[i].checked;
+                    }
+                    else {
+                        if (valueHolders[i].type === "number") {
+                            returnedObject[keys[i]] = parseFloat(valueHolders[i].value);
+                        } else {
+                            returnedObject[keys[i]] = valueHolders[i].value;
+                        }
+                        if(!valueHolders[i].value.length && property.default && property.default[keys[i]]){
+                            returnedObject[keys[i]] = property.default[keys[i]];
+                        }
+                    }
+                }
+                ok(returnedObject);
             }
         });
         buttons[1].addEventListener('click', () => {
@@ -8028,7 +8143,9 @@ class UI { // jshint ignore:line
                         if (prop.field && obj[prop.field] && obj[prop.field].function) {
                             propType = 'function';
                         }
-
+                        if (prop.field && obj[prop.field] && obj[prop.field].object) {
+                            propType = 'object';
+                        }
                         switch (propType) {
                             case 'file':
                             case 'button':
@@ -8163,6 +8280,46 @@ class UI { // jshint ignore:line
                                 input.value = obj[prop.field] || "";
                                 break;
 
+
+                            case 'object':
+                                input = document.createElement('span');
+                                input.innerText = "{OBJ}";
+                                input.className = "frPropObject";
+                                const objBttn = document.createElement('span');
+                                objBttn.style.position = "absolute";
+                                objBttn.style.right = "4px";
+                                objBttn.className = "frIcon frIconClickable";
+                                objBttn.innerText = "{.}";//Todo: find a better icon for obj editors
+                                objBttn.style.border = "solid black 1px";
+                                objBttn.addEventListener("click", () => {
+                                    this.objectEditor((obj[prop.field] && obj[prop.field].object) || {}, prop, (result) => {
+                                        let isDefault = (obj[prop.field] && obj[prop.field].default);
+                                        if(isDefault){
+                                            let keys = Object.keys(obj[prop.field].default);
+                                            for(let i = 0;i<keys.length;i++){
+                                                if(!isDefault) {
+                                                    continue;
+                                                }
+                                                if(obj[prop.field].default[keys[i]] !== result[keys[i]]){
+                                                    isDefault = false;
+                                                }
+                                            }
+                                        }
+                                        if(!isDefault) {
+                                            obj[prop.field] = {
+                                                type: "object",
+                                                object: result,
+                                            };
+                                        }
+                                        else delete obj[prop.field];
+                                    });
+                                });
+                                // TODO: Fix this so that these are in the 3rd cell.
+                                td2.colSpan = 2;
+                                tr.deleteCell(2);
+                                input.appendChild(objBttn);
+                                td2.appendChild(input);
+                                break;
                             case 'function':
                                 input = document.createElement('span');
                                 input.innerText = "{FUNC}";
