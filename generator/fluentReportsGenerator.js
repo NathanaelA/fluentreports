@@ -2154,7 +2154,7 @@ class frSection { // jshint ignore:line
                 break;
             case 2: // Footer
                 this._stockElement = new frStandardFooter(this._report, this, {
-                    top: parseInt(this._html.style.top, 10),
+                    top: this.height - 43,
                     left: left
                 });
                 break;
@@ -2312,9 +2312,13 @@ class frSection { // jshint ignore:line
     }
 
     _parseSelf(data) {
-        if (data.fixedHeight) {
-            this.fixedHeight = data.fixedHeight;
-            this.pageBreak = data.pageBreak;
+        if (data) {
+            if (data.fixedHeight) {
+                this.fixedHeight = data.fixedHeight;
+            }
+            if (data.pageBreak) {
+                this.pageBreak = data.pageBreak;
+            }
             this.height = data.height != null ? data.height : this.height;
         }
     }
@@ -2322,6 +2326,7 @@ class frSection { // jshint ignore:line
     _parseSection(data) {
         if (data && data.settings && data.settings.absoluteY) {
             let top = data.settings.absoluteY + (data.settings.height || 32);//Some elements have height, others use the default 32.
+            top *= this.scale;
             if (top >= this.height) {
                 this.height = top;
             }
@@ -3072,7 +3077,7 @@ class frElement { // jshint ignore:line
     }
 
     get _saving_top() {
-        return parseInt(parseInt(this._html.style.top, 10) / this.scale, 10);
+        return Math.round(parseInt(this._html.style.top, 10) / this.scale);
     }
 
     get _saving_absoluteY() {
@@ -3262,7 +3267,8 @@ class frElement { // jshint ignore:line
             dest.absoluteX = targetX;
         }
         if (targetY !== null) {
-            dest.absoluteY = parseInt( (version === 1 ? targetY : targetY * this.scale), 10);
+            // Use Math.round to get closer to the actual pixel because of scaling
+            dest.absoluteY = Math.round( (version === 1 ? targetY : targetY * this.scale));
         }
 
     }
