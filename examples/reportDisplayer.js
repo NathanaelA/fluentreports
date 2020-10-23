@@ -44,6 +44,10 @@ module.exports = function(err, reportName, testing) {
     const reportNoExt = reportName.replace(".pdf", "");
 
     if (typeof process.env.TESTING !== "undefined" || testing.force === true ) {
+        if (global.skipTesting) {
+            console.log("SKIPPED:", reportNoExt);
+            process.exit(0);
+        }
         let blockParams = [];
         if (testing && testing.blocks) {
             for (let i=0;i<testing.blocks.length;i++) {
