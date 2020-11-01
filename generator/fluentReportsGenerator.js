@@ -5122,35 +5122,20 @@ class frBandElement extends frPrint { // jshint ignore:line
         }
     }
 
+    get border() {
+        return this._border;
+    }
+
+    set border(val) {
+        this._border = val;
+    }
+
     get collapse() {
         return this._collapse;
     }
 
     set collapse(val) {
         this._collapse = !!val;
-    }
-
-    get border(){
-        return this._border;
-    }
-    set border(val){
-        this._border = val;
-        //A hack implemented, since FluentReports doesn't support border objects on the band, just the cells.
-        for(let i =0;i<this._bands.length;i++){
-            if(this._bands[i].border && !this._bands[i].border.hacked) {
-                continue;//Skip all naturally given border objects.
-            }
-            this._bands[i].border = {
-                "type":"object",
-                "hacked":true,//used to tell if this object was given naturally or via the hack.
-                "object":{
-                    "left":(i === 0) ? val.object.left : 0,
-                    "right":(i+1 === this._bands.length) ? val.object.right : 0,
-                    "top":val.object.top,
-                    "bottom":val.object.bottom,
-                }
-            }
-        }
     }
 
     constructor(report, parent, options = {}) {
