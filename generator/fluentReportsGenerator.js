@@ -3480,8 +3480,21 @@ class frElement { // jshint ignore:line
                 }
 
                 // Check to see if the field has the default value
-                if (typeof curProp.default !== 'undefined' && curProp.default === this[curProp.field]) {
-                    continue;
+                if (typeof curProp.default !== 'undefined') {
+                    if (curProp.default === this[curProp.field]) {
+                        continue;
+                    }
+                    // Check to see if it is a default.object and compare it's defaults
+                    if (this[curProp.field].object) {
+                        let isDefault = true;
+                        for (let key in curProp.default) {
+                            if (curProp.default.hasOwnProperty(key) && curProp.default[key] !== this[curProp.field].object[key]) {
+                                isDefault = false;
+                                break;
+                            }
+                        }
+                        if (isDefault) { continue; }
+                    }
                 }
 
                 // Check to see if we have a destination override
@@ -5155,6 +5168,7 @@ class frBandElement extends frPrint { // jshint ignore:line
         this._gutter = 0;
         this._padding = 1;
         this._collapse = true;
+        this._border = {type: "object", object: {left: 0,right: 0,top: 0,bottom: 0}};
 
         this._table = document.createElement("table");
         this._table.className = "frBand";
@@ -5174,7 +5188,7 @@ class frBandElement extends frPrint { // jshint ignore:line
             {type: 'boolean', field: 'suppression', default: false},
             {type: 'number', field: 'columns', destination: false},
             {type: 'number', field: 'fillOpacity', destination: 'settings'},
-            {type: 'object', field: 'border',destination: 'settings',default: {left:0,right:0,top:0,bottom:0},fields:{left:"number",right:"number",top:"number",bottom:"number"}},
+            {type: 'object', field: 'border',destination: 'settings', defaultName: "None", default: {left: 0,right: 0,top: 0,bottom: 0}, fields: {left: "number",right: "number",top: "number",bottom: "number"}},
             {type: 'number', field: 'gutter', destination: 'settings', default: 0},
             {type: 'boolean', field: 'collapse', destination: 'settings', default: true},
             {type: 'boolean', field: "wrap", default: false, destination: "settings"},
@@ -6996,7 +7010,7 @@ class UI { // jshint ignore:line
     objectEditor(object, property, ok, cancel) {
         const body = document.createElement('div');
         const nameplate = document.createElement('span');
-        nameplate.innerText = (property.title || property.field) + " = {";
+        nameplate.innerText = this._fixShowPropertyTitle(property.title || property.field) + " = {";
 
         body.appendChild(nameplate);
         body.appendChild(document.createElement("br"));
@@ -7028,7 +7042,7 @@ class UI { // jshint ignore:line
                 default:
                     editor.value = "null";
                     editor.disabled = true;
-                    console.error("ObjectEditor doesn't know how to handle: [ "+property.fields[keys[i]]+" ].")
+                    console.error("ObjectEditor doesn't know how to handle: [ "+property.fields[keys[i]]+" ].");
                     break;
             }
             valueHolders.push(editor);
@@ -7052,7 +7066,7 @@ class UI { // jshint ignore:line
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
-        let d = new Dialog("Object Editor", body, this.hostElement);
+        let d = new Dialog(this._fixShowPropertyTitle(property.title || property.field) + " Editor", body, this.hostElement);
 
         buttons[0].addEventListener('click', () => {
             d.hide();
@@ -8097,6 +8111,18 @@ class UI { // jshint ignore:line
         }
     }
 
+    _checkObjectMatchDefault(defaults, data) {
+        for (let key in defaults) {
+            if (defaults.hasOwnProperty(key)) {
+                if (defaults[key] !== data[key]) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     _handleShowProperty(prop, obj, name, tr, layout) {
         layout.trackCreated.push(name);
         let td1, td2, td3, created = true, input;
@@ -8271,44 +8297,44 @@ class UI { // jshint ignore:line
                                 input.value = obj[prop.field] || "";
                                 break;
 
-
                             case 'object':
                                 input = document.createElement('span');
-                                input.innerText = "{OBJ}";
+
+                                // Field data isn't set
+                                if (!obj[prop.field] || !obj[prop.field].object) {
+                                    input.innerText = prop.defaultName || "Customize";
+                                } else if (!prop.default || !this._checkObjectMatchDefault(prop.default, obj[prop.field].object)) {
+                                    input.innerText = "Custom";
+                                } else {
+                                    input.innerText = prop.defaultName || "Customize";
+                                }
                                 input.className = "frPropObject";
-                                const objBttn = document.createElement('span');
-                                objBttn.style.position = "absolute";
-                                objBttn.style.right = "4px";
-                                objBttn.className = "frIcon frIconClickable";
-                                objBttn.innerText = "{.}";//Todo: find a better icon for obj editors
-                                objBttn.style.border = "solid black 1px";
-                                objBttn.addEventListener("click", () => {
+                                const objBtn = document.createElement('span');
+                                objBtn.style.position = "absolute";
+                                objBtn.style.right = "4px";
+                                objBtn.className = "frIcon frIconClickable";
+                                objBtn.innerText = "\ue817";
+                                objBtn.style.border = "solid black 1px";
+                                objBtn.addEventListener("click", () => {
                                     this.objectEditor((obj[prop.field] && obj[prop.field].object) || {}, prop, (result) => {
-                                        let isDefault = (obj[prop.field] && obj[prop.field].default);
-                                        if(isDefault){
-                                            let keys = Object.keys(obj[prop.field].default);
-                                            for(let i = 0;i<keys.length;i++){
-                                                if(!isDefault) {
-                                                    continue;
-                                                }
-                                                if(obj[prop.field].default[keys[i]] !== result[keys[i]]){
-                                                    isDefault = false;
-                                                }
-                                            }
-                                        }
+                                        let isDefault = this._checkObjectMatchDefault(prop.default || {}, result);
                                         if(!isDefault) {
-                                            obj[prop.field] = {
-                                                type: "object",
-                                                object: result,
-                                            };
+                                            input.innerText = "Custom";
+                                            input.appendChild(objBtn);
+                                        } else {
+                                            input.innerText = prop.defaultName || "Customize";
+                                            input.appendChild(objBtn);
                                         }
-                                        else delete obj[prop.field];
+                                        obj[prop.field] = {
+                                            type: "object",
+                                            object: result,
+                                        };
                                     });
                                 });
                                 // TODO: Fix this so that these are in the 3rd cell.
                                 td2.colSpan = 2;
                                 tr.deleteCell(2);
-                                input.appendChild(objBttn);
+                                input.appendChild(objBtn);
                                 td2.appendChild(input);
                                 break;
                             case 'function':
