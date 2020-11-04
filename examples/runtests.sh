@@ -15,7 +15,9 @@ if [[ -n "$_single" ]]; then
     else
       # Remove any of the images that passed so the Artifacts don't have them...
       name=$(echo "${_single}" | cut -f 1 -d '.')
-      rm Check/${name}*.png
+      if [[ "$2" == "" ]]; then
+         rm Check/${name}*.png
+      fi
       echo Success $_single
    fi
 else

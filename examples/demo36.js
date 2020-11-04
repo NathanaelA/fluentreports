@@ -1,11 +1,9 @@
 /***
- * This report tests using a pageBreak, "before" and "after" values
+ * This report tests using custom border values
+ *   Includes cell over-riding outer borders (Totals)
  */
 
 "use strict";
-// This test is currently Broken because of Page Breaking Code
-global.skipTesting = true;
-
 
 const ReportBuilder = require('../lib/fluentReportsBuilder').ReportBuilder;
 const displayReport = require('./reportDisplayer');
@@ -108,10 +106,10 @@ const data = [
 const reportData = {
     "type": "report",
     "dataUUID": 10002,
-    "version": 1,
+    "version": 2,
     "fontSize": 8,
     "autoPrint": false,
-    "name": "demo33.pdf",
+    "name": "demo36.pdf",
     "paperSize": "letter",
     "paperOrientation": "portrait",
     "fonts": [],
@@ -123,6 +121,48 @@ const reportData = {
             "dataUUID": 10003,
             "dataType": "parent",
             "data": "emphours",
+            "groupBy": [
+                {
+                    "type": "group",
+                    "groupOn": "week",
+                    "header": {
+                        "children": [
+                            {
+                                "skip": true,
+                                "type": "function",
+                                "function": "vars.counter=0;",
+                                "async": false,
+                                "name": "counter reset"
+                            },
+                            {
+                                "async": true,
+                                "name": "Print Function",
+                                "settings": {
+                                    "absoluteX": 0,
+                                    "absoluteY": 0
+                                },
+                                "function": {
+                                    "function": "done(`Week Number: ${data.week}`);",
+                                    "type": "function",
+                                    "async": true,
+                                    "name": "Print Function"
+                                },
+                                "type": "print"
+                            }
+                        ]
+                    },
+                    "detail": {
+                        "children": []
+                    },
+                    "footer": {
+                        "children": [
+                            {
+                                "type": "newLine"
+                            }
+                        ]
+                    }
+                }
+            ],
             "type": "report",
             "detail": {
                 "children": [
@@ -133,15 +173,16 @@ const reportData = {
                     },
                     {
                         "settings": {
-                            "fillOpacity": 1,
                             "absoluteX": 0,
-                            "absoluteY": 0,
+                            "absoluteY": 1,
                             "fill": {
                                 "type": "function",
                                 "function": "return (vars.counter % 2 === 0 ? '#f0f0f0' : '#e0e0e0');",
                                 "name": "fill"
                             },
                             "textColor": "#0000ff",
+                            "fillOpacity": 1,
+                            "collapse": false,
                             "wrap": true
                         },
                         "type": "band",
@@ -152,7 +193,16 @@ const reportData = {
                             },
                             {
                                 "field": "day",
-                                "width": 100
+                                "width": 100,
+                                "border": {
+                                    "type": "object",
+                                    "object": {
+                                        "left": 1,
+                                        "right": 1,
+                                        "top": 1,
+                                        "bottom": 1
+                                    }
+                                }
                             },
                             {
                                 "field": "hours",
@@ -208,57 +258,7 @@ const reportData = {
                 ]
             },
             "detail": {
-                "children": [
-                    {
-                        "text": "Label",
-                        "settings": {
-                            "absoluteX": 0,
-                            "absoluteY": 0
-                        },
-                        "type": "print"
-                    },
-                    {
-                        "text": "Label",
-                        "settings": {
-                            "absoluteX": 0,
-                            "absoluteY": 21
-                        },
-                        "type": "print"
-                    },
-                    {
-                        "text": "Label",
-                        "settings": {
-                            "absoluteX": 0,
-                            "absoluteY": 42
-                        },
-                        "type": "print"
-                    },
-                    {
-                        "active": {
-                            "type": "function",
-                            "name": "Function",
-                            "function": "return vars.counter % 5 === 0;",
-                            "async": false
-                        },
-                        "type": "newPage"
-                    },
-                    {
-                        "text": "Label",
-                        "settings": {
-                            "absoluteX": 0,
-                            "absoluteY": 80
-                        },
-                        "type": "print"
-                    },
-                    {
-                        "text": "Label",
-                        "settings": {
-                            "absoluteX": 0,
-                            "absoluteY": 102
-                        },
-                        "type": "print"
-                    }
-                ]
+                "children": []
             },
             "footer": {
                 "children": [
@@ -276,10 +276,22 @@ const reportData = {
                         ]
                     },
                     {
+                        "type": "newLine"
+                    },
+                    {
                         "settings": {
-                            "fillOpacity": 1,
                             "absoluteX": 0,
-                            "absoluteY": 0
+                            "absoluteY": 1,
+                            "fillOpacity": 1,
+                            "border": {
+                                "type": "object",
+                                "object": {
+                                    "left": 0,
+                                    "right": 0,
+                                    "top": 1,
+                                    "bottom": 1
+                                }
+                            }
                         },
                         "type": "band",
                         "fields": [
@@ -290,7 +302,16 @@ const reportData = {
                                     "function": "return `Totals for ${data.name}`",
                                     "async": false
                                 },
-                                "width": 180
+                                "width": 180,
+                                "border": {
+                                    "type": "object",
+                                    "object": {
+                                        "left": 0,
+                                        "right": 1,
+                                        "top": 0,
+                                        "bottom": 0
+                                    }
+                                }
                             },
                             {
                                 "total": "hours",
@@ -298,9 +319,6 @@ const reportData = {
                                 "align": 3
                             }
                         ]
-                    },
-                    {
-                        "type": "newLine"
                     }
                 ]
             }
@@ -323,7 +341,6 @@ const reportData = {
         "HoursDisplay": "callback('Hours: ' + input)"
     }
 };
-
 
 let rpt = new ReportBuilder(reportData, data);
 
