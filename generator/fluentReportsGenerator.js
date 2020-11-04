@@ -5146,6 +5146,14 @@ class frBandElement extends frPrint { // jshint ignore:line
     }
 
     set border(val) {
+        if(!val.type){
+            val = {
+                left:parseInt(val),
+                right:parseInt(val),
+                top:parseInt(val),
+                bottom:parseInt(val)
+            }
+        }
         this._border = val;
     }
 
