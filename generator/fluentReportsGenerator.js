@@ -5146,15 +5146,20 @@ class frBandElement extends frPrint { // jshint ignore:line
     }
 
     set border(val) {
-        if(!val.type){
-            val = {
-                left:parseInt(val),
-                right:parseInt(val),
-                top:parseInt(val),
-                bottom:parseInt(val)
+        if(typeof val === "string" || typeof val === "number"){
+            this._border = {
+                object: {
+                    left: parseInt(val),
+                    right: parseInt(val),
+                    top: parseInt(val),
+                    bottom: parseInt(val),
+                },
+                type:"object"
             }
         }
-        this._border = val;
+        else if(val && val.type === "object") {
+            this._border = val;
+        }
     }
 
     get collapse() {
