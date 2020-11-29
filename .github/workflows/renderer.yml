@@ -13,14 +13,20 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [10.x,12.x,14.x]
+        node-version: [12.x,14.x,15.x]
 
     steps:
       - name: Checkout Startup
         uses: actions/checkout@v2
 
+      - name: Update APT files
+        run: sudo apt update
+
+      - name: Upgrade OS files
+        run: sudo apt upgrade -y
+
       - name: Get Poppler
-        run: sudo apt-get install poppler-utils
+        run: sudo apt install poppler-utils
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
