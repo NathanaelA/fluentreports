@@ -1287,17 +1287,20 @@ class FluentReportsGenerator {
         // Check to see if a dialog is open
         if (_frDialogCounter > 0) { return; }
 
-        // Check for a ContentEditable control...  At this point they are all tied to a _text value...
-        if (this._currentSelected.length === 1 && this._currentSelected[0]._text && this._currentSelected[0]._text.isContentEditable) {
-            if (this._isEventFromInputElement(args, this._currentSelected[0]._text)) {
-                return;
-            }
-        } else {
-            // Check for Input Elements also works inside the Shadow Dom.
-            if (this._isEventFromInputElement(args)) {
-                return;
+        for(let i =0;i<this._currentSelected.length;i++) {
+            // Check for a ContentEditable control...  At this point they are all tied to a _text value...
+            if (this._currentSelected.length === 1 && this._currentSelected[i]._text && this._currentSelected[i]._text.isContentEditable) {
+                if (this._isEventFromInputElement(args, this._currentSelected[i]._text)) {
+                    return;
+                }
+            } else {
+                // Check for Input Elements also works inside the Shadow Dom.
+                if (this._isEventFromInputElement(args)) {
+                    return;
+                }
             }
         }
+
 
         // Which/KeyCode is depreciated; but still valid in many browsers
         if (args.which === 46 && args.keyCode === 46 || (args.code === "NumpadDecimal" && args.key !== '.') || args.key.toLowerCase() === 'delete' || args.key.toLowerCase() === "backspace") {
@@ -3049,8 +3052,10 @@ class frElement { // jshint ignore:line
      * Delete this Element
      */
     delete() {
-        if (this._report.currentSelected[0] === this) {
-            this.blur();
+        for(let i =0;i<this._report.currentSelected.length;i++) {
+            if (this._report.currentSelected[i] === this) {
+                this.blur();
+            }
         }
         this._report.showProperties(this._report, true);
         this._parent.removeChild(this);
@@ -3062,8 +3067,10 @@ class frElement { // jshint ignore:line
      * Duplicate this Element
      */
     duplicate() {
-        if (this._report.currentSelected[0] === this) {
-            this.blur();
+        for(let i =0;i<this._report.currentSelected.length;i++) {
+            if (this._report.currentSelected[i] === this) {
+                this.blur();
+            }
         }
         let options = {};
         this._saveProperties(options);
@@ -3461,7 +3468,12 @@ class frElement { // jshint ignore:line
     }
 
     _blur(args) {
-        this._report.currentSelected[0] = null;
+        for(let i =0;i<this._report.currentSelected.length;i++){
+            if(this._report.currentSelected[i] === this){
+                this._report._currentSelected.splice(i,1);
+                break;
+            }
+        }
         this._html.classList.remove("frSelected");
 
         if (this._handlers.blur && args !== this) {
@@ -3516,8 +3528,8 @@ class frElement { // jshint ignore:line
             this._report.showProperties(this._report.currentSelected, true);
         }
         else{
-            if (this._report._currentSelected[0] !== this && this._report._currentSelected.length > 0) {
-                for(let i =0;i<this._report._currentSelected.length;i++) {
+            for(let i =0;i<this._report.currentSelected.length;i++) {
+                if (this._report.currentSelected[i] !== this) {
                     this._report._currentSelected[i].blur();
                 }
             }
