@@ -5236,6 +5236,7 @@ class frBandElement extends frPrint { // jshint ignore:line
     }
 
     set border(val) {
+        this._border = val;
         if(typeof val === "string" || typeof val === "number"){
             this._border = {
                 object: {
