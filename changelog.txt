@@ -49,6 +49,7 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.3.7 - FRG: Fix Delete keys inside Shadow Elements
 1.3.8 - FRG: Fix FormatterFunctions on all Print, Fix elements changing Y coords on load, Fix print alignment
 1.3.9 - FRG: Customized Borders.
+1.3.10 - FRG: Fixed Loading/Saving of SVG elements, Fixed Band Element Function selection, minor cleanup
 
 
 Breaking changes or API inconsistencies:

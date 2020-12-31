@@ -12,6 +12,8 @@ const fs = require('fs');
 const util = require('util');
 const execFile = util.promisify(require('child_process').execFile);
 const child_process = require('child_process');
+let scalingFactor = process.env.SCALING_FACTOR || 1;
+
 
 // ----------------------------------------------------------------------------------------------
 // TODO: Need to populate this with Application paths for other popular PDF readers
@@ -52,7 +54,17 @@ module.exports = function(err, reportName, testing) {
         if (testing && testing.blocks) {
             for (let i=0;i<testing.blocks.length;i++) {
                 blockParams.push("--block-out");
-                blockParams.push(testing.blocks[i]);
+                if (scalingFactor > 1 && false) {
+                    let scaleBlocks = testing.blocks[i].split(",");
+                    for (let j=0;j<scaleBlocks.length;j++) {
+                        scaleBlocks[j] *= scalingFactor;
+                    }
+                    console.log(testing.blocks[i], "   - ", scaleBlocks);
+
+                    blockParams.push(scaleBlocks.join(","));
+                } else {
+                    blockParams.push(testing.blocks[i]);
+                }
             }
         }
 
@@ -60,7 +72,7 @@ module.exports = function(err, reportName, testing) {
         // Normally not needed, but if the area we expect to change has moved
         // drastically; we can enable this to see the actual box we are ignoring.
         const debugging = [];
-        if (testing && testing.debugImage === true) {
+        if (testing && testing.debugImage === true || true) {
             debugging.push('--debug');
         }
 
@@ -70,17 +82,18 @@ module.exports = function(err, reportName, testing) {
         }
 
        // console.log([reportNameDir, __dirname + "/Check/"+reportNoExt, "-png", "-freetype", "yes"]);
-
-        execFile( "pdftoppm", [reportNameDir, __dirname + "/Check/"+reportNoExt, "-png", "-freetype", "yes", "-aaVector", "yes"]).then(( std ) => {
+        
+        execFile( "pdftoppm", [reportNameDir, __dirname + "/Check/"+reportNoExt, "-png", "-freetype", "yes", "-aaVector", "yes", "-aa", "yes"]).then(( std ) => {
             if (std.stdout !== '' || std.stderr !== '') { console.log(std); }
             let testGroup = [];
             for (let i=0;i<count;i++) {
                 let name = reportNoExt + "-"+(i+1)+".png";
                 let outName = __dirname + "/Check/" + reportNoExt + "-" + (i+1)+"c.png";
-                //console.log(  [__dirname + "/Originals/" + name, __dirname + "/Check/" + name, "--output", outName, "--no-composition", "--threshold", "0", "--delta", "0"].concat(blockParams, debugging).join(" "));
+                //console.log(  [__dirname + "/Originals/" + name, __dirname + "/Check/" + name, "--output", outName, "--no-composition", "--threshold", "0", "--delta", "1"].concat(blockParams, debugging).join(" "));
                 testGroup.push(
+                    // We are using a Delta difference of 0.00000001, because Font aliasing might be slightly different depending on the OS and OS version.  But the only difference should be a very slight grey difference.
                     execFile("blink-diff",
-                        [__dirname + "/Originals/" + name, __dirname + "/Check/" + name, "--output", outName, "--no-composition", "--threshold", "0", "--delta", "0"].concat(blockParams, debugging)
+                        [__dirname + "/Originals/" + name, __dirname + "/Check/" + name, "--output", outName, "--no-composition", "--threshold", "0", "--delta", "0.00000001", "--verbose"].concat(blockParams, debugging)
                     )
                 );
             }
