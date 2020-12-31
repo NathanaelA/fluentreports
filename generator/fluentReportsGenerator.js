@@ -1259,12 +1259,8 @@ class FluentReportsGenerator {
     }
 
     _reportLayoutClicked(args) {
-        if (this._currentSelected.length) {
-            for(let i =0;i<this._currentSelected.length;i++) {
-                if(this._currentSelected[i]) {
-                    this._currentSelected[i].blur();
-                }
-            }
+        while(this._currentSelected.length){
+            this._currentSelected[0].blur();//Inside the blur() splices itself from currentSelected.
         }
         this._currentSelected = [];
         this._updateSectionIn(args.clientY);
@@ -3347,6 +3343,19 @@ class frElement { // jshint ignore:line
         this._draggable.containment = this._parent.elementContainer;
 
         this._draggable.onDragStart = (e) => {
+            let dragAllowed = true;
+            for(let i =0;i<this._report.currentSelected.length;i++){
+                dragAllowed = false;
+                if(this._report.currentSelected[i] === this){
+                    dragAllowed = true;
+                    break;
+                }
+            }
+            this._draggable.disabled = !dragAllowed;
+            if(!dragAllowed){
+                return false;
+            }
+
             // Only allow left-mouse button dragging
             if (typeof e.button !== 'undefined' && e.button !== 0) {
                 return false;
@@ -3368,8 +3377,11 @@ class frElement { // jshint ignore:line
             this._draggable.snap = this._generateSnapping();
         };
         this._draggable.onMove = (e) => {
-            for(let i =0;i<this._report._currentSelected.length;i++){
-                if(this._report._currentSelected[i] === this){
+            if(this._draggable.disabled){
+                return false;
+            }
+            for (let i = 0; i < this._report._currentSelected.length; i++) {
+                if (this._report._currentSelected[i] === this) {
                     continue;
                 }
                 this._report._currentSelected[i].top = this.top + this._report._currentSelected[i].offsetDragging.y;
@@ -3522,10 +3534,28 @@ class frElement { // jshint ignore:line
                     break;
                 }
             }
-            if(!included){
-                this._report.currentSelected.push(this);
+            //If there is currently an item selected, and that item(s) parent does not match the clicked item's parent.
+            let uuidToMatch = true;
+            if(this._report.currentSelected.length){
+                //This is to check in case the user selected multible elements, then dragged some of the elements out.
+                //If this is the case, then no item can be added to multi select due to not know which section to allow selecting elements.
+                uuidToMatch = this._parent.uuid;
+                for(let i =0;i<this._report.currentSelected.length;i++){
+                    if(uuidToMatch !== this._report.currentSelected[0]._parent.uuid){
+                        uuidToMatch = false;
+                    }
+                }
+
             }
-            this._report.showProperties(this._report.currentSelected, true);
+            //!== false: incase the uuid sometimes being a string somehow messes this up on a weird case.
+            if(uuidToMatch !== false){
+                if (!included) {
+                    this._report.currentSelected.push(this);
+                    this._draggable.disabled = false;
+                }
+                this._html.classList.add("frSelected");
+                this._report.showProperties(this._report.currentSelected, true);
+            }
         }
         else{
             for(let i =0;i<this._report.currentSelected.length;i++) {
@@ -3535,8 +3565,9 @@ class frElement { // jshint ignore:line
             }
             this._report.showProperties(this, true);
             this._report.currentSelected = [this];
+            this._draggable.disabled = false;
+            this._html.classList.add("frSelected");
         }
-        this._html.classList.add("frSelected");
     }
 
     _addProperties(arr, insert = true) {
