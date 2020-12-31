@@ -1072,8 +1072,6 @@ class FluentReportsGenerator {
      * @private
      */
     _clearReport() {
-        console.log("Clear Report");
-
         // Reset Tracking Data
         this._includeData = false;
         this._totals = {};
@@ -1744,9 +1742,6 @@ class FluentReportsGenerator {
     }
 
     _generateReportLayout(data, height, groupName, dataUUID) {
-
-        console.log("GenerateReportLayout", groupName);
-
         let report = this._parsedData.findByUUID(dataUUID);
         if (report === null) {
             console.log("Report DATA does not match report layout!");
@@ -2609,8 +2604,6 @@ class frSection { // jshint ignore:line
         this._draggable = new PlainDraggable(this._frLine, {leftTop: true});
         this._draggable.handle = this._frLine;
         if (this.frSections.length > 1) {
-//            this.frSections[this.frSections.length-2]._frLine.style.display = 'none';
-
             this.frSections[this.frSections.length - 2]._draggable.handle = this._titleTD;
         }
 
@@ -2621,16 +2614,18 @@ class frSection { // jshint ignore:line
         this._draggable.onDragStart = this._onDragStart.bind(this);
         this._draggable.onDragEnd = this._onDragEnd.bind(this);
         this._draggable.onMove = () => {
+            this._draggable.position();
             const rect = this._html.getBoundingClientRect();
             this._html.style.height = (this._draggable.rect.bottom - (rect.top + window.pageYOffset)) + 'px';
             let top = (parseInt(this._html.style.height, 10) + parseInt(this._html.style.top, 10));
-            this._draggable.position();
+
             for (let i = this._sectionId + 1; i < this.frSections.length; i++) {
                 let next = this.frSections[i];
                 next._html.style.top = top + "px";
                 top += next.height;
                 next._draggable.position();
             }
+            this._draggable.position();
 
         };
     }
@@ -2791,18 +2786,21 @@ class frSection { // jshint ignore:line
             pageEnd = this.frSections[this.frSections.length - 1].bottom;
         }
 
+        const extraSpace = 32;
+
         // Figure out the MIN-Size
-        // First set top to be bottom of prior section plus a space to put an object into the section it...
-        let top = 22;
+        // First set top to be bottom of prior section plus a space (22) to put an object into the section it...
+        // + (10) for the selected border area
+        let top = extraSpace;
         if (this._sectionId) {
             // Bottom of Prior section
-            top = this.frSections[this._sectionId - 1].bottom + 22;
+            top = this.frSections[this._sectionId - 1].bottom + extraSpace;
         }
         // Let top be to bottom of any children elements...
         for (let i = 0; i < this._children.length; i++) {
-            let newTop = this.top + this._children[i].top + this._children[i].elementHeight;
-            if (newTop >= top) {
-                top = newTop + 5;
+            let newTop = this.top + this._children[i].top + this._children[i].elementHeight + extraSpace;
+            if (newTop > top) {
+                top = newTop;
             }
         }
 
@@ -2815,7 +2813,7 @@ class frSection { // jshint ignore:line
             this._report.reportLayout.style.height = currentHeight + "px";
         }
 
-        let end = currentHeight - 22 - this.top;
+        let end = currentHeight - 32 - this.top;
         for (let i = this._sectionId + 1; i < this.frSections.length; i++) {
             end -= this.frSections[i].height;
         }
@@ -3405,8 +3403,9 @@ class frElement { // jshint ignore:line
     }
 
     _resizeParentContainer(top) {
-        if ((this.elementHeight * this.scale) + top + 1 > this._parent.elementContainerHeight) {
-            this._parent.elementContainerHeight = ((this.elementHeight * this.scale) + top + 1);
+        // NOTE: We don't need to use the Scaling here; as this is called only using real coord space
+        if ((this.elementHeight) + top + 1 > this._parent.elementContainerHeight) {
+            this._parent.elementContainerHeight = ((this.elementHeight) + top + 1);
             this._parent._draggable.position();
         }
     }
@@ -5864,7 +5863,6 @@ class UI { // jshint ignore:line
     }
 
     _preventDefault(evt) {
-        console.log("Drag start");
         evt.preventDefault();
         return false;
     }
@@ -8359,6 +8357,7 @@ class UI { // jshint ignore:line
                                     input.innerText = prop.defaultName || "Customize";
                                 }
                                 input.className = "frPropObject";
+
                                 const objBtn = document.createElement('span');
                                 objBtn.style.position = "absolute";
                                 objBtn.style.right = "4px";
@@ -8387,6 +8386,7 @@ class UI { // jshint ignore:line
                                 input.appendChild(objBtn);
                                 td2.appendChild(input);
                                 break;
+
                             case 'function':
                                 input = document.createElement('span');
                                 input.innerText = "{FUNC}";
@@ -8544,9 +8544,6 @@ class UI { // jshint ignore:line
 
     _createTextEditorSpan(obj, prop, layout) {
         const EditorSpan = document.createElement('span');
-        EditorSpan.style.position = "absolute";
-        EditorSpan.style.right = "4px";
-        EditorSpan.style.marginTop = "4px";
         EditorSpan.className = "frIcon frIconClickable";
         EditorSpan.innerText = "Tt";
         EditorSpan.style.border = "solid black 1px";
