@@ -88,11 +88,17 @@ class FluentReportsGenerator {
     }
 
     get currentSelected() {
-        return this._currentSelected;
+        return this._currentSelected || [];
     }
 
     set currentSelected(val) {
-        this._currentSelected = val;
+        if(val instanceof Array){
+            this._currentSelected = val;
+        }
+        else{
+            this._currentSelected = [];
+            this._currentSelected.push(val);
+        }
     }
 
     get properties() {
@@ -332,7 +338,7 @@ class FluentReportsGenerator {
         this._toolBarLayout = null;
         this._sectionConstrainer = null;
         this._propertiesLayout = null;
-        this._currentSelected = null;
+        this._currentSelected = [];
         this._sectionIn = 0;
         this._debugging = false;
         this._scale = _frScale;
@@ -382,8 +388,8 @@ class FluentReportsGenerator {
         this._marginRight = 72;
         this._marginTop = 72;
         this._marginBottom = 72;
-        this._copiedElementClass = null;
-        this._copiedElementOptions = null;
+        this._copiedElementClasses = null;
+        this._copiedOptions = null;
         this._name = "report.pdf";
         this._properties = [
             {type: 'string', field: 'name', functionable: true, lined: false},
@@ -1254,15 +1260,16 @@ class FluentReportsGenerator {
     }
 
     _reportLayoutClicked(args) {
-        if (this._currentSelected) {
-            this._currentSelected.blur();
+        while(this._currentSelected.length){
+            this._currentSelected[0].blur();//Inside the blur() splices itself from currentSelected.
         }
+        this._currentSelected = [];
         this._updateSectionIn(args.clientY);
         this.showProperties(this._getSection(this._sectionIn), true);
     }
 
     _clearCopyBuffer() {
-        this._copiedElementClass = null;
+        this._copiedElementClasses = null;
     }
 
     _isEventFromInputElement(event, additionalElement) {
@@ -1277,60 +1284,78 @@ class FluentReportsGenerator {
         // Check to see if a dialog is open
         if (_frDialogCounter > 0) { return; }
 
-        // Check for a ContentEditable control...  At this point they are all tied to a _text value...
-        if (this._currentSelected && this._currentSelected._text && this._currentSelected._text.isContentEditable) {
-            if (this._isEventFromInputElement(args, this._currentSelected._text)) {
-                return;
-            }
-        } else {
-            // Check for Input Elements also works inside the Shadow Dom.
-            if (this._isEventFromInputElement(args)) {
-                return;
+        for(let i =0;i<this._currentSelected.length;i++) {
+            // Check for a ContentEditable control...  At this point they are all tied to a _text value...
+            if (this._currentSelected.length === 1 && this._currentSelected[i]._text && this._currentSelected[i]._text.isContentEditable) {
+                if (this._isEventFromInputElement(args, this._currentSelected[i]._text)) {
+                    return;
+                }
+            } else {
+                // Check for Input Elements also works inside the Shadow Dom.
+                if (this._isEventFromInputElement(args)) {
+                    return;
+                }
             }
         }
 
+
         // Which/KeyCode is depreciated; but still valid in many browsers
         if (args.which === 46 && args.keyCode === 46 || (args.code === "NumpadDecimal" && args.key !== '.') || args.key.toLowerCase() === 'delete' || args.key.toLowerCase() === "backspace") {
-            if (this._currentSelected) {
-                this._currentSelected.delete();
+            if (this._currentSelected.length) {
+                for(let i =0;i<this._currentSelected.length;i++) {
+                    this._currentSelected[i].delete();
+                }
             }
             return;
         }
 
         if (args.ctrlKey) {
             if (args.key.toLowerCase() === 'c') {
-                if (this._currentSelected) {
-                    if (!this._currentSelected.canCopy) {
-                        this._clearCopyBuffer();
-                        return;
+                if (this._currentSelected.length) {
+                    let options = [];
+                    this._copiedElementClasses = [];
+                    for(let i =0;i<this._currentSelected.length;i++) {
+                        if (!this._currentSelected[i].canCopy) {
+                            this._clearCopyBuffer();
+                            return;
+                        }
+                        this._copiedElementClasses.push(this._currentSelected[i].constructor);
+                        let curOptions = {copy: true};
+                        this._currentSelected[i]._saveProperties(curOptions);
+                        options.push(curOptions);
                     }
-                    this._copiedElementClass = this._currentSelected.constructor;
-                    let options = {copy: true};
-                    this._currentSelected._saveProperties(options);
-                    this._copiedElementOptions = options;
+                    this._copiedOptions = options;
                 }
             } else if (args.key.toLowerCase() === 'v') {
-                if (this._copiedElementClass) {
-                    let duplicate = new this._copiedElementClass(this, this._getSection(this._sectionIn), this._copiedElementOptions);
-                    if (typeof duplicate._parseElement === "function") {
-                        duplicate._parseElement(this._copiedElementOptions);
-                    }
-                    // We only allow one paste of a cut item.
-                    if (this._copiedElementOptions.cut) {
-                        this._clearCopyBuffer();
+                if (this._copiedElementClasses.length) {
+                    for(let i =0;i<this._copiedElementClasses.length;i++){
+                        let duplicate = new this._copiedElementClasses[i](this, this._getSection(this._sectionIn), this._copiedOptions[i]);
+                        if (typeof duplicate._parseElement === "function") {
+                            duplicate._parseElement(this._copiedOptions[i]);
+                        }
+                        // We only allow one paste of a cut item.
+                        if (this._copiedOptions.cut) {
+                            this._clearCopyBuffer();
+                        }
                     }
                 }
             } else if (args.key.toLowerCase() === 'x') {
                 if (this._currentSelected) {
-                    if (!this._currentSelected.canCopy) {
-                        this._clearCopyBuffer();
-                        return;
+                    let options = [];
+                    this._copiedElementClasses = [];
+                    for(let i =0;i<this._currentSelected.length;i++) {
+                        if (!this._currentSelected[i].canCopy) {
+                            this._clearCopyBuffer();
+                            return;
+                        }
+                        this._copiedElementClasses.push(this._currentSelected[i].constructor);
+                        let curOptions = {copy: true};
+                        this._currentSelected[i]._saveProperties(curOptions);
+                        this._currentSelected[i].delete();
+                        options.push(curOptions);
                     }
-                    this._copiedElementClass = this._currentSelected.constructor;
-                    let options = {cut: true};
-                    this._currentSelected._saveProperties(options);
-                    this._copiedElementOptions = options;
-                    this._currentSelected.delete();
+                    this._copiedOptions = options;
+                    this._currentSelected = [];
                 }
             }
         }
@@ -1809,7 +1834,17 @@ class FluentReportsGenerator {
     }
 
     showProperties(obj, refresh = false) {
-        this.UIBuilder.showProperties(obj, this._propertiesLayout, refresh);
+        if(obj instanceof Array){
+            if(obj.length > 1){
+                this.UIBuilder.showMultiProperties(obj, this._propertiesLayout, refresh);
+            }
+            else if(obj.length === 1){
+                this.UIBuilder.showProperties(obj[1], this._propertiesLayout, refresh);
+            }
+        }
+        else {
+            this.UIBuilder.showProperties(obj, this._propertiesLayout, refresh);
+        }
     }
 
 }
@@ -3014,8 +3049,10 @@ class frElement { // jshint ignore:line
      * Delete this Element
      */
     delete() {
-        if (this._report.currentSelected === this) {
-            this.blur();
+        for(let i =0;i<this._report.currentSelected.length;i++) {
+            if (this._report.currentSelected[i] === this) {
+                this.blur();
+            }
         }
         this._report.showProperties(this._report, true);
         this._parent.removeChild(this);
@@ -3027,8 +3064,10 @@ class frElement { // jshint ignore:line
      * Duplicate this Element
      */
     duplicate() {
-        if (this._report.currentSelected === this) {
-            this.blur();
+        for(let i =0;i<this._report.currentSelected.length;i++) {
+            if (this._report.currentSelected[i] === this) {
+                this.blur();
+            }
         }
         let options = {};
         this._saveProperties(options);
@@ -3202,12 +3241,12 @@ class frElement { // jshint ignore:line
         this._blur(this);
     }
 
-    focus() {
-        this._focus();
+    focus(e) {
+        this._focus(e);
     }
 
-    select() {
-        this._selected();
+    select(e) {
+        this._selected(e);
     }
 
     _refreshProperties() {
@@ -3308,6 +3347,13 @@ class frElement { // jshint ignore:line
         this._draggable.containment = this._parent.elementContainer;
 
         this._draggable.onDragStart = (e) => {
+            let multi = this._handleMultiSelecting(e);
+            if((!multi.included && !multi.multi) && !(multi.keyPress && this._report.currentSelected.length)){
+                while(this._report._currentSelected.length){
+                    this._report._currentSelected[0].blur();//Inside the blur() splices itself from currentSelected.
+                }
+            }
+
             // Only allow left-mouse button dragging
             if (typeof e.button !== 'undefined' && e.button !== 0) {
                 return false;
@@ -3316,11 +3362,29 @@ class frElement { // jshint ignore:line
             if (this._locked || this._readonly) {
                 return false;
             }
-
+            for(let i =0;i<this._report._currentSelected.length;i++){
+                if(this._report._currentSelected[i] === this || !this._report._currentSelected[i]){
+                    continue;
+                }
+                this._report._currentSelected[i].offsetDragging = {
+                    x:this._report._currentSelected[i].absoluteX - this.absoluteX,
+                    y:this._report._currentSelected[i].absoluteY - this.absoluteY,
+                };
+            }
             this._draggable.containment = this._report.reportLayout;
             this._draggable.snap = this._generateSnapping();
         };
-
+        this._draggable.onMove = (e) => {
+            for (let i = 0; i < this._report._currentSelected.length; i++) {
+                if (this._report._currentSelected[i] === this) {
+                    continue;
+                }
+                this._report._currentSelected[i].top = this.top + this._report._currentSelected[i].offsetDragging.y;
+                this._report._currentSelected[i].absoluteY = this.absoluteY + this._report._currentSelected[i].offsetDragging.y;
+                this._report._currentSelected[i].left = this.left + this._report._currentSelected[i].offsetDragging.x;
+                this._report._currentSelected[i].absoluteX = this.absoluteX + this._report._currentSelected[i].offsetDragging.x;
+            }
+        }
         this._draggable.onDragEnd = () => {
             if (this._locked || this._readonly) {
                 return;
@@ -3416,11 +3480,16 @@ class frElement { // jshint ignore:line
             return;
         }
 
-        this._selected();
+        this._selected(e);
     }
 
     _blur(args) {
-        this._report.currentSelected = null;
+        for(let i =0;i<this._report.currentSelected.length;i++){
+            if(this._report.currentSelected[i] === this){
+                this._report._currentSelected.splice(i,1);
+                break;
+            }
+        }
         this._html.classList.remove("frSelected");
 
         if (this._handlers.blur && args !== this) {
@@ -3432,7 +3501,7 @@ class frElement { // jshint ignore:line
         if (this._handlers.dblclick) {
             this._notify('dblclick', args);
         } else {
-            this._focus();
+            this._focus(args);
         }
     }
 
@@ -3444,22 +3513,88 @@ class frElement { // jshint ignore:line
             // We don't want the reportLayout to see this click event; as it will cancel the selection...
             args.stopPropagation();
 
-            this._selected();
+            this._selected(args);
         }
     }
 
-    _focus() {
-        this._selected();
+    _focus(event) {
+        this._selected(event);
         this._html.focus();
     }
-
-    _selected() {
-        if (this._report.currentSelected !== this && this._report.currentSelected != null) {
-            this._report.currentSelected.blur();
+    _handleMultiSelecting(event){
+        let multiSelect = (event && event.ctrlKey);
+        //if it's not selecting a new element,
+        if(!multiSelect) {
+            let included = false;
+            for (let i = 0; i < this._report.currentSelected.length; i++) {
+                if (this._report.currentSelected[i] === this) {
+                    included = true;
+                    break;
+                }
+            }
+            if (included) {
+                //but clicking an already selected element.
+                return {
+                    keyPress:multiSelect,
+                    multi: true,
+                    included: true,
+                }
+            }
         }
-        this._report.showProperties(this, true);
-        this._report.currentSelected = this;
-        this._html.classList.add("frSelected");
+        //If it's clicking a brand new element.
+        if(multiSelect){
+            //If there is currently an item selected, and that item(s) parent does not match the clicked item's parent.
+            let uuidToMatch = true;
+            if(this._report.currentSelected.length){
+                //This is to check in case the user selected multible elements, then dragged some of the elements out.
+                //If this is the case, then no item can be added to multi select due to not know which section to allow selecting elements.
+                uuidToMatch = this._parent.uuid;
+                for(let i =0;i<this._report.currentSelected.length;i++){
+                    if(uuidToMatch !== this._report.currentSelected[0]._parent.uuid){
+                        uuidToMatch = false;
+                    }
+                }
+
+            }
+            //!== false: incase the uuid sometimes being a string somehow messes this up on a weird case.
+            return {
+                keyPress:multiSelect,
+                multi: uuidToMatch !== false,
+                included: false,
+            }
+        }
+        return {
+            keyPress:multiSelect,
+            multi:false,
+            included:false,
+        }
+    }
+    _selected(event) {
+        let multi = this._handleMultiSelecting(event);
+        console.dir(multi);
+        console.log(!(multi.keyPress && this._report.currentSelected.length), this._report.currentSelected.length)
+        if(multi.multi){
+            if (!multi.included) {
+                this._report.currentSelected.push(this);
+            }
+            this._html.classList.add("frSelected");
+            if(this._report.currentSelected.length > 1) {
+                this._report.showProperties(this._report.currentSelected, true);
+            }
+            else{
+                this._report.showProperties(this, true);
+            }
+        }
+        else if(!(multi.keyPress && this._report.currentSelected.length)){
+            for(let i =0;i<this._report.currentSelected.length;i++) {
+                if (this._report.currentSelected[i] !== this) {
+                    this._report._currentSelected[i].blur();
+                }
+            }
+            this._report.showProperties(this, true);
+            this._report.currentSelected = [this];
+            this._html.classList.add("frSelected");
+        }
     }
 
     _addProperties(arr, insert = true) {
@@ -5205,7 +5340,7 @@ class frBandElement extends frPrint { // jshint ignore:line
                     bottom: parseInt(val),
                 },
                 type:"object"
-            };
+            }
         }
         else if(val && val.type === "object") {
             this._border = val;
@@ -8111,6 +8246,95 @@ class UI { // jshint ignore:line
 
     }
 
+    showMultiProperties(objs, layout, refresh = false, overrideProps = null) {
+        if (objs === layout.trackProperties) {
+            if (refresh !== true) {
+                return;
+            }
+        } else {
+            // set refresh if we don't match type...
+            refresh = true;
+        }
+        layout.trackCreated = [];
+        if (refresh || objs == null) {
+            this.clearArea(layout);
+        }
+        layout.trackProperties = objs;
+        if (objs == null) {
+            return;
+        }
+
+        let table = null;
+        const tableCollection = layout.getElementsByClassName("frTableProps");
+        if (tableCollection.length) {
+            table = tableCollection[0];
+        }
+        if (!table) {
+            table = document.createElement("table");
+            table.id = "frTableProps";
+        }
+
+        if (!table.children.length) {
+            let tr = table.insertRow(-1);
+            let td = tr.insertCell(0);
+            td.colSpan = 3;
+
+            // TODO: Create list of all elements as a select list to select the element (Quick List at top of elements)
+            let div = document.createElement('div');
+            let span = document.createElement('span');
+            div.appendChild(span);
+            span.className = "frPropTitle";
+            span.innerText = "Mulitible Elements.";
+            table.className = "frTableProps";
+
+            td.appendChild(div);
+        }
+        let fakeObj = {
+            _uuid:"fakeObjUUID"
+        };
+        let props = [];
+        let fields = [];
+        //System to only get MATCHING keys.
+        //Any matching values will be left alone, different values will be changed to ...
+        for(let i =0;i<objs.length;i++){
+            let currentFields = [];
+            for(let j =0;j<objs[i]._properties.length;j++) {
+                let field = objs[i]._properties[j].field;
+                currentFields.push(field);
+                if (i === 0) {
+                    props.push(objs[i]._properties[j]);
+                    fields.push(field);
+                    fakeObj[field] = objs[i][field];
+                }
+                if(fields.includes(field)&&fakeObj[field] !== objs[i][field]){
+                    fakeObj[field] = "...";
+                }
+            }
+            for(let j=0;j<fields.length;j++){
+                if(!currentFields.includes(fields[j])){
+                    fields.splice(j,1);
+                    j--;
+                }
+            }
+        }
+        props = overrideProps || props;
+
+        this._handleShowProperties(props, fakeObj, table, layout);
+        layout.appendChild(table);
+        // Might be able to scan the TR children
+        let children = table.children[0].children;
+        // Skip first row because it is our "Title" row....
+        for (let i = 1; i < children.length; i++) {
+            if (layout.trackCreated.indexOf(children[i].id) < 0) {
+                children[i].style.display = 'none';
+            } else {
+                children[i].style.display = '';
+            }
+        }
+
+
+    }
+
     _fixShowPropertyTitle(name) {
         return name.charAt(0).toUpperCase() + name.slice(1).split(/(?=[A-Z])/).join(' ');
     }
@@ -8167,6 +8391,16 @@ class UI { // jshint ignore:line
     }
 
     _handleShowProperty(prop, obj, name, tr, layout) {
+        let changeProperty = (key,value) => {
+            if(this._parent.currentSelected.length > 1){
+                for(let i =0;i<this._parent._currentSelected.length;i++){
+                    this._parent._currentSelected[i][key] = value;
+                }
+            }
+            else{
+                obj[key] = value;
+            }
+        }
         layout.trackCreated.push(name);
         let td1, td2, td3, created = true, input;
         if (tr.children.length) {
@@ -8240,9 +8474,9 @@ class UI { // jshint ignore:line
                                 input.className = "frPropSelect";
                                 input.addEventListener("change", () => {
                                     if (typeof prop.translate === 'function') {
-                                        obj[prop.field] = prop.translate(input.value);
+                                        changeProperty(prop.field,prop.translate(input.value));
                                     } else {
-                                        obj[prop.field] = input.value;
+                                        changeProperty(prop.field,input.value);
                                     }
                                     if (prop.onchange) {
                                         prop.onchange(input.value);
@@ -8259,12 +8493,12 @@ class UI { // jshint ignore:line
                                 input.className = "frPropSelect";
                                 input.addEventListener("change", () => {
                                     if (typeof prop.translate === 'function') {
-                                        obj[prop.field] = prop.translate(input.value);
+                                        changeProperty(prop.field,prop.translate(input.value));
                                     } else {
-                                        obj[prop.field] = input.value;
+                                        changeProperty(prop.field,input.value);
                                     }
                                     if (prop.field2) {
-                                        obj[prop.field2] = input.options[input.selectedIndex][prop.field2];
+                                        changeProperty(prop.field2,input.options[input.selectedIndex][prop.field2]);
                                     }
                                     if (prop.onchange) {
                                         prop.onchange(input.value);
@@ -8288,9 +8522,9 @@ class UI { // jshint ignore:line
                                 input.className = "frPropCheck";
                                 input.addEventListener('change', () => {
                                     if (typeof prop.translate === 'function') {
-                                        obj[prop.field] = prop.translate(input.checked);
+                                        changeProperty(prop.field,prop.translate(input.checked));
                                     } else {
-                                        obj[prop.field] = input.checked;
+                                        changeProperty(prop.field,input.checked);
                                     }
                                 });
                                 td2.appendChild(input);
@@ -8313,7 +8547,7 @@ class UI { // jshint ignore:line
                                     input.addEventListener('blur', () => {
                                         if (input.value.endsWith("%")) {
                                             input.value = this._parent._parseSize(input.value, prop.field);
-                                            obj[prop.field] = input.value;
+                                            changeProperty(prop.field,input.value);
                                         }
                                     });
                                 }
@@ -8322,13 +8556,13 @@ class UI { // jshint ignore:line
 
                                 input.addEventListener('input', () => {
                                     if (typeof prop.translate === 'function') {
-                                        obj[prop.field] = prop.translate(input.value);
+                                        changeProperty(prop.field,prop.translate(input.value))
                                     } else {
-                                        obj[prop.field] = input.value;
+                                        changeProperty(prop.field,input.value);
                                     }
                                     if (prop.handlePercentage) {
                                         if (obj[prop.field].toString().endsWith("%")) {
-                                            obj[prop.field] = this._parent._parseSize(obj[prop.field], prop.field);
+                                            changeProperty(prop.field,this._parent._parseSize(obj[prop.field], prop.field));
                                         }
                                     }
                                 });
@@ -8374,10 +8608,10 @@ class UI { // jshint ignore:line
                                             input.innerText = prop.defaultName || "Customize";
                                             input.appendChild(objBtn);
                                         }
-                                        obj[prop.field] = {
+                                        changeProperty(prop.field,{
                                             type: "object",
                                             object: result,
-                                        };
+                                        });
                                     });
                                 });
                                 // TODO: Fix this so that these are in the 3rd cell.
@@ -8400,9 +8634,9 @@ class UI { // jshint ignore:line
                                 innerSpan.addEventListener("click", () => {
                                     this.functionEditor(obj[prop.field].function, null, null, null, (result) => {
                                         if (obj[prop.field].function !== result) {
-                                            obj[prop.field].function = result;
-                                            // Clear any cached Preview func object
-                                            delete obj[prop.field].func;
+                                            let testObj = shallowClone(obj[prop.field]);
+                                            testObj.function = result;
+                                            changeProperty(prop.field,testObj);
                                         }
                                     });
                                 });
@@ -8414,7 +8648,7 @@ class UI { // jshint ignore:line
                                 deleteSpan.innerText = "\uE80B";
                                 deleteSpan.style.border = "solid black 1px";
                                 deleteSpan.addEventListener("click", () => {
-                                    obj[prop.field] = '';
+                                    changeProperty(prop.field,'');
                                     this.showProperties(layout.trackProperties, layout, true);
                                 });
 
