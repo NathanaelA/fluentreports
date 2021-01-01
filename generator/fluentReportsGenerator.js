@@ -1838,7 +1838,7 @@ class FluentReportsGenerator {
             if (obj.length > 1) {
                 this.UIBuilder.showMultiProperties(obj, this._propertiesLayout, refresh);
             } else if (obj.length === 1) {
-                this.UIBuilder.showProperties(obj[1], this._propertiesLayout, refresh);
+                this.UIBuilder.showProperties(obj[0], this._propertiesLayout, refresh);
             }
         } else {
             this.UIBuilder.showProperties(obj, this._propertiesLayout, refresh);
@@ -3555,7 +3555,7 @@ class frElement { // jshint ignore:line
     _handleMultiSelecting(event) {
         let multiSelect = (event && event.ctrlKey);
 
-        //if it's not selecting a new element,
+        //if it's not selecting a new element, clicking already selected element
         if (!multiSelect) {
             let included = false;
             for (let i = 0; i < this._report.currentSelected.length; i++) {
