@@ -1,5 +1,5 @@
 /**************************************************************************************
- * (c) 2019-2020, Master Technology
+ * (c) 2019-2021, Master Technology
  * Licensed under the MIT license or contact me for a support, changes, enhancements.
  *
  * Any questions please feel free to put a issue up on github
@@ -17,7 +17,7 @@
 let _frItemUUID = 10000; // jshint ignore:line
 
 // Used to track if dialogs are opened, so that global key handler won't interfere
-let _frDialogCounter=0;
+let _frDialogCounter = 0;
 
 const _frScale = 1.5;
 
@@ -25,7 +25,6 @@ class FluentReportsGenerator {
     /*
     * Private Properties
     */
-
     get uuid() {
         return this._uuid;
     }
@@ -92,12 +91,10 @@ class FluentReportsGenerator {
     }
 
     set currentSelected(val) {
-        if(val instanceof Array){
+        if (Array.isArray(val)) {
             this._currentSelected = val;
-        }
-        else{
-            this._currentSelected = [];
-            this._currentSelected.push(val);
+        } else {
+            this._currentSelected = [val];
         }
     }
 
@@ -339,6 +336,7 @@ class FluentReportsGenerator {
         this._sectionConstrainer = null;
         this._propertiesLayout = null;
         this._currentSelected = [];
+        this._inDragDrop = false;
         this._sectionIn = 0;
         this._debugging = false;
         this._scale = _frScale;
@@ -1260,10 +1258,10 @@ class FluentReportsGenerator {
     }
 
     _reportLayoutClicked(args) {
-        while(this._currentSelected.length){
-            this._currentSelected[0].blur();//Inside the blur() splices itself from currentSelected.
+        while (this._currentSelected.length) {
+            //Inside the blur() splices itself from currentSelected.
+            this._currentSelected[0].blur();
         }
-        this._currentSelected = [];
         this._updateSectionIn(args.clientY);
         this.showProperties(this._getSection(this._sectionIn), true);
     }
@@ -1282,9 +1280,11 @@ class FluentReportsGenerator {
     _reportLayoutKeyed(args) {
 
         // Check to see if a dialog is open
-        if (_frDialogCounter > 0) { return; }
+        if (_frDialogCounter > 0) {
+            return;
+        }
 
-        for(let i =0;i<this._currentSelected.length;i++) {
+        for (let i = 0; i < this._currentSelected.length; i++) {
             // Check for a ContentEditable control...  At this point they are all tied to a _text value...
             if (this._currentSelected.length === 1 && this._currentSelected[i]._text && this._currentSelected[i]._text.isContentEditable) {
                 if (this._isEventFromInputElement(args, this._currentSelected[i]._text)) {
@@ -1302,7 +1302,7 @@ class FluentReportsGenerator {
         // Which/KeyCode is depreciated; but still valid in many browsers
         if (args.which === 46 && args.keyCode === 46 || (args.code === "NumpadDecimal" && args.key !== '.') || args.key.toLowerCase() === 'delete' || args.key.toLowerCase() === "backspace") {
             if (this._currentSelected.length) {
-                for(let i =0;i<this._currentSelected.length;i++) {
+                for (let i = 0; i < this._currentSelected.length; i++) {
                     this._currentSelected[i].delete();
                 }
             }
@@ -1314,7 +1314,7 @@ class FluentReportsGenerator {
                 if (this._currentSelected.length) {
                     let options = [];
                     this._copiedElementClasses = [];
-                    for(let i =0;i<this._currentSelected.length;i++) {
+                    for (let i = 0; i < this._currentSelected.length; i++) {
                         if (!this._currentSelected[i].canCopy) {
                             this._clearCopyBuffer();
                             return;
@@ -1328,7 +1328,7 @@ class FluentReportsGenerator {
                 }
             } else if (args.key.toLowerCase() === 'v') {
                 if (this._copiedElementClasses.length) {
-                    for(let i =0;i<this._copiedElementClasses.length;i++){
+                    for (let i = 0; i < this._copiedElementClasses.length; i++) {
                         let duplicate = new this._copiedElementClasses[i](this, this._getSection(this._sectionIn), this._copiedOptions[i]);
                         if (typeof duplicate._parseElement === "function") {
                             duplicate._parseElement(this._copiedOptions[i]);
@@ -1343,7 +1343,7 @@ class FluentReportsGenerator {
                 if (this._currentSelected) {
                     let options = [];
                     this._copiedElementClasses = [];
-                    for(let i =0;i<this._currentSelected.length;i++) {
+                    for (let i = 0; i < this._currentSelected.length; i++) {
                         if (!this._currentSelected[i].canCopy) {
                             this._clearCopyBuffer();
                             return;
@@ -1519,8 +1519,8 @@ class FluentReportsGenerator {
             const rect = this._frame.getBoundingClientRect();
             topLayer.style.top = "0px"; // rect.top;
             topLayer.style.left = "0px"; // rect.left;
-            topLayer.style.width = rect.width+"px";
-            topLayer.style.height = rect.height+"px";
+            topLayer.style.width = rect.width + "px";
+            topLayer.style.height = rect.height + "px";
             this._frame.appendChild(topLayer);
 
             const data = this._generateSave();
@@ -1834,15 +1834,13 @@ class FluentReportsGenerator {
     }
 
     showProperties(obj, refresh = false) {
-        if(obj instanceof Array){
-            if(obj.length > 1){
+        if (Array.isArray(obj)) {
+            if (obj.length > 1) {
                 this.UIBuilder.showMultiProperties(obj, this._propertiesLayout, refresh);
-            }
-            else if(obj.length === 1){
+            } else if (obj.length === 1) {
                 this.UIBuilder.showProperties(obj[1], this._propertiesLayout, refresh);
             }
-        }
-        else {
+        } else {
             this.UIBuilder.showProperties(obj, this._propertiesLayout, refresh);
         }
     }
@@ -2938,7 +2936,9 @@ class frElement { // jshint ignore:line
      * @private
      */
     _getValueFromOptions(options, key, defaultValue, type = typeof defaultValue) {
-        if (options == null || typeof options[key] === 'undefined') { return defaultValue; }
+        if (options == null || typeof options[key] === 'undefined') {
+            return defaultValue;
+        }
 
         if (type === "float") {
             return this._getFloatOrFunction(options[key]);
@@ -3049,7 +3049,7 @@ class frElement { // jshint ignore:line
      * Delete this Element
      */
     delete() {
-        for(let i =0;i<this._report.currentSelected.length;i++) {
+        for (let i = 0; i < this._report.currentSelected.length; i++) {
             if (this._report.currentSelected[i] === this) {
                 this.blur();
             }
@@ -3064,7 +3064,7 @@ class frElement { // jshint ignore:line
      * Duplicate this Element
      */
     duplicate() {
-        for(let i =0;i<this._report.currentSelected.length;i++) {
+        for (let i = 0; i < this._report.currentSelected.length; i++) {
             if (this._report.currentSelected[i] === this) {
                 this.blur();
             }
@@ -3128,8 +3128,10 @@ class frElement { // jshint ignore:line
         // We have to be below the header area
         const newTop = parseInt(val, 10);
         this._html.style.top = newTop + "px";
-        const clientSize = this._html.getBoundingClientRect();
-        this._resizeParentContainer(newTop + clientSize.height);
+        if (!this._report._inDragDrop) {
+            const clientSize = this._html.getBoundingClientRect();
+            this._resizeParentContainer(newTop + clientSize.height);
+        }
     }
 
     get left() { // noinspection JSCheckFunctionSignatures
@@ -3311,7 +3313,7 @@ class frElement { // jshint ignore:line
         }
         if (targetY !== null) {
             // Use Math.round to get closer to the actual pixel because of scaling
-            dest.absoluteY = Math.round( (version === 1 ? targetY : targetY * this.scale));
+            dest.absoluteY = Math.round((version === 1 ? targetY : targetY * this.scale));
         }
 
     }
@@ -3348,9 +3350,10 @@ class frElement { // jshint ignore:line
 
         this._draggable.onDragStart = (e) => {
             let multi = this._handleMultiSelecting(e);
-            if((!multi.included && !multi.multi) && !(multi.keyPress && this._report.currentSelected.length)){
-                while(this._report._currentSelected.length){
-                    this._report._currentSelected[0].blur();//Inside the blur() splices itself from currentSelected.
+            if ((!multi.included && !multi.multi) && !(multi.keyPress && this._report.currentSelected.length)) {
+                while (this._report._currentSelected.length) {
+                    //Inside the blur() splices itself from currentSelected.
+                    this._report._currentSelected[0].blur();
                 }
             }
 
@@ -3362,19 +3365,23 @@ class frElement { // jshint ignore:line
             if (this._locked || this._readonly) {
                 return false;
             }
-            for(let i =0;i<this._report._currentSelected.length;i++){
-                if(this._report._currentSelected[i] === this || !this._report._currentSelected[i]){
+
+            this._report._inDragDrop = true;
+
+            for (let i = 0; i < this._report._currentSelected.length; i++) {
+                if (this._report._currentSelected[i] === this) {
                     continue;
                 }
                 this._report._currentSelected[i].offsetDragging = {
-                    x:this._report._currentSelected[i].absoluteX - this.absoluteX,
-                    y:this._report._currentSelected[i].absoluteY - this.absoluteY,
+                    x: this._report._currentSelected[i].absoluteX - this.absoluteX,
+                    y: this._report._currentSelected[i].absoluteY - this.absoluteY,
                 };
             }
             this._draggable.containment = this._report.reportLayout;
             this._draggable.snap = this._generateSnapping();
         };
-        this._draggable.onMove = (e) => {
+
+        this._draggable.onMove = (/* e */) => {
             for (let i = 0; i < this._report._currentSelected.length; i++) {
                 if (this._report._currentSelected[i] === this) {
                     continue;
@@ -3384,65 +3391,85 @@ class frElement { // jshint ignore:line
                 this._report._currentSelected[i].left = this.left + this._report._currentSelected[i].offsetDragging.x;
                 this._report._currentSelected[i].absoluteX = this.absoluteX + this._report._currentSelected[i].offsetDragging.x;
             }
-        }
+        };
+
         this._draggable.onDragEnd = () => {
+            this._report._inDragDrop = false;
+
             if (this._locked || this._readonly) {
                 return;
             }
+
+            // Find top most element....
+            let elementTop = this._report._currentSelected[0].top;
+            for (let i=1;i<this._report._currentSelected.length;i++) {
+                if (this._report._currentSelected[i].top < elementTop) { elementTop = this._report._currentSelected[i].top; }
+            }
+
             let newSection = this._parent.sectionId;
-            if (this.top < 0) {
-                if (this.top < -17) {
+
+            // Check to see if we went up a section
+            if (elementTop < 0) {
+                if (elementTop < -17) {
                     // Went into another section....
-                    newSection = this._report._getSectionIn(this._parent.elementContainerTop + this.top);
+                    newSection = this._report._getSectionIn(this._parent.elementContainerTop + elementTop);
                 } else {
                     // If we go into the Header, we just want to reset back to 0
-                    this.top = 0;
+                    for (let i=0;i<this._report._currentSelected.length;i++) {
+                        this._report._currentSelected[i].top = this._report._currentSelected[i].top - elementTop;
+                    }
+                    //this.top = 0;
                 }
-            } else if (this.top >= this._parent.elementContainerHeight) {
-                newSection = this._report._getSectionIn(this._parent.elementContainerTop + this.top + 1);
+            } else if (elementTop >= this._parent.elementContainerHeight) {
+                // Check if we went down a section...
+                newSection = this._report._getSectionIn(this._parent.elementContainerTop + elementTop + 1);
                 if (newSection === 0) {
                     newSection = this.frSections.length - 1;
                 }
             }
+
+            // So we moved sections...
             if (newSection !== this._parent.sectionId) {
-                // We are grabbing the original _parent.top
-                let top = this._parent.top + this.top;
+                const newParentSection = this._report._getSection(newSection);
+                const oldParentSection = this._parent;
 
-                this._parent.removeChild(this);
-                let sec = this._report._getSection(newSection);
-                sec.appendChild(this);
-                this._parent = sec;
-
-                // We are now subtracting the NEW _parent.top
-                top -= this._parent.top;
-
-                // In case dropped in header
-                if (top < 0) {
-                    top = 0;
+                // We are grabbing the original _parent.top & removing the new Parent's top
+                let top = oldParentSection.top - newParentSection.top;
+                // In case top most element was dropped in header
+                if (elementTop + top < 0) {
+                    top -= (elementTop + top);
                 }
 
-                // Position the element
-                this.top = top;
-            } else {
-                // Moved into the header
-                if (this.top < 0) {
-                    this.top = 0;
+                for (let i=0;i<this._report._currentSelected.length;i++) {
+                    oldParentSection.removeChild(this._report._currentSelected[i]);
+                    newParentSection.appendChild(this._report._currentSelected[i]);
+                    this._report._currentSelected[i]._parent = newParentSection;
+                    this._report._currentSelected[i].top = top + this._report._currentSelected[i].top;
                 }
             }
 
-            // Resize Section in case it is too small
-            if (this._html) {
-                const clientSize = this._html.getBoundingClientRect();
-                this._resizeParentContainer(this.top + clientSize.height);
+            // Resize the Section in case it is too small
+            let bottom = 0;
+            for (let i=0;i<this._report._currentSelected.length;i++) {
+                if (this._report._currentSelected[i]._html) {
+                    const clientSize = this._report._currentSelected[i]._html.getBoundingClientRect();
+                    let size = clientSize.height + this._report._currentSelected[i].top;
+                    if (size > bottom) {
+                        bottom = size;
+                    }
+                }
+            }
+
+            if (bottom > 0) {
+                this._resizeParentContainer(bottom);
             } else {
-                // If we have no HTML element, then we just assume the height + 2 for safe keeping.
                 // I don't believe this path is possible; so it is just a fallback...
-                this._resizeParentContainer(this.top + this.height + 2);
+                this._resizeParentContainer(this.top + this.height + 12);
             }
 
             this._draggable.position();
 
-            this._report.showProperties(this, false);
+            this._report.showProperties(this._report.currentSelected, false);
 
             // While the object is at rest; we want to force it to stay inside its section
             //this._draggable.containment = this._parent._html;
@@ -3466,6 +3493,9 @@ class frElement { // jshint ignore:line
         return this._draggable;
     }
 
+
+
+
     _resizeParentContainer(top) {
         // NOTE: We don't need to use the Scaling here; as this is called only using real coord space
         if ((this.elementHeight) + top + 1 > this._parent.elementContainerHeight) {
@@ -3484,9 +3514,9 @@ class frElement { // jshint ignore:line
     }
 
     _blur(args) {
-        for(let i =0;i<this._report.currentSelected.length;i++){
-            if(this._report.currentSelected[i] === this){
-                this._report._currentSelected.splice(i,1);
+        for (let i = 0; i < this._report.currentSelected.length; i++) {
+            if (this._report.currentSelected[i] === this) {
+                this._report._currentSelected.splice(i, 1);
                 break;
             }
         }
@@ -3521,10 +3551,12 @@ class frElement { // jshint ignore:line
         this._selected(event);
         this._html.focus();
     }
-    _handleMultiSelecting(event){
+
+    _handleMultiSelecting(event) {
         let multiSelect = (event && event.ctrlKey);
+
         //if it's not selecting a new element,
-        if(!multiSelect) {
+        if (!multiSelect) {
             let included = false;
             for (let i = 0; i < this._report.currentSelected.length; i++) {
                 if (this._report.currentSelected[i] === this) {
@@ -3535,58 +3567,57 @@ class frElement { // jshint ignore:line
             if (included) {
                 //but clicking an already selected element.
                 return {
-                    keyPress:multiSelect,
+                    keyPress: multiSelect,
                     multi: true,
                     included: true,
-                }
+                };
             }
         }
+
         //If it's clicking a brand new element.
-        if(multiSelect){
+        if (multiSelect) {
             //If there is currently an item selected, and that item(s) parent does not match the clicked item's parent.
             let uuidToMatch = true;
-            if(this._report.currentSelected.length){
-                //This is to check in case the user selected multible elements, then dragged some of the elements out.
+            if (this._report.currentSelected.length) {
+                //This is to check in case the user selected multiple elements, then dragged some of the elements out.
                 //If this is the case, then no item can be added to multi select due to not know which section to allow selecting elements.
                 uuidToMatch = this._parent.uuid;
-                for(let i =0;i<this._report.currentSelected.length;i++){
-                    if(uuidToMatch !== this._report.currentSelected[0]._parent.uuid){
+                for (let i = 0; i < this._report.currentSelected.length; i++) {
+                    if (uuidToMatch !== this._report.currentSelected[0]._parent.uuid) {
                         uuidToMatch = false;
                     }
                 }
-
             }
-            //!== false: incase the uuid sometimes being a string somehow messes this up on a weird case.
+
+            //!== false: in case the uuid sometimes being a string somehow messes this up on a weird case.
             return {
-                keyPress:multiSelect,
+                keyPress: multiSelect,
                 multi: uuidToMatch !== false,
                 included: false,
-            }
+            };
         }
         return {
-            keyPress:multiSelect,
-            multi:false,
-            included:false,
-        }
+            keyPress: multiSelect,
+            multi: false,
+            included: false,
+        };
     }
+
     _selected(event) {
         let multi = this._handleMultiSelecting(event);
-        console.dir(multi);
-        console.log(!(multi.keyPress && this._report.currentSelected.length), this._report.currentSelected.length)
-        if(multi.multi){
+        if (multi.multi) {
             if (!multi.included) {
+                if (this._report.currentSelected.indexOf(this) !== -1) { return; }
                 this._report.currentSelected.push(this);
             }
             this._html.classList.add("frSelected");
-            if(this._report.currentSelected.length > 1) {
+            if (this._report.currentSelected.length > 1) {
                 this._report.showProperties(this._report.currentSelected, true);
-            }
-            else{
+            } else {
                 this._report.showProperties(this, true);
             }
-        }
-        else if(!(multi.keyPress && this._report.currentSelected.length)){
-            for(let i =0;i<this._report.currentSelected.length;i++) {
+        } else if (!(multi.keyPress && this._report.currentSelected.length)) {
+            for (let i = 0; i < this._report.currentSelected.length; i++) {
                 if (this._report.currentSelected[i] !== this) {
                     this._report._currentSelected[i].blur();
                 }
@@ -3641,7 +3672,9 @@ class frElement { // jshint ignore:line
                                 break;
                             }
                         }
-                        if (isDefault) { continue; }
+                        if (isDefault) {
+                            continue;
+                        }
                     }
                 }
 
@@ -3656,16 +3689,16 @@ class frElement { // jshint ignore:line
                     if (typeof props[curProp.destination] === 'undefined') {
                         props[curProp.destination] = {};
                     }
-                    if (typeof this["_saving_"+curProp.field] !== "undefined") {
-                        props[curProp.destination][curProp.field] = this["_saving_"+curProp.field];
+                    if (typeof this["_saving_" + curProp.field] !== "undefined") {
+                        props[curProp.destination][curProp.field] = this["_saving_" + curProp.field];
                     } else {
                         props[curProp.destination][curProp.field] = this[curProp.field];
 
                     }
                 } else {
                     // Use the normal save location...
-                    if (typeof this["_saving_"+curProp.field] !== "undefined") {
-                        props[curProp.field] = this["_saving_"+curProp.field];
+                    if (typeof this["_saving_" + curProp.field] !== "undefined") {
+                        props[curProp.field] = this["_saving_" + curProp.field];
                     } else {
                         props[curProp.field] = this[curProp.field];
                     }
@@ -3704,7 +3737,6 @@ class frElement { // jshint ignore:line
             item.selected = true;
         }
         selectGroup.appendChild(item);
-
 
 
         return selectGroup;
@@ -3843,7 +3875,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this.usesSpace = this._getValueFromOptions(data.settings, "usesSpace", true);
         this.fillOpacity = this._getValueFromOptions(data.settings, "fillOpacity", 1.0, "float");
         const top = this._getValueFromOptions(data.settings, "top", 0);
-        this.top = Math.round( (this._report.version === 1 ? top : top * this.scale));
+        this.top = Math.round((this._report.version === 1 ? top : top * this.scale));
     }
 
     _saveProperties(props, ignore = []) {
@@ -4066,7 +4098,7 @@ class frStandardHeader extends frTitledLabel { // jshint ignore:line
         super(report, parent, options);
         this._title = 'Report';
         this._addProperties({type: 'string', field: 'title'});
-        this._deleteProperties(['top','left', 'width', 'height']);
+        this._deleteProperties(['top', 'left', 'width', 'height']);
 //        this._draggable.containment = parent._html;
         this.locked = true;
     }
@@ -4219,7 +4251,7 @@ class frPageBreak extends frTitledLabel { // jshint ignore:line
     }
 
     _parseElement(data) {
-        if(data){
+        if (data) {
             this._copyProperties(data, this, ["top"]);
             this.active = data.active;
         }
@@ -4858,7 +4890,7 @@ class frPrint extends frTitledLabel {
             case 2:
             case "center":
                 this._align = "center";
-                this.absoluteX = (parseInt((this.pageWidth ), 10) / 2) - (this.elementWidth / 2);
+                this.absoluteX = (parseInt((this.pageWidth), 10) / 2) - (this.elementWidth / 2);
                 break;
 
             case 3:
@@ -5133,8 +5165,8 @@ class frPrintPageNumber extends frPrintLabel { // jshint ignore:line
     }
 
     _parseElement(data) {
-        if(data){
-            if(data.page) {
+        if (data) {
+            if (data.page) {
                 this.page = data.page;
             }
             if (data.header) {
@@ -5331,7 +5363,7 @@ class frBandElement extends frPrint { // jshint ignore:line
     }
 
     set border(val) {
-        if(typeof val === "string" || typeof val === "number"){
+        if (typeof val === "string" || typeof val === "number") {
             this._border = {
                 object: {
                     left: parseInt(val),
@@ -5339,10 +5371,9 @@ class frBandElement extends frPrint { // jshint ignore:line
                     top: parseInt(val),
                     bottom: parseInt(val),
                 },
-                type:"object"
-            }
-        }
-        else if(val && val.type === "object") {
+                type: "object"
+            };
+        } else if (val && val.type === "object") {
             this._border = val;
         }
     }
@@ -5366,7 +5397,7 @@ class frBandElement extends frPrint { // jshint ignore:line
         this._gutter = 0;
         this._padding = 1;
         this._collapse = true;
-        this._border = {type: "object", object: {left: 0,right: 0,top: 0,bottom: 0}};
+        this._border = {type: "object", object: {left: 0, right: 0, top: 0, bottom: 0}};
 
         this._table = document.createElement("table");
         this._table.className = "frBand";
@@ -5381,12 +5412,19 @@ class frBandElement extends frPrint { // jshint ignore:line
 
         this._html.appendChild(this._table);
 
-        this._deleteProperties(['rotate', 'width', 'align',"border"]);
+        this._deleteProperties(['rotate', 'width', 'align', "border"]);
         this._addProperties([
             {type: 'boolean', field: 'suppression', default: false},
             {type: 'number', field: 'columns', destination: false},
             {type: 'number', field: 'fillOpacity', destination: 'settings'},
-            {type: 'object', field: 'border',destination: 'settings', defaultName: "None", default: {left: 0,right: 0,top: 0,bottom: 0}, fields: {left: "number",right: "number",top: "number",bottom: "number"}},
+            {
+                type: 'object',
+                field: 'border',
+                destination: 'settings',
+                defaultName: "None",
+                default: {left: 0, right: 0, top: 0, bottom: 0},
+                fields: {left: "number", right: "number", top: "number", bottom: "number"}
+            },
             {type: 'number', field: 'gutter', destination: 'settings', default: 0},
             {type: 'boolean', field: 'collapse', destination: 'settings', default: true},
             {type: 'boolean', field: "wrap", default: false, destination: "settings"},
@@ -6314,7 +6352,12 @@ class UI { // jshint ignore:line
             {type: 'select', field: "align", translate: toInt, default: "left", display: createAlignSelect},
             {type: 'string', field: "textColor", default: "", functionable: true},
             {type: 'string', field: "fill", "title": "Fill Color", default: "", functionable: true},
-            {type: 'object', field:'border', default:{left:0,right:0,top:0,bottom:0},fields:{left:"number",right:"number",top:"number",bottom:"number"}},
+            {
+                type: 'object',
+                field: 'border',
+                default: {left: 0, right: 0, top: 0, bottom: 0},
+                fields: {left: "number", right: "number", top: "number", bottom: "number"}
+            },
             {type: 'boolean', field: "fontBold", title: "bold", default: false, functionable: true},
             {type: 'boolean', field: "fontItalic", title: "italic", default: false, functionable: true},
             {type: 'boolean', field: "underline", default: false, functionable: true},
@@ -7196,15 +7239,15 @@ class UI { // jshint ignore:line
         let valueHolders = [];
         let keys = Object.keys(property.fields);
         let table = document.createElement('table');
-        for(let i = 0; i < keys.length; i++){
+        for (let i = 0; i < keys.length; i++) {
             let col1 = document.createElement("td");
             let key = document.createElement("span");
-            key.innerText = keys[i]+":";
+            key.innerText = keys[i] + ":";
             col1.appendChild(key);
 
             let col2 = document.createElement("td");
             let editor = document.createElement('input');
-            switch(property.fields[keys[i]]){
+            switch (property.fields[keys[i]]) {
                 case "number":
                     editor.type = "number";
                     editor.value = object[keys[i]] || ((property.default && property.default[keys[i]]) || 0);
@@ -7220,7 +7263,7 @@ class UI { // jshint ignore:line
                 default:
                     editor.value = "null";
                     editor.disabled = true;
-                    console.error("ObjectEditor doesn't know how to handle: [ "+property.fields[keys[i]]+" ].");
+                    console.error("ObjectEditor doesn't know how to handle: [ " + property.fields[keys[i]] + " ].");
                     break;
             }
             valueHolders.push(editor);
@@ -7250,17 +7293,16 @@ class UI { // jshint ignore:line
             d.hide();
             if (typeof ok === 'function') {
                 let returnedObject = {};
-                for(let i =0;i<keys.length;i++){
-                    if(valueHolders[i].type === "checkbox"){
+                for (let i = 0; i < keys.length; i++) {
+                    if (valueHolders[i].type === "checkbox") {
                         returnedObject[keys[i]] = !!valueHolders[i].checked;
-                    }
-                    else {
+                    } else {
                         if (valueHolders[i].type === "number") {
                             returnedObject[keys[i]] = parseFloat(valueHolders[i].value);
                         } else {
                             returnedObject[keys[i]] = valueHolders[i].value;
                         }
-                        if(!valueHolders[i].value.length && property.default && property.default[keys[i]]){
+                        if (!valueHolders[i].value.length && property.default && property.default[keys[i]]) {
                             returnedObject[keys[i]] = property.default[keys[i]];
                         }
                     }
@@ -7848,7 +7890,7 @@ class UI { // jshint ignore:line
         // Delete
         addButtons[2].addEventListener("click", () => {
             if (fieldSelect.selectedIndex >= 0) {
-                const key = parseInt(fieldSelect.value,10);
+                const key = parseInt(fieldSelect.value, 10);
                 resultFields.splice(key, 1);
                 fieldSelect.options[fieldSelect.selectedIndex] = null;
                 //valueValue.innerText = '';
@@ -8284,21 +8326,21 @@ class UI { // jshint ignore:line
             let span = document.createElement('span');
             div.appendChild(span);
             span.className = "frPropTitle";
-            span.innerText = "Mulitible Elements.";
+            span.innerText = "Multiple Elements.";
             table.className = "frTableProps";
 
             td.appendChild(div);
         }
         let fakeObj = {
-            _uuid:"fakeObjUUID"
+            _uuid: "fakeObjUUID"
         };
         let props = [];
         let fields = [];
         //System to only get MATCHING keys.
         //Any matching values will be left alone, different values will be changed to ...
-        for(let i =0;i<objs.length;i++){
+        for (let i = 0; i < objs.length; i++) {
             let currentFields = [];
-            for(let j =0;j<objs[i]._properties.length;j++) {
+            for (let j = 0; j < objs[i]._properties.length; j++) {
                 let field = objs[i]._properties[j].field;
                 currentFields.push(field);
                 if (i === 0) {
@@ -8306,13 +8348,13 @@ class UI { // jshint ignore:line
                     fields.push(field);
                     fakeObj[field] = objs[i][field];
                 }
-                if(fields.includes(field)&&fakeObj[field] !== objs[i][field]){
+                if (fields.includes(field) && fakeObj[field] !== objs[i][field]) {
                     fakeObj[field] = "...";
                 }
             }
-            for(let j=0;j<fields.length;j++){
-                if(!currentFields.includes(fields[j])){
-                    fields.splice(j,1);
+            for (let j = 0; j < fields.length; j++) {
+                if (!currentFields.includes(fields[j])) {
+                    fields.splice(j, 1);
                     j--;
                 }
             }
@@ -8391,16 +8433,16 @@ class UI { // jshint ignore:line
     }
 
     _handleShowProperty(prop, obj, name, tr, layout) {
-        let changeProperty = (key,value) => {
-            if(this._parent.currentSelected.length > 1){
-                for(let i =0;i<this._parent._currentSelected.length;i++){
+        let changeProperty = (key, value) => {
+            if (this._parent.currentSelected.length > 1) {
+                for (let i = 0; i < this._parent._currentSelected.length; i++) {
                     this._parent._currentSelected[i][key] = value;
                 }
-            }
-            else{
+            } else {
                 obj[key] = value;
             }
-        }
+        };
+
         layout.trackCreated.push(name);
         let td1, td2, td3, created = true, input;
         if (tr.children.length) {
@@ -8460,10 +8502,10 @@ class UI { // jshint ignore:line
                                 input = document.createElement("select");
                                 for (let i = 0; i < prop.values.length; i++) {
                                     let opt;
-                                    if (prop.properCase || (prop.capFirst && i === 0) ) {
+                                    if (prop.properCase || (prop.capFirst && i === 0)) {
                                         opt = new Option(properCase(prop.values[i], true), prop.values[i]);
                                     } else {
-                                            opt = new Option(prop.values[i]);
+                                        opt = new Option(prop.values[i]);
                                     }
                                     if (prop.values[i] === tempField) {
                                         opt.selected = true;
@@ -8474,9 +8516,9 @@ class UI { // jshint ignore:line
                                 input.className = "frPropSelect";
                                 input.addEventListener("change", () => {
                                     if (typeof prop.translate === 'function') {
-                                        changeProperty(prop.field,prop.translate(input.value));
+                                        changeProperty(prop.field, prop.translate(input.value));
                                     } else {
-                                        changeProperty(prop.field,input.value);
+                                        changeProperty(prop.field, input.value);
                                     }
                                     if (prop.onchange) {
                                         prop.onchange(input.value);
@@ -8493,12 +8535,12 @@ class UI { // jshint ignore:line
                                 input.className = "frPropSelect";
                                 input.addEventListener("change", () => {
                                     if (typeof prop.translate === 'function') {
-                                        changeProperty(prop.field,prop.translate(input.value));
+                                        changeProperty(prop.field, prop.translate(input.value));
                                     } else {
-                                        changeProperty(prop.field,input.value);
+                                        changeProperty(prop.field, input.value);
                                     }
                                     if (prop.field2) {
-                                        changeProperty(prop.field2,input.options[input.selectedIndex][prop.field2]);
+                                        changeProperty(prop.field2, input.options[input.selectedIndex][prop.field2]);
                                     }
                                     if (prop.onchange) {
                                         prop.onchange(input.value);
@@ -8522,9 +8564,9 @@ class UI { // jshint ignore:line
                                 input.className = "frPropCheck";
                                 input.addEventListener('change', () => {
                                     if (typeof prop.translate === 'function') {
-                                        changeProperty(prop.field,prop.translate(input.checked));
+                                        changeProperty(prop.field, prop.translate(input.checked));
                                     } else {
-                                        changeProperty(prop.field,input.checked);
+                                        changeProperty(prop.field, input.checked);
                                     }
                                 });
                                 td2.appendChild(input);
@@ -8547,7 +8589,7 @@ class UI { // jshint ignore:line
                                     input.addEventListener('blur', () => {
                                         if (input.value.endsWith("%")) {
                                             input.value = this._parent._parseSize(input.value, prop.field);
-                                            changeProperty(prop.field,input.value);
+                                            changeProperty(prop.field, input.value);
                                         }
                                     });
                                 }
@@ -8556,13 +8598,13 @@ class UI { // jshint ignore:line
 
                                 input.addEventListener('input', () => {
                                     if (typeof prop.translate === 'function') {
-                                        changeProperty(prop.field,prop.translate(input.value))
+                                        changeProperty(prop.field, prop.translate(input.value));
                                     } else {
-                                        changeProperty(prop.field,input.value);
+                                        changeProperty(prop.field, input.value);
                                     }
                                     if (prop.handlePercentage) {
                                         if (obj[prop.field].toString().endsWith("%")) {
-                                            changeProperty(prop.field,this._parent._parseSize(obj[prop.field], prop.field));
+                                            changeProperty(prop.field, this._parent._parseSize(obj[prop.field], prop.field));
                                         }
                                     }
                                 });
@@ -8601,14 +8643,14 @@ class UI { // jshint ignore:line
                                 objBtn.addEventListener("click", () => {
                                     this.objectEditor((obj[prop.field] && obj[prop.field].object) || {}, prop, (result) => {
                                         let isDefault = this._checkObjectMatchDefault(prop.default || {}, result);
-                                        if(!isDefault) {
+                                        if (!isDefault) {
                                             input.innerText = "Custom";
                                             input.appendChild(objBtn);
                                         } else {
                                             input.innerText = prop.defaultName || "Customize";
                                             input.appendChild(objBtn);
                                         }
-                                        changeProperty(prop.field,{
+                                        changeProperty(prop.field, {
                                             type: "object",
                                             object: result,
                                         });
@@ -8636,7 +8678,7 @@ class UI { // jshint ignore:line
                                         if (obj[prop.field].function !== result) {
                                             let testObj = shallowClone(obj[prop.field]);
                                             testObj.function = result;
-                                            changeProperty(prop.field,testObj);
+                                            changeProperty(prop.field, testObj);
                                         }
                                     });
                                 });
@@ -8648,7 +8690,7 @@ class UI { // jshint ignore:line
                                 deleteSpan.innerText = "\uE80B";
                                 deleteSpan.style.border = "solid black 1px";
                                 deleteSpan.addEventListener("click", () => {
-                                    changeProperty(prop.field,'');
+                                    changeProperty(prop.field, '');
                                     this.showProperties(layout.trackProperties, layout, true);
                                 });
 
@@ -9053,9 +9095,13 @@ function minDisplayOpacity(value) { // jshint ignore:line
  * @param forceLower {boolean}
  * @returns {string|*}
  */
-function properCase(value, forceLower=true) { // jshint ignore:line
-   if (!value) { return value; }
-   return (forceLower ? value.toLowerCase() : value).replace(/(^|[\s\xA0])[^\s\xA0]/g, function(s){ return s.toUpperCase(); });
+function properCase(value, forceLower = true) { // jshint ignore:line
+    if (!value) {
+        return value;
+    }
+    return (forceLower ? value.toLowerCase() : value).replace(/(^|[\s\xA0])[^\s\xA0]/g, function (s) {
+        return s.toUpperCase();
+    });
 }
 
 window.FluentReportsGenerator = FluentReportsGenerator;
