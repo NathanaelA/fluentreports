@@ -3349,17 +3349,11 @@ class frElement { // jshint ignore:line
         this._draggable.containment = this._parent.elementContainer;
 
         this._draggable.onDragStart = (e) => {
-            let dragAllowed = true;
-            for(let i =0;i<this._report.currentSelected.length;i++){
-                dragAllowed = false;
-                if(this._report.currentSelected[i] === this){
-                    dragAllowed = true;
-                    break;
+            let multi = this._handleMultiSelecting(e);
+            if((!multi.included && !multi.multi) && !(multi.keyPress && this._report.currentSelected.length)){
+                while(this._report._currentSelected.length){
+                    this._report._currentSelected[0].blur();//Inside the blur() splices itself from currentSelected.
                 }
-            }
-            this._draggable.disabled = !dragAllowed;
-            if(!dragAllowed){
-                return false;
             }
 
             // Only allow left-mouse button dragging
@@ -3383,9 +3377,6 @@ class frElement { // jshint ignore:line
             this._draggable.snap = this._generateSnapping();
         };
         this._draggable.onMove = (e) => {
-            if(this._draggable.disabled){
-                return false;
-            }
             for (let i = 0; i < this._report._currentSelected.length; i++) {
                 if (this._report._currentSelected[i] === this) {
                     continue;
@@ -3531,23 +3522,28 @@ class frElement { // jshint ignore:line
         this._selected(event);
         this._html.focus();
     }
-
-    _selected(event) {
-        for(let i =0;i<this._report._currentSelected.length;i++){
-            if(!this._report._currentSelected[i]){
-                this._report._currentSelected.splice(i,1);
-                i--;
-            }
-        }
-        let multiSelect = (event && event.ctrlKey) || this._report.currentSelected.length > 1;
-        if(multiSelect) {
+    _handleMultiSelecting(event){
+        let multiSelect = (event && event.ctrlKey);
+        //if it's not selecting a new element,
+        if(!multiSelect) {
             let included = false;
-            for(let i =0;i<this._report.currentSelected.length;i++){
-                if(this._report.currentSelected[i] === this){
+            for (let i = 0; i < this._report.currentSelected.length; i++) {
+                if (this._report.currentSelected[i] === this) {
                     included = true;
                     break;
                 }
             }
+            if (included) {
+                //but clicking an already selected element.
+                return {
+                    keyPress:multiSelect,
+                    multi: true,
+                    included: true,
+                }
+            }
+        }
+        //If it's clicking a brand new element.
+        if(multiSelect){
             //If there is currently an item selected, and that item(s) parent does not match the clicked item's parent.
             let uuidToMatch = true;
             if(this._report.currentSelected.length){
@@ -3562,16 +3558,35 @@ class frElement { // jshint ignore:line
 
             }
             //!== false: incase the uuid sometimes being a string somehow messes this up on a weird case.
-            if(uuidToMatch !== false){
-                if (!included) {
-                    this._report.currentSelected.push(this);
-                    this._draggable.disabled = false;
-                }
-                this._html.classList.add("frSelected");
-                this._report.showProperties(this._report.currentSelected, true);
+            return {
+                keyPress:multiSelect,
+                multi: uuidToMatch !== false,
+                included: false,
             }
         }
-        else{
+        return {
+            keyPress:multiSelect,
+            multi:false,
+            included:false,
+        }
+    }
+    _selected(event) {
+        let multi = this._handleMultiSelecting(event);
+        console.dir(multi);
+        console.log(!(multi.keyPress && this._report.currentSelected.length), this._report.currentSelected.length)
+        if(multi.multi){
+            if (!multi.included) {
+                this._report.currentSelected.push(this);
+            }
+            this._html.classList.add("frSelected");
+            if(this._report.currentSelected.length > 1) {
+                this._report.showProperties(this._report.currentSelected, true);
+            }
+            else{
+                this._report.showProperties(this, true);
+            }
+        }
+        else if(!(multi.keyPress && this._report.currentSelected.length)){
             for(let i =0;i<this._report.currentSelected.length;i++) {
                 if (this._report.currentSelected[i] !== this) {
                     this._report._currentSelected[i].blur();
@@ -3579,7 +3594,6 @@ class frElement { // jshint ignore:line
             }
             this._report.showProperties(this, true);
             this._report.currentSelected = [this];
-            this._draggable.disabled = false;
             this._html.classList.add("frSelected");
         }
     }
