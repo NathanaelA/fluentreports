@@ -40,6 +40,7 @@ To create a new Report on the Browser (see the `reportgenerator.html` for detail
         js: false,
         css: false,
         scale: 1.45,
+        multiSelectKey: 'ctrl', // Can be 'ctrl', 'shift', or 'meta'/'alt'.
 
         // Don't set a "preview" (or set to undefinded) for it to use the built in preview
         preview: undefined,

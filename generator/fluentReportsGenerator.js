@@ -98,6 +98,10 @@ class FluentReportsGenerator {
         }
     }
 
+    get multiSelectKey() {
+        return this._multiSelectKey;
+    }
+
     get properties() {
         return this._properties;
     }
@@ -341,6 +345,7 @@ class FluentReportsGenerator {
         this._debugging = false;
         this._scale = _frScale;
         this._version = 2;
+        this._multiSelectKey = "ctrlKey";
 
         /**
          * This tracks all the Elements on the Screen
@@ -418,6 +423,10 @@ class FluentReportsGenerator {
             {type: 'button', title: 'Fonts', click: this._setFonts.bind(this)},
             {type: 'button', title: 'Data', click: this._setData.bind(this)}
         ];
+
+        if (typeof options.multiSelectKey !== 'undefined') {
+            this.setConfig("multiSelectKey", options.multiSelectKey);
+        }
 
         if (options.scale) {
             this.setConfig('scale', options.scale);
@@ -513,6 +522,7 @@ class FluentReportsGenerator {
                     }
                 }
                 break;
+
             case 'scale':
                 this._scale = parseFloat(value);
                 if (isNaN(this._scale)) {
@@ -541,6 +551,30 @@ class FluentReportsGenerator {
             case 'save':
                 if (typeof value === 'function') {
                     this._saveFunction = value;
+                }
+                break;
+
+            case 'multiSelectKey':
+                switch (value.toString().toLowerCase()) {
+                    case 'ctrl':
+                    case 'ctrlkey':
+                        this._multiSelectKey = "ctrlKey";
+                        break;
+
+                    case 'shift':
+                    case 'shiftkey':
+                        this._multiSelectKey = "shiftKey";
+                        break;
+
+                    case 'meta':
+                    case 'alt':
+                    case 'altkey':
+                    case 'metakey':
+                        this._multiSelectKey = "metaKey";
+                        break;
+
+                    default:
+                        this._multiSelectKey = "ctrlKey";
                 }
                 break;
 
@@ -644,7 +678,6 @@ class FluentReportsGenerator {
         }
         return false;
     }
-
 
     /**
      * Handles dealing with switching the paper orientations
@@ -816,7 +849,6 @@ class FluentReportsGenerator {
         }
     }
 
-
     /**
      * Generate the Data for each of the child reports
      * @param dataSet
@@ -838,7 +870,6 @@ class FluentReportsGenerator {
             this._generateChildSave(children[i], newResult);
         }
     }
-
 
     /**
      * Starts generating the save data
@@ -1050,7 +1081,6 @@ class FluentReportsGenerator {
             this._includeData = include;
         });
     }
-
 
     /**
      * Simple shallow clone of properties to another object
@@ -1562,7 +1592,6 @@ class FluentReportsGenerator {
         }
         this._toolBarLayout.appendChild(this._previewButton);
     }
-
 
     closeLayer() {
         if (this._topLayer) {
@@ -3553,7 +3582,7 @@ class frElement { // jshint ignore:line
     }
 
     _handleMultiSelecting(event) {
-        let multiSelect = (event && event.ctrlKey);
+        let multiSelect = (event && event[this._report.multiSelectKey]);
 
         //if it's not selecting a new element, clicking already selected element
         if (!multiSelect) {
