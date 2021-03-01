@@ -3866,6 +3866,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
             {type: 'select', field: "shape", display: this.createSelect.bind(this), destination: 'settings'},
             {type: 'number', field: 'radius', default: null, destination: 'settings'},
             {type: 'boolean', field: 'usesSpace', default: true, destination: 'settings'},
+            {type: 'number', field: 'border', default: 0, destination: 'settings'},
             {
                 type: 'string',
                 field: 'borderColor',
@@ -4690,12 +4691,10 @@ class frPrint extends frTitledLabel {
                 },
                 {type: 'string', field: "textColor", functionable: true, default: "", destination: "settings"},
                 {type: 'string', field: "link", functionable: true, default: "", destination: "settings"},
-                {type: 'number', field: "border", default: 0, destination: "settings"},
                 {type: 'number', field: 'characterSpacing', title: 'Char Spacing', default: 0, destination: "settings"},
                 {type: 'number', field: 'wordSpacing', default: 0, destination: "settings"},
                 {type: 'number', field: 'rotate', default: 0, destination: 'settings'},
                 {type: 'number', field: 'opacity', default: 1.0, destination: 'settings'},
-
                 {
                     type: 'select',
                     field: "align",
@@ -4869,14 +4868,6 @@ class frPrint extends frTitledLabel {
      */
     set link(val) {
         this._link = val;
-    }
-
-    get border() {
-        return this._border;
-    }
-
-    set border(val) {
-        this._border = parseInt(val, 10);
     }
 
     get wrap() {
@@ -5414,6 +5405,18 @@ class frBandElement extends frPrint { // jshint ignore:line
     set collapse(val) {
         this._collapse = !!val;
     }
+    get borderColor() {
+        return this._borderColor;
+    }
+    set borderColor(val) {
+        this._borderColor = val;
+    }
+    get dash() {
+        return this._dash;
+    }
+    set dash(val) {
+        this._dash = !!val;
+    }
 
     constructor(report, parent, options = {}) {
         options.elementTitle = "Band";
@@ -5426,6 +5429,8 @@ class frBandElement extends frPrint { // jshint ignore:line
         this._gutter = 0;
         this._padding = 1;
         this._collapse = true;
+        this._dash = false;
+        this._borderColor = "#000000";
         this._border = {type: "object", object: {left: 0, right: 0, top: 0, bottom: 0}};
 
         this._table = document.createElement("table");
@@ -5441,11 +5446,10 @@ class frBandElement extends frPrint { // jshint ignore:line
 
         this._html.appendChild(this._table);
 
-        this._deleteProperties(['rotate', 'width', 'align', "border"]);
+           this._deleteProperties(['rotate', 'width', 'align', "border"]);
         this._addProperties([
-            {type: 'boolean', field: 'suppression', default: false},
-            {type: 'number', field: 'columns', destination: false},
-            {type: 'number', field: 'fillOpacity', destination: 'settings'},
+            {type: 'string', field: 'borderColor', title: "Border Color", default: "", destination: 'settings', functionable: true},
+            {type: 'boolean', field: "dash", title:"dashed", default: 0, destination: "settings", functionable: true},
             {
                 type: 'object',
                 field: 'border',
@@ -5454,6 +5458,9 @@ class frBandElement extends frPrint { // jshint ignore:line
                 default: {left: 0, right: 0, top: 0, bottom: 0},
                 fields: {left: "number", right: "number", top: "number", bottom: "number"}
             },
+            {type: 'boolean', field: 'suppression', default: false},
+            {type: 'number', field: 'columns', destination: false},
+            {type: 'number', field: 'fillOpacity', destination: 'settings'},
             {type: 'number', field: 'gutter', destination: 'settings', default: 0},
             {type: 'boolean', field: 'collapse', destination: 'settings', default: true},
             {type: 'boolean', field: "wrap", default: false, destination: "settings"},
@@ -5539,14 +5546,29 @@ class frBandElement extends frPrint { // jshint ignore:line
         super._saveProperties(props);
         props.type = "band";
         props.fields = [];
-
+        if(this.dash && props.settings) props.settings.dash = 1;
+        let defaultDashed = props.settings.dash;
+        let defaultBorder = props.settings.border;
+        let defaultColor = props.settings.borderColor;
+        if(props && props.settings){
+            delete props.settings.dash;
+            delete props.settings.border;
+        }
         // Save only what the minimum number of columns selected, or the minimum number of columns that exist...
         let count = Math.min(this.columns, this._bands.length);
         for (let i = 0; i < count; i++) {
+            //Cells will inherit dash, border, borderColor from the bandElement.
+            let band = this._bands[i];
+            if(band.dash) band.dash = 1;
+            else if(defaultDashed === 1) band.dash = defaultDashed;
+            else delete band.dash;
+            if(band.border){
+                if(!(band.border.left && band.border.right && band.border.top && band.border.bottom) && defaultBorder) band.border = defaultBorder;
+            }
+            else if(defaultBorder) band.border = defaultBorder;
             props.fields.push(this._bands[i]);
         }
     }
-
 
     _parseElement(data) {
         const len = data.fields.length;
@@ -5554,7 +5576,7 @@ class frBandElement extends frPrint { // jshint ignore:line
         for (let i = 0; i < len; i++) {
             this._handleBandCell(data.fields[i]);
         }
-        this._copyProperties(data, this, ["gutter", "fillOpacity", "suppression", "padding", "collapse"]);
+        this._copyProperties(data, this, ["gutter", "fillOpacity", "suppression", "padding", "collapse","borderColor", "border","dash"]);
         super._parseElement(data);
     }
 
@@ -6381,9 +6403,11 @@ class UI { // jshint ignore:line
             {type: 'select', field: "align", translate: toInt, default: "left", display: createAlignSelect},
             {type: 'string', field: "textColor", default: "", functionable: true},
             {type: 'string', field: "fill", "title": "Fill Color", default: "", functionable: true},
+            {type: 'boolean', field: "dash", title:"dashed", default: 0, destination: "settings", functionable: true},
             {
                 type: 'object',
                 field: 'border',
+                destination: 'settings',
                 default: {left: 0, right: 0, top: 0, bottom: 0},
                 fields: {left: "number", right: "number", top: "number", bottom: "number"}
             },
