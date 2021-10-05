@@ -7430,7 +7430,8 @@ class UI { // jshint ignore:line
             let text = textArea.value;
             if (typeof ok === 'function') {
                 if (async !== null && asyncCheckbox.checked) {
-                    if (text.indexOf('done(') < 0) {
+                    let textToSearch = text.toString().trim().split(" ").join("");
+                    if (textToSearch.indexOf('done(') < 0&&textToSearch.indexOf('done)') < 0) {
                         text += "; done();";
                     }
                 }
