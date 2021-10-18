@@ -1278,6 +1278,14 @@ class FluentReportsGenerator {
         } else {
             this._paperWidthLayout.style.display = "";
         }
+
+        //GO through all elements, find the ones with an alignment NOT set to none
+        //and update their preview position to match up with page size.
+        for(let i =0;i<this.frElements.length;i++){
+            if(typeof this.frElements[i].align ==="string" && this.frElements[i].align.toLowerCase() !== "none"){
+                this.frElements[i].align = this.frElements[i].align;//set it to itself, to trigger it's built in updater
+            }
+        }
     }
 
     _updateSectionIn(Y) {
@@ -4913,7 +4921,7 @@ class frPrint extends frTitledLabel {
             case 1:
             case 'right':
                 this._align = "right";
-                this.absoluteX = (parseInt((this.pageWidth * this.scale), 10)) - (this.elementWidth * this.scale);
+                this.absoluteX = (parseInt(this.pageWidth, 10)) - (this.elementWidth);
                 break;
 
             case 2:
