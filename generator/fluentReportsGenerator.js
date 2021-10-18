@@ -317,6 +317,12 @@ class FluentReportsGenerator {
         this._formatterFunctions = val;
     }
 
+    get onfocus(){
+        return this._onfocus;
+    }
+    set onfocus(val){
+        this._onfocus = val;
+    }
     /**
      * The Constructor
      * @param options
@@ -326,6 +332,7 @@ class FluentReportsGenerator {
         this._UIBuilder = UI;
 
         // Tracking Information
+        this._onfocus = null
         this._formatterFunctions = {};
         this._parentElement = null;
         this._includeCSS = options.css !== false;
@@ -467,7 +474,9 @@ class FluentReportsGenerator {
         if (typeof options.preview !== 'undefined') {
             this.setConfig('preview', options.preview);
         }
-
+        if(options.onfocus){
+            this.setConfig('onfocus',options.onfocus);
+        }
         if (options.formatterFunctions) {
             this.setConfig('formatterFunctions', options.formatterFunctions);
         }
@@ -547,7 +556,11 @@ class FluentReportsGenerator {
             case 'report':
                 this._parseReport(value);
                 break;
-
+            case 'onfocus':
+                if (typeof value === 'function') {
+                    this._onfocus = value;
+                }
+                break;
             case 'save':
                 if (typeof value === 'function') {
                     this._saveFunction = value;
@@ -1152,7 +1165,6 @@ class FluentReportsGenerator {
 
         this._frame = document.createElement("div");
         this._frame.style.position = "relative";
-
         this._frame.style.height = (this._parentElement.clientHeight < 300 ? 300 : this._parentElement.clientHeight) + "px";
 
         // Prefix the entire sub-tree with our name space for CSS resolution
@@ -1232,6 +1244,9 @@ class FluentReportsGenerator {
         // All Key Combo's
         this._frame.tabIndex = 0;
         this._frame.addEventListener("keydown", this._reportLayoutKeyed.bind(this));
+        if(typeof this.onfocus === "function") {
+            this._frame.onfocus = this.onfocus;
+        }
         this._frame.focus();
 
         this._reportScroller = document.createElement("div");
