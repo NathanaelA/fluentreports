@@ -7430,7 +7430,8 @@ class UI { // jshint ignore:line
             let text = textArea.value;
             if (typeof ok === 'function') {
                 if (async !== null && asyncCheckbox.checked) {
-                    if (text.indexOf('done(') < 0) {
+                    // Search for either a , or ( then any number of spaces, then "done" then any number of spaces and either a , or ( or an )
+                    if (text.match(/[,(]\s*(done)\s*[,)(]/) === null) {
                         text += "; done();";
                     }
                 }

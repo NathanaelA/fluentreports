@@ -21,6 +21,7 @@ let scalingFactor = process.env.SCALING_FACTOR || 1;
 const PDFApplications = [
     // Linux
     "/usr/bin/xreader",
+    "/usr/bin/evince",
     
     // Windows
     "C:\\Program Files (x86)\\Foxit Software\\Foxit Reader\\Foxit Reader.exe",
