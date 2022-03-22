@@ -3696,7 +3696,11 @@ class frElement { // jshint ignore:line
                 }
 
                 // If the item is undefined null or NaN, then we don't bother saving it.
-                if (typeof this[curProp.field] === 'undefined' || this[curProp.field] === null || isNaN(this[curProp.field])) {
+                if (typeof this[curProp.field] === 'undefined' || this[curProp.field] === null) {
+                    continue;
+                }
+
+                if (typeof this[curProp.field] === 'number' && isNaN(this[curProp.field])) {
                     continue;
                 }
 
@@ -4414,20 +4418,20 @@ class frImage extends frTitledElement { // jshint ignore:line
                 display: this._createFitSelect.bind(this),
                 destination: 'settings'
             },
-            {
+           /* {
                 type: 'select',
                 field: "align",
                 default: "left",
                 display: this._createAlignSelect.bind(this),
                 destination: 'settings'
-            },
-            {
+            }, */
+           /* {
                 type: 'select',
                 field: "valign",
                 default: "top",
                 display: this._createVAlignSelect.bind(this),
                 destination: 'settings'
-            },
+            }, */
             {
                 type: 'number',
                 title: 'scale',
