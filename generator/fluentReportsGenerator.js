@@ -3856,6 +3856,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this._svgRoot.style.height = (this.height * this.scale).toString();
         this._html.appendChild(this._svgRoot);
         this._html.style.minWidth = "0px";
+        this._border = 0;
         this.setupShape();
         this._deleteProperties(['top', 'left', 'width', 'height']);
         this._addProperties([
@@ -3895,6 +3896,7 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
     }
 
     _parseElement(data) {
+        this.border = this._getValueFromOptions(data.settings,"border",0);
         this.shape = this._getValueFromOptions(data.settings, "shape", "line");
         this.radius = this._getValueFromOptions(data.settings, "radius", 50);
         this.width = this._getValueFromOptions(data.settings, "width", 50);
@@ -3965,7 +3967,12 @@ class frSVGElement extends frTitledElement { // jshint ignore:line
         this._svg.style.height = (this.height * this.scale).toString();
         this._svgRoot.appendChild(this._svg);
     }
-
+    get border(){
+        return this._border;
+    }
+    set border(val){
+        this._border = parseInt(val,10);
+    }
     get usesSpace() {
         return this._usesSpace;
     }
@@ -4645,7 +4652,6 @@ class frPrint extends frTitledLabel {
 //        this._text.style.wordBreak = "keep-all";
         this._text.style.whiteSpace = "nowrap";
 
-        this._border = 0;
         this._wrap = false;
 
         // TODO: Do we need width, height?
@@ -4938,7 +4944,7 @@ class frPrint extends frTitledLabel {
 
     _parseElement(data) {
         this._copyProperties(data, this, ["absoluteX", "absoluteY", "font", "fontSize", "fontBold", "fontItalic", "underline",
-            "strike", "fill", "textColor", "link", "border", "characterSpacing", "wordSpacing", "rotate", "align", "wrap", "width", "formatFunction"]);
+            "strike", "fill", "textColor", "link", "characterSpacing", "wordSpacing", "rotate", "align", "wrap", "width", "formatFunction"]);
     }
 
     _saveProperties(props, ignore) {
