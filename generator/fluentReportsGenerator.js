@@ -3033,6 +3033,8 @@ class frElement { // jshint ignore:line
         this._width = 0;
         this._height = 0;
         this._handlers = {};
+        this._top = 0;
+        this._left = 0;
         this._properties = [
             {type: 'number', field: 'top', default: 0, destination: "settings"},
             {type: 'number', field: 'left', default: 0, destination: "settings"},
@@ -3141,22 +3143,14 @@ class frElement { // jshint ignore:line
     }
 
     get top() {
-        return parseInt(this._html.style.top, 10);
-    }
-
-    get _saving_top() {
-        return Math.round(parseInt(this._html.style.top, 10) / this.scale);
-    }
-
-    // noinspection JSUnusedGlobalSymbols
-    get _saving_absoluteY() {
-        return this._saving_top;
+        return this._top
     }
 
     set top(val) {
         // We have to be below the header area
         const newTop = parseInt(val, 10);
         this._html.style.top = newTop + "px";
+        this._top = newTop;
         if (!this._report._inDragDrop) {
             const clientSize = this._html.getBoundingClientRect();
             this._resizeParentContainer(newTop + clientSize.height);
@@ -3164,10 +3158,11 @@ class frElement { // jshint ignore:line
     }
 
     get left() { // noinspection JSCheckFunctionSignatures
-        return parseInt(parseInt(this._html.style.left, 10) / this.scale, 10);
+        return this._left
     }
 
     set left(val) {
+        this._left = parseInt(val,10);
         this._html.style.left = (parseInt(val, 10) * this.scale) + "px";
     }
 
@@ -3413,11 +3408,12 @@ class frElement { // jshint ignore:line
         this._draggable.onMove = (/* e */) => {
             for (let i = 0; i < this._report._currentSelected.length; i++) {
                 if (this._report._currentSelected[i] === this) {
+                    this._report._currentSelected[i].absoluteY = parseInt(this._html.style.top, 10);
+                    this._report._currentSelected[i].absoluteX = parseInt(parseInt(this._html.style.left, 10) / this.scale, 10);
+
                     continue;
                 }
-                this._report._currentSelected[i].top = this.top + this._report._currentSelected[i].offsetDragging.y;
                 this._report._currentSelected[i].absoluteY = this.absoluteY + this._report._currentSelected[i].offsetDragging.y;
-                this._report._currentSelected[i].left = this.left + this._report._currentSelected[i].offsetDragging.x;
                 this._report._currentSelected[i].absoluteX = this.absoluteX + this._report._currentSelected[i].offsetDragging.x;
             }
         };
