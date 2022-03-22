@@ -3695,8 +3695,8 @@ class frElement { // jshint ignore:line
                     continue;
                 }
 
-                // If the item is undefined, then we don't bother saving it.
-                if (typeof this[curProp.field] === 'undefined') {
+                // If the item is undefined null or NaN, then we don't bother saving it.
+                if (typeof this[curProp.field] === 'undefined' || this[curProp.field] === null || isNaN(this[curProp.field])) {
                     continue;
                 }
 
