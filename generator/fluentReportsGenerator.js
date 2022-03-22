@@ -1244,9 +1244,11 @@ class FluentReportsGenerator {
         // All Key Combo's
         this._frame.tabIndex = 0;
         this._frame.addEventListener("keydown", this._reportLayoutKeyed.bind(this));
-        if(typeof this.onfocus === "function") {
-            this._frame.onfocus = this.onfocus;
-        }
+        this._frame.addEventListener("focus",()=>{
+            if(typeof this.onfocus === "function") {
+                this.onfocus();
+            }    
+        })
         this._frame.focus();
 
         this._reportScroller = document.createElement("div");
