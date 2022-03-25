@@ -13,7 +13,6 @@
         #fluentReportsEditor {
             border: solid red 1px;
             height: 450px;
-            zwidth: 1136px;
         }
     </style>
 </head>
@@ -161,6 +160,7 @@
             data: data,
             report: reportData,
             debug: true,
+            multiSelectKey: "shift", // can be "ctrl", "shift", or "meta"
             // preview: false,  // You can disable the preview button if you want...
             save: (value, done) => {
                 console.log("Saving");

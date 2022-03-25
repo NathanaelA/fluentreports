@@ -15,6 +15,17 @@
     overflow: hidden;
 }
 
+@supports (-moz-appearance:none) {
+    .fluentReports .frPropInput[type="color"] {
+        height: auto;
+        padding: 2px;
+    }
+
+    input[type="color"]::-moz-color-swatch {
+        height: 10px;
+    }
+}
+
 .frPropSelect {
     width: calc(100% - 2px);
 }

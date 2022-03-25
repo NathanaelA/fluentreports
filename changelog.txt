@@ -52,6 +52,7 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.3.10 - FRG: Fixed Loading/Saving of SVG elements, Fixed Band Element Function selection, minor cleanup
 1.3.11 - FRG: Multi-Select, Fix several issues with drag/drop of sections and elements.
 1.3.12 - FRG: Fix minor selection annoyance, allow choice of multi-select key.
+1.3.13 - FRG: Fix multiple issues (#246/#259, #251/#258, #257, #250/#256, #252, #241/#242/#243), add color picker, cleanup some display issues.
 
 
 Breaking changes or API inconsistencies:

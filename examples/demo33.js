@@ -3,7 +3,8 @@
  */
 
 "use strict";
-// This test is currently Broken because of Page Breaking Code
+// This test is currently Broken because of Page Breaking Code does not change the Absolute values back down by the size of the page...
+// Technically this should print like the "originals" shows.
 global.skipTesting = true;
 
 
