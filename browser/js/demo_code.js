@@ -1,4 +1,4 @@
-/* (c) 2015-2019, Master Technology --  some code from pdfkit website */
+/* (c) 2015-2022, Master Technology --  some code from pdfkit website */
 "use strict";
 
 /* globals ace */
@@ -61,9 +61,52 @@ function resetBlobStream() {
 }
 
 function init() {
-    if (initialized) { return; }
+    if (initialized) {
+        return;
+    }
     initialized = true;
+    if (demo_screen === 0) {
+        demo_main();
+    } else if (demo_screen === 1) {
+        demo_ace();
+    } else if (demo_screen === 2) {
+        demo_frg();
+    }
+}
 
+function demo_main() {
+   let tabOneHeader = document.getElementById('codebased');
+   let tabTwoHeader = document.getElementById('guibased');
+   let tabOne = document.getElementById('dataDriven');
+   let demoFrame = document.getElementById('demoFrame');
+
+//   let tabTwo = document.getElementById('JSONDriven');
+   setupEvent(tabOneHeader, 'click', () => {
+       tabOneHeader.classList.toggle('tabselected', true);
+       tabTwoHeader.classList.toggle('tabselected', false);
+       demoFrame.src = "demo-ace.html";
+//       tabOne.style.display = '';
+//       tabTwo.style.display = "none";
+   });
+   setupEvent(tabTwoHeader, 'click', () => {
+       tabOneHeader.classList.toggle('tabselected', false);
+       tabTwoHeader.classList.toggle('tabselected', true);
+       demoFrame.src = "demo-frg.html";
+ //      tabOne.style.display = 'none';
+ //      tabTwo.style.display = '';
+   });
+
+   let smenu = document.getElementById('smenu');
+   setupEvent(smenu, "change", menuChange);
+}
+
+function demo_frg() {
+    resetBlobStream();
+    guiHoursReport();
+}
+
+
+function demo_ace() {
     resetBlobStream();
 
     editor = ace.edit("editor");
@@ -84,29 +127,9 @@ function init() {
     rptItem = document.getElementById('rptAccount');
     setupEvent(rptItem, "click", function() { useReport(runAccountReport); });
 
-    let tabOneHeader = document.getElementById('codebased');
-    let tabTwoHeader = document.getElementById('guibased');
-    let tabOne = document.getElementById('dataDriven');
-    let tabTwo = document.getElementById('JSONDriven');
-    setupEvent(tabOneHeader, 'click', () => {
-        tabOneHeader.classList.toggle('tabselected', true);
-        tabTwoHeader.classList.toggle('tabselected', false);
-        tabOne.style.display = '';
-        tabTwo.style.display = "none";
-    });
-    setupEvent(tabTwoHeader, 'click', () => {
-        tabOneHeader.classList.toggle('tabselected', false);
-        tabTwoHeader.classList.toggle('tabselected', true);
-        tabOne.style.display = 'none';
-        tabTwo.style.display = '';
-        guiHoursReport();
-    });
-
     iFrame = document.getElementById('iframe');
     setupEvent(iFrame, "load", function() { loadingVisible(false); });
 
-    let smenu = document.getElementById('smenu');
-    setupEvent(smenu, "change", menuChange);
 
     useReport(runFaxReport);
 
@@ -121,7 +144,7 @@ function guiHoursReport() {
     const reportData =
         {
             type: 'report',
-            name: 'demo19.pdf',
+            name: 'demo.pdf',
             autoPrint: false,
             fontSize: 8,
 

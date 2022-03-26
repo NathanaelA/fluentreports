@@ -1,5 +1,5 @@
 /**************************************************************************************
- * (c) 2016-2020, Master Technology
+ * (c) 2016-2022, Master Technology
  * Licensed under the MIT license or contact me for a support, changes, enhancements.
  *
  * Any questions please feel free to put a issue up on github
