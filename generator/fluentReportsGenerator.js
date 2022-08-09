@@ -2622,7 +2622,7 @@ class frSection { // jshint ignore:line
         //this._type === 3 ensures details use [] while the rest use ().
         let surrounder = this._type === 3 ? ["(",")"] : ["[","]"];
         let type = this._treePathing[this._treePathing.length-1].type;
-        return (type === "subReport" ? "SubReport " + this._counters.subReportCounter : "Group " + this._counters.groupCounter) +"'s "+this._title+ (this._groupName !== '' ? " " + surrounder[0] + this._groupName + surrounder[1] : '')
+        return (this._fromGroup ? (type === "subReport" ? "SubReport " + this._counters.subReportCounter : "Group " + this._counters.groupCounter) +"'s " : "")+this._title+ (this._groupName !== '' ? " " + surrounder[0] + this._groupName + surrounder[1] : '')
     }
 
     appendChild(child) {
