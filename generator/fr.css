@@ -355,4 +355,85 @@
         transform: rotate(359deg);
     }
 }
+.frSectionEditorDeleteSectionButton:hover{
+    color:red;
+}
+.frSectionEditorInvalidDraggable{
+    cursor: not-allowed;
+}
+.frSectionEditorEditSectionButton, .frSectionEditorDeleteSectionButton{
+    width: 184px;
+    width:-webkit-fill-available;
+    font-size: 130%;
+}
+.frSectionEditorHideChildrenButton {
+    padding: 0;
+    width: 12px;
+    height: 12px;
+    line-height:8px;
+}
 
+.frSectionEditorChildrenContainer {
+    border-left: black 1px solid;
+    min-height: 10px;
+    margin-left: 8px;
+    padding: 4px 0px 4px 8px;
+}
+.frSectionEditorChildrenHidden{
+    border-left: black 1px solid;
+    margin-left: 8px;
+    padding: 4px 0px 4px 8px;
+    font-family: monospace;
+    line-height: 0.4;
+}
+.frSectionEditorTreeView{
+    display: inline-block;
+    height: 200px;
+    width: 200px;
+    overflow: auto;
+}
+.frSectionEditorTreeViewContainer{
+    border:solid black 1px;
+    margin-right: 5px;
+    left: 5px;
+    right: 5px;
+    height: 198px;
+    overflow: auto;
+}
+.frSectionEditorDetailsView{
+    display: inline-block;
+    margin: 5px;
+    border: solid black 1px;
+    height: 200px;
+    width: 200px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    position: relative;
+    border-left: 1px black solid;
+}
+.frSectionEditorSelectedTree{
+    background-color: #B7B6B6;
+}
+.frSectionEditorNOTSelectedTree{
+    background-color: rgba(255,255,255,0.2);
+}
+.frSectionEditorInvalidTree {
+    box-shadow: red -1px 0px 5px -1px;
+}
+.frSectionEditorTreeDescription{
+    padding: 2px;
+    margin: 0;
+}
+.frSectionEditorValidDropLocation{
+    border: 1px solid #0f0;
+}
+
+.frSectionEditorInValidDropLocation{
+    border: 1px solid #f00;
+}
+.frSectionEditorTreeName{
+    margin-left: 2px;
+}
+.frSectionEditorGhostElement{
+    filter: opacity(0.5);
+}
