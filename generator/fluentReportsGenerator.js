@@ -6649,7 +6649,7 @@ class UI { // jshint ignore:line
         const copy = function (obj) {
             return JSON.parse(JSON.stringify(obj));
         }
-        const getReportFieldFromTree = function (treeReport) {
+        const getReportFieldFromTree = (treeReport) => {
             let returnValue = this._parent.reportFields
             for (let i = 0; i < treeReport.length; i++) {
                 if (!(treeReport[i] === "report") && treeReport[i] && returnValue.children && returnValue.children[treeReport[i]]) {
