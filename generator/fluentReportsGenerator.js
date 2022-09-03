@@ -66,6 +66,8 @@ class FluentReportsGenerator {
          * @private
          */
         this._frSections = [];
+        this._subReportCounter = 0;
+        this._groupCounter = {counter:0};
 
         this._registeredFonts = [];
         this._includeData = false;
@@ -821,7 +823,9 @@ class FluentReportsGenerator {
             this._clearReport();
 
             // Create the Sections
-            this._generateReportLayout(this._reportData, 57, "", this._parsedData.dataUUID);
+            this._subReportCounter = 0;
+            this._groupCounter = {counter:0};
+            this._generateReportLayout(this._reportData, 57, "", [{type:"report",index:0,datatUUID:this._parsedData.dataUUID}], this._parsedData.dataUUID);
         }
 
 
@@ -872,12 +876,11 @@ class FluentReportsGenerator {
      */
     _generateChildSave(dataSet, results) {
 
-        let newResult = {dataUUID: dataSet.dataUUID, dataType: dataSet.dataType, data: dataSet.data};
+        let newResult = {dataUUID: dataSet.dataUUID, dataType: dataSet.dataType, data: dataSet.data, type:"report"};
         if (!Array.isArray(results.subReports)) {
             results.subReports = [];
         }
-        results.subReports.push(newResult);
-        this._saveTemporaryData.reports[dataSet.dataUUID] = newResult;
+        this._saveTemporaryData.reportTemplates[dataSet.dataUUID] = newResult;
 
         // Loop thru the children of this child
         let children = dataSet.childrenIndexed;
@@ -893,7 +896,7 @@ class FluentReportsGenerator {
      */
     _generateSave() {
         // Setup our temporary data storage
-        this._saveTemporaryData = {reports: {}};
+        this._saveTemporaryData = {reportTemplates: {},sectionDestinations:{}};
 
         const results = {type: 'report', dataUUID: this._parsedData.dataUUID, version: 2};
         this._copyProperties(this, results, ["fontSize", "autoPrint", "name", "paperSize", "paperOrientation"]);
@@ -907,7 +910,7 @@ class FluentReportsGenerator {
         }
 
         // Add our first level report
-        this._saveTemporaryData.reports[this._parsedData.dataUUID] = results;
+        this._saveTemporaryData.reportTemplates[this._parsedData.dataUUID] = results;
 
         results.fonts = this.additionalFonts;
         results.variables = shallowClone(this.reportVariables);
@@ -926,13 +929,88 @@ class FluentReportsGenerator {
                     return element1.absoluteY === element2.absoluteY ? (element1.absoluteX - element2.absoluteX) : (element1.absoluteY - element2.absoluteY);
                 });
             }
-            this._frSections[i]._generateSave(results, this._saveTemporaryData.reports);
+            this._frSections[i]._generateSave(results, this._saveTemporaryData.reportTemplates,this._saveTemporaryData);
         }
 
         // Save the Totals..{type: 'report', detail: [], dataUUID: }
-        for (let key in this._saveTemporaryData.reports) {
-            if (this._saveTemporaryData.reports.hasOwnProperty(key)) {
-                this._saveTotals(this._saveTemporaryData.reports[key], this._saveTemporaryData.reports[key].dataUUID);
+        this._saveTotals();
+        //Copy over subreports & groups from the _saveTemporaryData.sectionDestinations
+        let sectionDestinationKeys = Object.keys(this._saveTemporaryData.sectionDestinations);
+        sectionDestinationKeys = sectionDestinationKeys.sort((a,b)=>{
+            if(a.length === b.length){}
+            return a.length - b.length;
+        })
+        for(let i =0;i<sectionDestinationKeys.length;i++){
+            let section = this._saveTemporaryData.sectionDestinations[sectionDestinationKeys[i]];
+            let destination = null;
+            let quit = false;
+            for(let j =0;j<section.treePathing.length;j++){
+                let treePath = section.treePathing[j]
+                if(quit) {
+                    break;
+                }
+                switch(treePath.type){
+                    case "report":
+                        destination = results;
+                        if (j + 1 === section.treePathing.length) {
+                            for(let q in section.container){
+                                results[q] = section.container[q];
+                            }
+                        }
+                        break;
+                    case "groupBy":
+                        if(destination){
+                            if (j + 1 === section.treePathing.length) {
+                                if (!destination.groupBy) destination.groupBy = [];
+                                destination.groupBy[treePath.index] = section.container;
+
+                            }
+                            else{
+                                if (!destination.groupBy) {
+                                    let continueOn = false;
+                                    for(let q = 0;q<this._groupBys.length;q++){
+                                        if(this._groupBys[q].dataUUID === treePath.dataUUID){
+                                            continueOn = true;
+                                            destination.groupBy = [];
+                                            destination.groupBy[treePath.index] = {type:"group",groupOn:this._groupBys[q].name};
+                                            destination = destination.groupBy[treePath.index];
+                                            break;
+                                        }
+                                    }
+                                    if(!continueOn) {
+                                        quit = true;
+                                        break;
+                                    }
+                                }
+                                else{
+                                    destination = destination.groupBy[treePath.index];
+                                }
+
+                            }
+                        }
+                        break;
+                    case "subReports":
+                    case "subReport":
+                        if (!destination.subReports) {
+                            destination.subReports = [];
+                        }
+                        if(destination) {
+                            if (!destination.subReports) destination.subReports = [];
+                            if (j + 1 === section.treePathing.length) {
+                                destination.subReports[treePath.index] = section.container;
+                            }
+                            else{
+                                if (!destination.subReports[treePath.index]) {
+                                    destination.subReports[treePath.index] = {
+                                        data:this._parsedData.findByUUID(treePath.dataUUID).data,
+                                        dataType: 'parent'
+                                    }
+                                }
+                                destination = destination.subReports[treePath.index];
+                            }
+                        }
+                        break;
+                }
             }
         }
 
@@ -940,7 +1018,7 @@ class FluentReportsGenerator {
         // Update groups data with any Groups that have no actual sections
         for (let i = 0; i < this._groupBys.length; i++) {
             let found = false;
-            let curData = this._saveTemporaryData.reports[this._groupBys[i].dataUUID];
+            let curData = this._saveTemporaryData.reportTemplates[this._groupBys[i].dataUUID];
             let dataSet = this._parsedData.findByUUID(this._groupBys[i].dataUUID);
 
             if (!curData) {
@@ -951,7 +1029,7 @@ class FluentReportsGenerator {
                     data: dataSet.name,
                     groupBy: []
                 };
-                this._saveTemporaryData.reports[this._groupBys[i].dataUUID] = curData;
+                this._saveTemporaryData.reportTemplates[this._groupBys[i].dataUUID] = curData;
             } else if (curData.groupBy) {
                 for (let j = 0; j < curData.groupBy.length; j++) {
                     if (curData.groupBy[j].groupOn === this._groupBys[i].name) {
@@ -970,11 +1048,11 @@ class FluentReportsGenerator {
 
         // TODO: Is this needed????
         // Remove Groups in Report, that no longer exist in the "groupBy" data
-        for (let key in this._saveTemporaryData.reports) {
-            if (!this._saveTemporaryData.reports.hasOwnProperty(key)) {
+        for (let key in this._saveTemporaryData.reportTemplates) {
+            if (!this._saveTemporaryData.reportTemplates.hasOwnProperty(key)) {
                 continue;
             }
-            let curData = this._saveTemporaryData.reports[key];
+            let curData = this._saveTemporaryData.reportTemplates[key];
 
             // No Groups; proceed to the next one...
             if (!curData.groupBy) {
@@ -1031,32 +1109,40 @@ class FluentReportsGenerator {
      * @param dataUUID
      * @private
      */
-    _saveTotals(dest, dataUUID) {
+    _saveTotals() {
         const totals = this.reportTotals;
-        let fields, calcs = null;
-
-        const curData = this._parsedData.findByUUID(dataUUID);
-        fields = curData.fields;
-
-        for (let key in totals) {
+        for(let key in totals){
             if (!totals.hasOwnProperty(key)) {
                 continue;
             }
-            for (let i = 0; i < totals[key].length; i++) {
-                if (fields.indexOf(totals[key][i]) >= 0) {
-                    if (calcs == null) {
-                        calcs = {};
+            for(let i=0;i<totals[key].length;i++){
+                let dataUUID = 0;
+                for(let j =0;j<totals[key][i].treePathing.length;j++){
+                    if(totals[key][i].treePathing[j].dataUUID){
+                        dataUUID = totals[key][i].treePathing[j].dataUUID;
                     }
-                    if (calcs[key] == null) {
-                        calcs[key] = [];
+                }
+                if(!dataUUID) {
+                    continue;
+                }
+                const fields = this._parsedData.findByUUID(dataUUID).fields;
+                if(fields.indexOf(totals[key][i].total) >= 0){
+                    const destinationStr = this.turnTreePathingIntoString(totals[key][i].treePathing);
+                    if(!this._saveTemporaryData.sectionDestinations[destinationStr]){
+                        this._saveTemporaryData.sectionDestinations[destinationStr] = {treePathing:totals[key][i].treePathing};
                     }
-                    calcs[key].push(totals[key][i]);
+                    if(!this._saveTemporaryData.sectionDestinations[destinationStr].container){
+                        this._saveTemporaryData.sectionDestinations[destinationStr].container = this._saveTemporaryData.reportTemplates[dataUUID];
+                    }
+                    if(!this._saveTemporaryData.sectionDestinations[destinationStr].container.calcs){
+                        this._saveTemporaryData.sectionDestinations[destinationStr].container.calcs = {};
+                    }
+                    if(!this._saveTemporaryData.sectionDestinations[destinationStr].container.calcs[key]) {
+                        this._saveTemporaryData.sectionDestinations[destinationStr].container.calcs[key] = []
+                    }
+                    this._saveTemporaryData.sectionDestinations[destinationStr].container.calcs[key].push(totals[key][i].total);
                 }
             }
-        }
-
-        if (calcs != null) {
-            dest.calcs = calcs;
         }
     }
 
@@ -1421,7 +1507,9 @@ class FluentReportsGenerator {
     _generateInterface() {
         if (typeof window.PlainDraggable !== 'undefined') {
             this._generateToolBarLayout();
-            this._generateReportLayout(this._reportData, 57, "", this._parsedData.dataUUID);
+            this._subReportCounter = 0;
+            this._groupCounter = {counter:0};
+            this._generateReportLayout(this._reportData, 57, "",[{type:"report",index:0,datatUUID:this._parsedData.dataUUID}], this._parsedData.dataUUID);
             this._reportSettings();
             this._resetPaperSizeLocation();
         } else {
@@ -1721,15 +1809,15 @@ class FluentReportsGenerator {
      * @param reportUUID
      * @private
      */
-    _generateReportHeaderSectionLayout(data, height, groupName, isGroup, reportUUID) {
+    _generateReportHeaderSectionLayout(data, height, groupName, treePathing, subReportCounter, isGroup, reportUUID) {
         if (typeof data.titleHeader !== 'undefined') {
-            this._generateSection("Title Header", height, 1, groupName, data.titleHeader, reportUUID, null, isGroup);
+            this._generateSection("Title Header", height, 1, groupName, treePathing, subReportCounter, data.titleHeader, reportUUID, null, isGroup);
         }
         if (typeof data.pageHeader !== 'undefined') {
-            this._generateSection("Page Header", height, 1, groupName, data.pageHeader, reportUUID, null, isGroup);
+            this._generateSection("Page Header", height, 1, groupName, treePathing, subReportCounter, data.pageHeader, reportUUID, null, isGroup);
         }
         if (typeof data.header !== 'undefined') {
-            this._generateSection("Header", height, 1, groupName, data.header, reportUUID, null, isGroup);
+            this._generateSection("Header", height, 1, groupName, treePathing, subReportCounter, data.header, reportUUID, null, isGroup);
         }
         // Handle Group By for The report/sub-report
         if (typeof data.groupBy !== 'undefined') {
@@ -1740,13 +1828,19 @@ class FluentReportsGenerator {
                         found = true;
                     }
                 }
+                let newTreePathing = [].concat(treePathing);
+                newTreePathing.push({type:"groupBy",index:i,dataUUID:reportUUID})
                 if (!found) {
                     this._groupBys.push({name: data.groupBy[i].groupOn, dataUUID: reportUUID});
                     if (data.groupBy[i].calcs) {
-                        this._mergeTotals(data.groupBy[i].calcs);
+                        this._mergeTotals(data.groupBy[i].calcs,newTreePathing);
                     }
                 }
-                this._generateReportHeaderSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, true, reportUUID);
+                if(!this._groupCounter[this.turnTreePathingIntoString(newTreePathing)]){
+                    this._groupCounter.counter++;
+                    this._groupCounter[this.turnTreePathingIntoString(newTreePathing)] = this._groupCounter.counter;
+                }
+                this._generateReportHeaderSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, newTreePathing,subReportCounter, true, reportUUID);
             }
         }
     }
@@ -1760,10 +1854,10 @@ class FluentReportsGenerator {
      * @param reportUUID
      * @private
      */
-    _generateReportDetailSectionLayout(data, height, groupName, isGroup, reportUUID) {
+    _generateReportDetailSectionLayout(data, height, groupName, treePathing, subReportCounter, isGroup, reportUUID) {
         // TODO: We might want to consider letting Detail happen after sub-reports....
         if (typeof data.detail !== 'undefined') {
-            this._generateSection("Detail", height, 3, groupName, data.detail, reportUUID, data, isGroup);
+            this._generateSection("Detail", height, 3, groupName, treePathing, subReportCounter, data.detail, reportUUID, data, isGroup);
         }
 
 
@@ -1772,7 +1866,6 @@ class FluentReportsGenerator {
             data.subReports = [data.subReport];
             delete data.subReport;
         }
-
         if (typeof data.subReports !== 'undefined') {
             // Find our Parent Report; so that we can limit the data to children of it...
             let parent = this._parsedData.findByUUID(reportUUID);
@@ -1780,7 +1873,9 @@ class FluentReportsGenerator {
                 for (let i = 0; i < data.subReports.length; i++) {
                     const child = parent.findExactChildDataSet(data.subReports[i].data);
                     if (child !== null) {
-                        this._generateReportLayout(data.subReports[i], height, data.subReports[i].data, child.dataUUID);
+                        let subReportPathing = [].concat(treePathing);
+                        subReportPathing.push({type:"subReport",index:i,dataUUID:child.dataUUID});
+                        this._generateReportLayout(data.subReports[i], height, data.subReports[i].data, subReportPathing,  child.dataUUID);
                     } else {
                         // TODO: Do we need to modify the data to add a new fake Data Section to line this up?
                         console.log("Subreport: ", data.subReports[i].data, "-- no data set matches.");
@@ -1791,7 +1886,13 @@ class FluentReportsGenerator {
 
         if (typeof data.groupBy !== 'undefined') {
             for (let i = 0; i < data.groupBy.length; i++) {
-                this._generateReportDetailSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, true, reportUUID);
+                let newTreePathing = [].concat(treePathing);
+                newTreePathing.push({type:"groupBy",index:i,dataUUID:reportUUID});
+                if(!this._groupCounter[this.turnTreePathingIntoString(newTreePathing)]){
+                    this._groupCounter.counter++;
+                    this._groupCounter[this.turnTreePathingIntoString(newTreePathing)] = this._groupCounter.counter;
+                }
+                this._generateReportDetailSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn,newTreePathing, subReportCounter, true, reportUUID);
             }
         }
     }
@@ -1805,24 +1906,30 @@ class FluentReportsGenerator {
      * @param reportUUID
      * @private
      */
-    _generateReportFooterSectionLayout(data, height, groupName, isGroup, reportUUID) {
+    _generateReportFooterSectionLayout(data, height, groupName, treePathing, subReportCounter, isGroup, reportUUID) {
         if (typeof data.groupBy !== 'undefined') {
             for (let i = 0; i < data.groupBy.length; i++) {
-                this._generateReportFooterSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, true, reportUUID);
+                let newTreePathing = [].concat(treePathing);
+                newTreePathing.push({type:"groupBy",index:i,dataUUID:reportUUID})
+                if(!this._groupCounter[this.turnTreePathingIntoString(newTreePathing)]){
+                    this._groupCounter.counter++;
+                    this._groupCounter[this.turnTreePathingIntoString(newTreePathing)] = this._groupCounter.counter;
+                }
+                this._generateReportFooterSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, newTreePathing, subReportCounter,true, reportUUID);
             }
         }
         if (typeof data.footer !== 'undefined') {
-            this._generateSection("Footer", height, 2, groupName, data.footer, reportUUID, null, isGroup);
+            this._generateSection("Footer", height, 2, groupName, treePathing, subReportCounter, data.footer, reportUUID, null, isGroup);
         }
         if (typeof data.pageFooter !== 'undefined') {
-            this._generateSection("Page Footer", height, 2, groupName, data.pageFooter, reportUUID, null, isGroup);
+            this._generateSection("Page Footer", height, 2, groupName, treePathing, subReportCounter, data.pageFooter, reportUUID, null, isGroup);
         }
         if (typeof data.finalSummary !== 'undefined') {
-            this._generateSection("Final Summary", height, 2, groupName, data.finalSummary, reportUUID, null, isGroup);
+            this._generateSection("Final Summary", height, 2, groupName, treePathing, subReportCounter, data.finalSummary, reportUUID, null, isGroup);
         }
     }
 
-    _generateReportLayout(data, height, groupName, dataUUID) {
+    _generateReportLayout(data, height, groupName, treePathing, dataUUID) {
         let report = this._parsedData.findByUUID(dataUUID);
         if (report === null) {
             console.log("Report DATA does not match report layout!");
@@ -1830,22 +1937,31 @@ class FluentReportsGenerator {
             return;
         }
 
+        if(treePathing.length > 1) this._subReportCounter++;
+        let counter = this._subReportCounter;
         report.parseData(data);
 
         // Top most report
-        if (/* report.parent === null && */ report.calcs) {
-            this._mergeTotals(report.calcs);
+        if (report.calcs) {
+            this._mergeTotals(report.calcs,treePathing);
         }
-        this._generateReportHeaderSectionLayout(data, height, groupName, false, report.dataUUID);
-        this._generateReportDetailSectionLayout(data, height, groupName, false, report.dataUUID);
-        this._generateReportFooterSectionLayout(data, height, groupName, false, report.dataUUID);
+        this._generateReportHeaderSectionLayout(data, height, groupName, treePathing, counter, false, report.dataUUID);
+        this._generateReportDetailSectionLayout(data, height, groupName, treePathing, counter, false, report.dataUUID);
+        this._generateReportFooterSectionLayout(data, height, groupName, treePathing, counter, false, report.dataUUID);
     }
 
-    _mergeTotals(totals) {
+    _mergeTotals(totals,treePathing) {
         const totalsTypes = ['sum', 'min', 'max', 'average', 'count'];
         for (let i = 0; i < totalsTypes.length; i++) {
             if (totals[totalsTypes[i]]) {
-
+                for(let j =0;j<totals[totalsTypes[i]].length;j++){
+                    if(typeof totals[totalsTypes[i]][j] === "string") {
+                        totals[totalsTypes[i]][j] = {total: totals[totalsTypes[i]][j], treePathing: treePathing};
+                    }
+                    else if(typeof totals[totalsTypes[i]][j] === "object" && totals[totalsTypes[i]][j].total){
+                        totals[totalsTypes[i]][j] = {total: totals[totalsTypes[i]][j].total, treePathing: treePathing};
+                    }
+                }
                 if (!this._totals[totalsTypes[i]]) {
                     this._totals[totalsTypes[i]] = totals[totalsTypes[i]];
                 } else {
@@ -1855,15 +1971,17 @@ class FluentReportsGenerator {
         }
     }
 
-    _generateSection(title, height, type, groupName, sectionData, reportUUID, data = null, fromGroup = false) {
+    _generateSection(title, height, type, groupName, treePathing, subReportCounter, sectionData, reportUUID, data = null, fromGroup = false) {
         let section;
         section = new frSection(this, {
+            counters:{subReportCounter:subReportCounter,groupCounter:(this._groupCounter[this.turnTreePathingIntoString(treePathing)] || 0)},
             title: title,
             height: height,
             type: type,
             group: groupName,
             dataUUID: reportUUID,
-            fromGroup: fromGroup
+            fromGroup: fromGroup,
+            treePathing: treePathing,
         });
         if (data !== null && typeof data.dataType !== 'undefined') {
             section.dataType = data.dataType;
@@ -1899,6 +2017,15 @@ class FluentReportsGenerator {
         } else {
             this.UIBuilder.showProperties(obj, this._propertiesLayout, refresh);
         }
+    }
+
+    turnTreePathingIntoString(treePathing){
+        let treePathStr ="";
+        for(let i =0;i<treePathing.length;i++){
+            treePathStr+=treePathing[i].type+"["+treePathing[i].index+"].";
+        }
+        treePathStr = treePathStr.substring(0,treePathStr.length-1);
+        return treePathStr;
     }
 
 }
@@ -2118,10 +2245,12 @@ class frSection { // jshint ignore:line
         this._hasFunctions = false;
         this._calculations = [];
         this._hasCalculations = false;
+        this._treePathing = options && options.treePathing || [-1];
         this._pageBreak = options && options.pageBreak || "auto";
         this._fromGroup = options && options.fromGroup || false;
         this._dataUUID = options && options.dataUUID || null;
 
+        this._counters = options && options.counters || {suReportCounter:0,groupCounter:0}
         this._children = [];
 
         this._type = options && options.type || 0;
@@ -2496,10 +2625,10 @@ class frSection { // jshint ignore:line
         }
     }
 
-    _generateSave(results, reportSections) {
+    _generateSave(results, reportSectionsTemplates,savedSectionsDestinations)  {
+        let sectionDestination = this._report.turnTreePathingIntoString(this._treePathing);
         if (this._groupName !== '') {
             let group;
-
             // Is this a sub-report or Group?
             if (/* this._type === 3 && */ this._fromGroup === false) {
                 // Sub-report
@@ -2507,8 +2636,14 @@ class frSection { // jshint ignore:line
                     results.subReports = [];
                 }
 
-                const newReport = reportSections[this._dataUUID];
-                newReport.type = 'report';
+                let newReport;
+                if(savedSectionsDestinations[sectionDestination]){
+                    newReport = savedSectionsDestinations[sectionDestination];
+                }
+                else {
+                    newReport = shallowClone(reportSectionsTemplates[this._dataUUID]);
+                    newReport.type = 'report';
+                }
                 //if (!Array.isArray(newReport.detail)) { newReport.detail = []; }
 
 
@@ -2518,10 +2653,17 @@ class frSection { // jshint ignore:line
 
                 // Switch to the subReport
                 results = newReport;
-            } else {
+            }
+            else {
 
                 // Grab the Section of the Report this group is for
-                let groupSection = reportSections[this._dataUUID];
+                let groupSection;
+                if(savedSectionsDestinations[sectionDestination]){
+                    groupSection = savedSectionsDestinations[sectionDestination];
+                }
+                else {
+                    groupSection = shallowClone(reportSectionsTemplates[this._dataUUID]);
+                }
 
                 // Setup the array to hold the groups if it doesn't exist
                 if (!groupSection.groupBy) {
@@ -2593,6 +2735,14 @@ class frSection { // jshint ignore:line
 
         let group = results[type].children;
         this._saveSectionInfo(group);
+        if(sectionDestination) {
+            if(!savedSectionsDestinations.sectionDestinations[sectionDestination]) {
+                savedSectionsDestinations.sectionDestinations[sectionDestination] = {treePathing: this._treePathing, container: results};
+            }
+            else {
+                savedSectionsDestinations.sectionDestinations[sectionDestination].container[type] = results[type];
+            }
+        }
     }
 
     _saveSectionInfo(results) {
@@ -2725,10 +2875,10 @@ class frSection { // jshint ignore:line
     }
 
     _generateTitle() {
-        if (this._type === 3 /* Detail */) {
-            return this._title + (this._groupName !== '' ? " (" + this._groupName + ")" : '');
-        }
-        return this._title + (this._groupName !== '' ? " [" + this._groupName + "]" : '');
+        //this._type === 3 ensures details use [] while the rest use ().
+        let surrounder = this._type === 3 ? ["(",")"] : ["[","]"];
+        let type = this._treePathing[this._treePathing.length-1].type;
+        return (type === "subReport" ? "SubReport " + this._counters.subReportCounter : "Group " + this._counters.groupCounter) +"'s "+this._title+ (this._groupName !== '' ? " " + surrounder[0] + this._groupName + surrounder[1] : '')
     }
 
     appendChild(child) {
@@ -6887,7 +7037,7 @@ class UI { // jshint ignore:line
             }
 
             for (let i = 0; i < totals[key].length; i++) {
-                const option = new Option(totals[key][i]);
+                const option = new Option(totals[key][i].total);
                 group.appendChild(option);
                 // Copy variables
                 resultVariables[key].push(totals[key][i]);
