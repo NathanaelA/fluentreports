@@ -2,7 +2,7 @@
  * (c) 2019-2022, Master Technology
  * Licensed under the MIT license or contact me for a support, changes, enhancements.
  *
- * Any questions please feel free to put a issue up on github
+ * Any questions please feel free to put an issue up on GitHub
  *
  *                                                        Nathan@master-technology.com
  *************************************************************************************/
@@ -67,7 +67,7 @@ class FluentReportsGenerator {
          */
         this._frSections = [];
         this._subReportCounter = 0;
-        this._groupCounter = {counter:0};
+        this._groupCounter = {counter: 0};
 
         this._registeredFonts = [];
         this._includeData = false;
@@ -79,7 +79,6 @@ class FluentReportsGenerator {
         this._totals = {};
         this._functions = [];
         this._groupBys = [];
-        this._subReports = [];
 
         this._saveFunction = (value, done) => {
             done();
@@ -181,7 +180,6 @@ class FluentReportsGenerator {
         if (options.formatterFunctions) {
             this.setConfig('formatterFunctions', options.formatterFunctions);
         }
-
 
         this.buildUI(this._parentElement);
     }
@@ -560,11 +558,13 @@ class FluentReportsGenerator {
             case 'report':
                 this._parseReport(value);
                 break;
+
             case 'onfocus':
                 if (typeof value === 'function') {
                     this._onfocus = value;
                 }
                 break;
+
             case 'save':
                 if (typeof value === 'function') {
                     this._saveFunction = value;
@@ -824,8 +824,12 @@ class FluentReportsGenerator {
 
             // Create the Sections
             this._subReportCounter = 0;
-            this._groupCounter = {counter:0};
-            this._generateReportLayout(this._reportData, 57, "", [{type:"report",index:0,datatUUID:this._parsedData.dataUUID}], this._parsedData.dataUUID);
+            this._groupCounter = {counter: 0};
+            this._generateReportLayout(this._reportData, 57, "", [{
+                type: "report",
+                index: 0,
+                datatUUID: this._parsedData.dataUUID
+            }], this._parsedData.dataUUID);
         }
 
 
@@ -876,13 +880,13 @@ class FluentReportsGenerator {
      */
     _generateChildSave(dataSet, results) {
 
-        let newResult = {dataUUID: dataSet.dataUUID, dataType: dataSet.dataType, data: dataSet.data, type:"report"};
+        let newResult = {dataUUID: dataSet.dataUUID, dataType: dataSet.dataType, data: dataSet.data, type: "report"};
         if (!Array.isArray(results.subReports)) {
             results.subReports = [];
         }
         this._saveTemporaryData.reportTemplates[dataSet.dataUUID] = newResult;
 
-        // Loop thru the children of this child
+        // Loop through the children of this child
         let children = dataSet.childrenIndexed;
         for (let i = 0; i < children.length; i++) {
             this._generateChildSave(children[i], newResult);
@@ -896,7 +900,7 @@ class FluentReportsGenerator {
      */
     _generateSave() {
         // Setup our temporary data storage
-        this._saveTemporaryData = {reportTemplates: {},sectionDestinations:{}};
+        this._saveTemporaryData = {reportTemplates: {}, sectionDestinations: {}};
 
         const results = {type: 'report', dataUUID: this._parsedData.dataUUID, version: 2};
         this._copyProperties(this, results, ["fontSize", "autoPrint", "name", "paperSize", "paperOrientation"]);
@@ -929,60 +933,64 @@ class FluentReportsGenerator {
                     return element1.absoluteY === element2.absoluteY ? (element1.absoluteX - element2.absoluteX) : (element1.absoluteY - element2.absoluteY);
                 });
             }
-            this._frSections[i]._generateSave(results, this._saveTemporaryData.reportTemplates,this._saveTemporaryData);
+            this._frSections[i]._generateSave(results, this._saveTemporaryData.reportTemplates, this._saveTemporaryData);
         }
 
         // Save the Totals..{type: 'report', detail: [], dataUUID: }
         this._saveTotals();
         //Copy over subreports & groups from the _saveTemporaryData.sectionDestinations
         let sectionDestinationKeys = Object.keys(this._saveTemporaryData.sectionDestinations);
-        sectionDestinationKeys = sectionDestinationKeys.sort((a,b)=>{
-            if(a.length === b.length){}
+        sectionDestinationKeys = sectionDestinationKeys.sort((a, b) => {
             return a.length - b.length;
-        })
-        for(let i =0;i<sectionDestinationKeys.length;i++){
+        });
+        for (let i = 0; i < sectionDestinationKeys.length; i++) {
             let section = this._saveTemporaryData.sectionDestinations[sectionDestinationKeys[i]];
             let destination = null;
             let quit = false;
-            for(let j =0;j<section.treePathing.length;j++){
-                let treePath = section.treePathing[j]
-                if(quit) {
+            for (let j = 0; j < section.treePathing.length; j++) {
+                let treePath = section.treePathing[j];
+                if (quit) {
                     break;
                 }
-                switch(treePath.type){
+                switch (treePath.type) {
                     case "report":
                         destination = results;
                         if (j + 1 === section.treePathing.length) {
-                            for(let q in section.container){
-                                results[q] = section.container[q];
+                            for (let q in section.container) {
+                                if (section.container.hasOwnProperty(q)) {
+                                    results[q] = section.container[q];
+                                }
                             }
                         }
                         break;
                     case "groupBy":
-                        if(destination){
+                        if (destination) {
                             if (j + 1 === section.treePathing.length) {
-                                if (!destination.groupBy) destination.groupBy = [];
+                                if (!destination.groupBy) {
+                                    destination.groupBy = [];
+                                }
                                 destination.groupBy[treePath.index] = section.container;
 
-                            }
-                            else{
+                            } else {
                                 if (!destination.groupBy) {
                                     let continueOn = false;
-                                    for(let q = 0;q<this._groupBys.length;q++){
-                                        if(this._groupBys[q].dataUUID === treePath.dataUUID){
+                                    for (let q = 0; q < this._groupBys.length; q++) {
+                                        if (this._groupBys[q].dataUUID === treePath.dataUUID) {
                                             continueOn = true;
                                             destination.groupBy = [];
-                                            destination.groupBy[treePath.index] = {type:"group",groupOn:this._groupBys[q].name};
+                                            destination.groupBy[treePath.index] = {
+                                                type: "group",
+                                                groupOn: this._groupBys[q].name
+                                            };
                                             destination = destination.groupBy[treePath.index];
                                             break;
                                         }
                                     }
-                                    if(!continueOn) {
+                                    if (!continueOn) {
                                         quit = true;
                                         break;
                                     }
-                                }
-                                else{
+                                } else {
                                     destination = destination.groupBy[treePath.index];
                                 }
 
@@ -991,20 +999,16 @@ class FluentReportsGenerator {
                         break;
                     case "subReports":
                     case "subReport":
-                        if (!destination.subReports) {
-                            destination.subReports = [];
-                        }
-                        if(destination) {
-                            if (!destination.subReports) destination.subReports = [];
+                        if (destination) {
+                            if (!destination.subReports) { destination.subReports = []; }
                             if (j + 1 === section.treePathing.length) {
                                 destination.subReports[treePath.index] = section.container;
-                            }
-                            else{
+                            } else {
                                 if (!destination.subReports[treePath.index]) {
                                     destination.subReports[treePath.index] = {
-                                        data:this._parsedData.findByUUID(treePath.dataUUID).data,
+                                        data: this._parsedData.findByUUID(treePath.dataUUID).data,
                                         dataType: 'parent'
-                                    }
+                                    };
                                 }
                                 destination = destination.subReports[treePath.index];
                             }
@@ -1105,40 +1109,38 @@ class FluentReportsGenerator {
 
     /**
      * Saves any total information
-     * @param dest
-     * @param dataUUID
      * @private
      */
     _saveTotals() {
         const totals = this.reportTotals;
-        for(let key in totals){
+        for (let key in totals) {
             if (!totals.hasOwnProperty(key)) {
                 continue;
             }
-            for(let i=0;i<totals[key].length;i++){
+            for (let i = 0; i < totals[key].length; i++) {
                 let dataUUID = 0;
-                for(let j =0;j<totals[key][i].treePathing.length;j++){
-                    if(totals[key][i].treePathing[j].dataUUID){
+                for (let j = 0; j < totals[key][i].treePathing.length; j++) {
+                    if (totals[key][i].treePathing[j].dataUUID) {
                         dataUUID = totals[key][i].treePathing[j].dataUUID;
                     }
                 }
-                if(!dataUUID) {
+                if (!dataUUID) {
                     continue;
                 }
                 const fields = this._parsedData.findByUUID(dataUUID).fields;
-                if(fields.indexOf(totals[key][i].total) >= 0){
+                if (fields.indexOf(totals[key][i].total) >= 0) {
                     const destinationStr = this.turnTreePathingIntoString(totals[key][i].treePathing);
-                    if(!this._saveTemporaryData.sectionDestinations[destinationStr]){
-                        this._saveTemporaryData.sectionDestinations[destinationStr] = {treePathing:totals[key][i].treePathing};
+                    if (!this._saveTemporaryData.sectionDestinations[destinationStr]) {
+                        this._saveTemporaryData.sectionDestinations[destinationStr] = {treePathing: totals[key][i].treePathing};
                     }
-                    if(!this._saveTemporaryData.sectionDestinations[destinationStr].container){
+                    if (!this._saveTemporaryData.sectionDestinations[destinationStr].container) {
                         this._saveTemporaryData.sectionDestinations[destinationStr].container = this._saveTemporaryData.reportTemplates[dataUUID];
                     }
-                    if(!this._saveTemporaryData.sectionDestinations[destinationStr].container.calcs){
+                    if (!this._saveTemporaryData.sectionDestinations[destinationStr].container.calcs) {
                         this._saveTemporaryData.sectionDestinations[destinationStr].container.calcs = {};
                     }
-                    if(!this._saveTemporaryData.sectionDestinations[destinationStr].container.calcs[key]) {
-                        this._saveTemporaryData.sectionDestinations[destinationStr].container.calcs[key] = []
+                    if (!this._saveTemporaryData.sectionDestinations[destinationStr].container.calcs[key]) {
+                        this._saveTemporaryData.sectionDestinations[destinationStr].container.calcs[key] = [];
                     }
                     this._saveTemporaryData.sectionDestinations[destinationStr].container.calcs[key].push(totals[key][i].total);
                 }
@@ -1214,7 +1216,6 @@ class FluentReportsGenerator {
         this._calculations = [];
         this._functions = [];
         this._groupBys = [];
-        this._subReports = [];
         this._registeredFonts = [];
 
         this.UIBuilder.clearArea(this._reportLayout);
@@ -1255,7 +1256,7 @@ class FluentReportsGenerator {
         this._frame.style.position = "relative";
         this._frame.style.height = (this._parentElement.clientHeight < 300 ? 300 : this._parentElement.clientHeight) + "px";
 
-        // Prefix the entire sub-tree with our name space for CSS resolution
+        // Prefix the entire subtree with our name space for CSS resolution
         this._frame.classList.add("fluentReports");
         this._parentElement.appendChild(this._frame);
 
@@ -1363,6 +1364,7 @@ class FluentReportsGenerator {
         this._generateInterface();
     }
 
+    // noinspection SillyAssignmentJS
     /**
      * Fixes up the Size of Page Line Location
      * @private
@@ -1384,10 +1386,11 @@ class FluentReportsGenerator {
             this._paperWidthLayout.style.display = "";
         }
 
-        //GO through all elements, find the ones with an alignment NOT set to none
-        //and update their preview position to match up with page size.
+        // GO through all elements, find the ones with an alignment NOT set to none
+        // and update their preview position to match up with page size.
         for (let i = 0; i < this.frElements.length; i++) {
             if (typeof this.frElements[i].align === "string" && this.frElements[i].align.toLowerCase() !== "none") {
+                // noinspection SillyAssignmentJS
                 this.frElements[i].align = this.frElements[i].align; //set it to itself, to trigger it's built in updater
             }
         }
@@ -1508,8 +1511,12 @@ class FluentReportsGenerator {
         if (typeof window.PlainDraggable !== 'undefined') {
             this._generateToolBarLayout();
             this._subReportCounter = 0;
-            this._groupCounter = {counter:0};
-            this._generateReportLayout(this._reportData, 57, "",[{type:"report",index:0,datatUUID:this._parsedData.dataUUID}], this._parsedData.dataUUID);
+            this._groupCounter = {counter: 0};
+            this._generateReportLayout(this._reportData, 57, "", [{
+                type: "report",
+                index: 0,
+                datatUUID: this._parsedData.dataUUID
+            }], this._parsedData.dataUUID);
             this._reportSettings();
             this._resetPaperSizeLocation();
         } else {
@@ -1519,31 +1526,8 @@ class FluentReportsGenerator {
         }
     }
 
-    _openGroupings() {
-        //groupBy
-        this.UIBuilder.groupsBrowse(this._groupBys, this, (groups) => {
-            let changed = false;
-            if (this._groupBys.length === groups.length) {
-                for (let i = 0; i < this._groupBys.length; i++) {
-                    if (this._groupBys[i].dataUUID !== groups[i].dataUUID) {
-                        changed = true;
-                        break;
-                    }
-                }
-            } else {
-                changed = true;
-            }
-
-            if (changed) {
-                this._groupBys = groups;
-                const newReport = this._generateSave();
-                this._parseReport(newReport);
-            }
-        });
-    }
-
     _openSections() {
-        // Generate the current layout report so we can easily parse it in the sectionBrowse
+        // Generate the current layout report, so we can easily parse it in the sectionBrowse
         let currentReport = this._generateSave();
         this.UIBuilder.sectionBrowse(currentReport, (updateReport) => {
             this._parseReport(updateReport);
@@ -1802,6 +1786,8 @@ class FluentReportsGenerator {
      * @param data
      * @param height
      * @param groupName
+     * @param treePathing
+     * @param subReportCounter
      * @param isGroup
      * @param reportUUID
      * @private
@@ -1826,18 +1812,18 @@ class FluentReportsGenerator {
                     }
                 }
                 let newTreePathing = [].concat(treePathing);
-                newTreePathing.push({type:"groupBy",index:i,dataUUID:reportUUID})
+                newTreePathing.push({type: "groupBy", index: i, dataUUID: reportUUID});
                 if (!found) {
                     this._groupBys.push({name: data.groupBy[i].groupOn, dataUUID: reportUUID});
                     if (data.groupBy[i].calcs) {
-                        this._mergeTotals(data.groupBy[i].calcs,newTreePathing);
+                        this._mergeTotals(data.groupBy[i].calcs, newTreePathing);
                     }
                 }
-                if(!this._groupCounter[this.turnTreePathingIntoString(newTreePathing)]){
+                if (!this._groupCounter[this.turnTreePathingIntoString(newTreePathing)]) {
                     this._groupCounter.counter++;
                     this._groupCounter[this.turnTreePathingIntoString(newTreePathing)] = this._groupCounter.counter;
                 }
-                this._generateReportHeaderSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, newTreePathing,subReportCounter, true, reportUUID);
+                this._generateReportHeaderSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, newTreePathing, subReportCounter, true, reportUUID);
             }
         }
     }
@@ -1847,6 +1833,8 @@ class FluentReportsGenerator {
      * @param data
      * @param height
      * @param groupName
+     * @param treePathing
+     * @param subReportCounter
      * @param isGroup
      * @param reportUUID
      * @private
@@ -1871,8 +1859,8 @@ class FluentReportsGenerator {
                     const child = parent.findExactChildDataSet(data.subReports[i].data);
                     if (child !== null) {
                         let subReportPathing = [].concat(treePathing);
-                        subReportPathing.push({type:"subReport",index:i,dataUUID:child.dataUUID});
-                        this._generateReportLayout(data.subReports[i], height, data.subReports[i].data, subReportPathing,  child.dataUUID);
+                        subReportPathing.push({type: "subReport", index: i, dataUUID: child.dataUUID});
+                        this._generateReportLayout(data.subReports[i], height, data.subReports[i].data, subReportPathing, child.dataUUID);
                     } else {
                         // TODO: Do we need to modify the data to add a new fake Data Section to line this up?
                         console.log("Subreport: ", data.subReports[i].data, "-- no data set matches.");
@@ -1884,12 +1872,12 @@ class FluentReportsGenerator {
         if (typeof data.groupBy !== 'undefined') {
             for (let i = 0; i < data.groupBy.length; i++) {
                 let newTreePathing = [].concat(treePathing);
-                newTreePathing.push({type:"groupBy",index:i,dataUUID:reportUUID});
-                if(!this._groupCounter[this.turnTreePathingIntoString(newTreePathing)]){
+                newTreePathing.push({type: "groupBy", index: i, dataUUID: reportUUID});
+                if (!this._groupCounter[this.turnTreePathingIntoString(newTreePathing)]) {
                     this._groupCounter.counter++;
                     this._groupCounter[this.turnTreePathingIntoString(newTreePathing)] = this._groupCounter.counter;
                 }
-                this._generateReportDetailSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn,newTreePathing, subReportCounter, true, reportUUID);
+                this._generateReportDetailSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, newTreePathing, subReportCounter, true, reportUUID);
             }
         }
     }
@@ -1899,6 +1887,8 @@ class FluentReportsGenerator {
      * @param data
      * @param height
      * @param groupName
+     * @param treePathing
+     * @param subReportCounter
      * @param isGroup
      * @param reportUUID
      * @private
@@ -1907,12 +1897,12 @@ class FluentReportsGenerator {
         if (typeof data.groupBy !== 'undefined') {
             for (let i = 0; i < data.groupBy.length; i++) {
                 let newTreePathing = [].concat(treePathing);
-                newTreePathing.push({type:"groupBy",index:i,dataUUID:reportUUID})
-                if(!this._groupCounter[this.turnTreePathingIntoString(newTreePathing)]){
+                newTreePathing.push({type: "groupBy", index: i, dataUUID: reportUUID});
+                if (!this._groupCounter[this.turnTreePathingIntoString(newTreePathing)]) {
                     this._groupCounter.counter++;
                     this._groupCounter[this.turnTreePathingIntoString(newTreePathing)] = this._groupCounter.counter;
                 }
-                this._generateReportFooterSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, newTreePathing, subReportCounter,true, reportUUID);
+                this._generateReportFooterSectionLayout(data.groupBy[i], height, data.groupBy[i].groupOn, newTreePathing, subReportCounter, true, reportUUID);
             }
         }
         if (typeof data.footer !== 'undefined') {
@@ -1934,28 +1924,27 @@ class FluentReportsGenerator {
             return;
         }
 
-        if(treePathing.length > 1) this._subReportCounter++;
+        if (treePathing.length > 1) { this._subReportCounter++; }
         let counter = this._subReportCounter;
         report.parseData(data);
 
         // Top most report
         if (report.calcs) {
-            this._mergeTotals(report.calcs,treePathing);
+            this._mergeTotals(report.calcs, treePathing);
         }
         this._generateReportHeaderSectionLayout(data, height, groupName, treePathing, counter, false, report.dataUUID);
         this._generateReportDetailSectionLayout(data, height, groupName, treePathing, counter, false, report.dataUUID);
         this._generateReportFooterSectionLayout(data, height, groupName, treePathing, counter, false, report.dataUUID);
     }
 
-    _mergeTotals(totals,treePathing) {
+    _mergeTotals(totals, treePathing) {
         const totalsTypes = ['sum', 'min', 'max', 'average', 'count'];
         for (let i = 0; i < totalsTypes.length; i++) {
             if (totals[totalsTypes[i]]) {
-                for(let j =0;j<totals[totalsTypes[i]].length;j++){
-                    if(typeof totals[totalsTypes[i]][j] === "string") {
+                for (let j = 0; j < totals[totalsTypes[i]].length; j++) {
+                    if (typeof totals[totalsTypes[i]][j] === "string") {
                         totals[totalsTypes[i]][j] = {total: totals[totalsTypes[i]][j], treePathing: treePathing};
-                    }
-                    else if(typeof totals[totalsTypes[i]][j] === "object" && totals[totalsTypes[i]][j].total){
+                    } else if (typeof totals[totalsTypes[i]][j] === "object" && totals[totalsTypes[i]][j].total) {
                         totals[totalsTypes[i]][j] = {total: totals[totalsTypes[i]][j].total, treePathing: treePathing};
                     }
                 }
@@ -1971,7 +1960,10 @@ class FluentReportsGenerator {
     _generateSection(title, height, type, groupName, treePathing, subReportCounter, sectionData, reportUUID, data = null, fromGroup = false) {
         let section;
         section = new frSection(this, {
-            counters:{subReportCounter:subReportCounter,groupCounter:(this._groupCounter[this.turnTreePathingIntoString(treePathing)] || 0)},
+            counters: {
+                subReportCounter: subReportCounter,
+                groupCounter: (this._groupCounter[this.turnTreePathingIntoString(treePathing)] || 0)
+            },
             title: title,
             height: height,
             type: type,
@@ -2016,12 +2008,12 @@ class FluentReportsGenerator {
         }
     }
 
-    turnTreePathingIntoString(treePathing){
-        let treePathStr ="";
-        for(let i =0;i<treePathing.length;i++){
-            treePathStr+=treePathing[i].type+"["+treePathing[i].index+"].";
+    turnTreePathingIntoString(treePathing) {
+        let treePathStr = "";
+        for (let i = 0; i < treePathing.length; i++) {
+            treePathStr += treePathing[i].type + "[" + treePathing[i].index + "].";
         }
-        treePathStr = treePathStr.substring(0,treePathStr.length-1);
+        treePathStr = treePathStr.substring(0, treePathStr.length - 1);
         return treePathStr;
     }
 
@@ -2104,10 +2096,12 @@ class frReportData { // jshint ignore:line
         return current;
     }
 
+    // noinspection JSUnusedGlobalSymbols
     get linkedToReport() {
         return this._linkedToReport;
     }
 
+    // noinspection JSUnusedGlobalSymbols
     set linkedToReport(val) {
         this._linkedToReport = !!val;
     }
@@ -2116,39 +2110,6 @@ class frReportData { // jshint ignore:line
         this._copyProperties(data, this, ["type", "dataType", "data", "calcs"]);
         this._linkedToReport = true;
     }
-
-    findMatchingLayoutInfo(layoutData, checkDataUUID = null) {
-        const curDataUUID = checkDataUUID || this.dataUUID;
-        if (layoutData.dataUUID === curDataUUID) {
-            return layoutData;
-        }
-        if (Array.isArray(layoutData.subReports)) {
-            for (let i = 0; i < layoutData.subReports.length; i++) {
-                const result = this.findMatchingLayoutInfo(layoutData.subReports[i], curDataUUID);
-                if (result) {
-                    return result;
-                }
-            }
-        }
-        return null;
-    }
-
-
-    /* _findDataSet(name) {
-        if (this._name === name) { return this; }
-
-        let result = null;
-        for (let i=0;i<this._children.length;i++) {
-            result = this._children._findDataSet(name);
-            if (result != null) { return result; }
-        }
-        return result;
-    } */
-
-    /*    findDataSet(name) {
-            let current = this.primary;
-            return current._findDataSet(name);
-        } */
 
     /**
      * Searches only the direct children of this dataset
@@ -2247,7 +2208,7 @@ class frSection { // jshint ignore:line
         this._fromGroup = options && options.fromGroup || false;
         this._dataUUID = options && options.dataUUID || null;
 
-        this._counters = options && options.counters || {suReportCounter:0,groupCounter:0}
+        this._counters = options && options.counters || {suReportCounter: 0, groupCounter: 0};
         this._children = [];
 
         this._type = options && options.type || 0;
@@ -2600,11 +2561,11 @@ class frSection { // jshint ignore:line
     }
 
     _resetTops(startId = 0) {
-        // We need to temporarily increase the report layout so we can move sections without shrinking any of them...
+        // We need to temporarily increase the report layout, so we can move sections without shrinking any of them...
         let curHeight = parseInt(this._report.reportLayout.clientHeight, 10);
         this._report.reportLayout.style.height = (curHeight + 1000) + "px";
 
-        // Lets start moving sections since we grew one of them...
+        // Let's start moving sections since we grew one of them...
         let top = this.frSections[startId].bottom;
         const len = this.frSections.length;
         for (let i = startId + 1; i < len; i++) {
@@ -2622,7 +2583,7 @@ class frSection { // jshint ignore:line
         }
     }
 
-    _generateSave(results, reportSectionsTemplates,savedSectionsDestinations)  {
+    _generateSave(results, reportSectionsTemplates, savedSectionsDestinations) {
         let sectionDestination = this._report.turnTreePathingIntoString(this._treePathing);
         if (this._groupName !== '') {
             let group;
@@ -2634,10 +2595,9 @@ class frSection { // jshint ignore:line
                 }
 
                 let newReport;
-                if(savedSectionsDestinations[sectionDestination]){
+                if (savedSectionsDestinations[sectionDestination]) {
                     newReport = savedSectionsDestinations[sectionDestination];
-                }
-                else {
+                } else {
                     newReport = shallowClone(reportSectionsTemplates[this._dataUUID]);
                     newReport.type = 'report';
                 }
@@ -2650,19 +2610,17 @@ class frSection { // jshint ignore:line
 
                 // Switch to the subReport
                 results = newReport;
-            }
-            else {
+            } else {
 
                 // Grab the Section of the Report this group is for
                 let groupSection;
-                if(savedSectionsDestinations[sectionDestination]){
+                if (savedSectionsDestinations[sectionDestination]) {
                     groupSection = savedSectionsDestinations[sectionDestination];
-                }
-                else {
+                } else {
                     groupSection = shallowClone(reportSectionsTemplates[this._dataUUID]);
                 }
 
-                // Setup the array to hold the groups if it doesn't exist
+                // Set up the array to hold the groups if it doesn't exist
                 if (!groupSection.groupBy) {
                     groupSection.groupBy = [];
                 }
@@ -2732,11 +2690,13 @@ class frSection { // jshint ignore:line
 
         let group = results[type].children;
         this._saveSectionInfo(group);
-        if(sectionDestination) {
-            if(!savedSectionsDestinations.sectionDestinations[sectionDestination]) {
-                savedSectionsDestinations.sectionDestinations[sectionDestination] = {treePathing: this._treePathing, container: results};
-            }
-            else {
+        if (sectionDestination) {
+            if (!savedSectionsDestinations.sectionDestinations[sectionDestination]) {
+                savedSectionsDestinations.sectionDestinations[sectionDestination] = {
+                    treePathing: this._treePathing,
+                    container: results
+                };
+            } else {
                 savedSectionsDestinations.sectionDestinations[sectionDestination].container[type] = results[type];
             }
         }
@@ -2873,9 +2833,9 @@ class frSection { // jshint ignore:line
 
     _generateTitle() {
         //this._type === 3 ensures details use [] while the rest use ().
-        let surrounder = this._type === 3 ? ["(",")"] : ["[","]"];
-        let type = this._treePathing[this._treePathing.length-1].type;
-        return (type === "subReport" ? "SubReport " + this._counters.subReportCounter : "Group " + this._counters.groupCounter) +"'s "+this._title+ (this._groupName !== '' ? " " + surrounder[0] + this._groupName + surrounder[1] : '')
+        let surrounder = this._type === 3 ? ["(", ")"] : ["[", "]"];
+        let type = this._treePathing[this._treePathing.length - 1].type;
+        return (type === "subReport" ? "SubReport " + this._counters.subReportCounter : "Group " + this._counters.groupCounter) + "'s " + this._title + (this._groupName !== '' ? " " + surrounder[0] + this._groupName + surrounder[1] : '');
     }
 
     appendChild(child) {
@@ -3773,12 +3733,12 @@ class frElement { // jshint ignore:line
             }
         }
 
-        //If it's clicking a brand new element.
+        //If it's clicking a brand-new element.
         if (multiSelect) {
             //If there is currently an item selected, and that item(s) parent does not match the clicked item's parent.
             let uuidToMatch = true;
             if (this._report.currentSelected.length) {
-                //This is to check in case the user selected multiple elements, then dragged some of the elements out.
+                //This is to check in case the user selected multiple elements, then dragged some elements out.
                 //If this is the case, then no item can be added to multi select due to not know which section to allow selecting elements.
                 uuidToMatch = this._parent.uuid;
                 for (let i = 0; i < this._report.currentSelected.length; i++) {
@@ -3868,7 +3828,7 @@ class frElement { // jshint ignore:line
                     if (curProp.default === this[curProp.field]) {
                         continue;
                     }
-                    // Check to see if it is a default.object and compare it's defaults
+                    // Check to see if it is a default.object and compare its defaults
                     if (this[curProp.field].object) {
                         let isDefault = true;
                         for (let key in curProp.default) {
@@ -5742,8 +5702,12 @@ class frBandElement extends frPrint { // jshint ignore:line
         super._saveProperties(props);
         props.type = "band";
         props.fields = [];
-        if (!props.settings) { props.settings = {}; }
-        if (this.dash) { props.settings.dash = 1; }
+        if (!props.settings) {
+            props.settings = {};
+        }
+        if (this.dash) {
+            props.settings.dash = 1;
+        }
         let defaultDashed = props.settings.dash;
         let defaultBorder = props.settings.border;
 
@@ -5771,7 +5735,7 @@ class frBandElement extends frPrint { // jshint ignore:line
                     band.border = defaultBorder;
                 }
             } else if (defaultBorder) {
-                // If we don't have a band.border and we have a defaultBorder, we use the defaultBorder on this band cell...
+                // If we don't have a band.border, and we have a defaultBorder, we use the defaultBorder on this band cell...
                 band.border = defaultBorder;
             }
 
@@ -6005,296 +5969,6 @@ class UI { // jshint ignore:line
         });
     }
 
-    groupsBrowse(groups, report, ok, cancel) {
-        const body = document.createElement('div');
-        const span = document.createElement('span');
-        span.innerText = "Group By:";
-        body.appendChild(span);
-        body.appendChild(document.createElement('br'));
-        const selectDiv = document.createElement('div');
-
-        const select = document.createElement('select');
-        select.style.border = "solid black 1px";
-        select.style.margin = "5px";
-        select.style.left = "5px";
-        select.style.right = "5px";
-        select.style.height = "200px";
-        select.style.width = "200px";
-        select.size = 10;
-        let resultVariables = [];
-        for (let i = 0; i < groups.length; i++) {
-            resultVariables.push(shallowClone(groups[i]));
-        }
-        let tempFields = report.reportFields;
-        const tempOptGroups = {};
-
-        let group = document.createElement("optgroup");
-        group.label = "Primary";
-        tempOptGroups[tempFields.dataUUID] = group;
-        let tempOptUUIDS = [tempFields.dataUUID];
-        select.appendChild(group);
-
-        // TODO: Do we want to allow us to go more than two levels deep, this makes it a lot more confusing...
-        // We can change this to a recursive function, if we need more than two levels...
-        for (let key in tempFields.children) {
-            if (!tempFields.children.hasOwnProperty(key)) {
-                continue;
-            }
-            const group = document.createElement("optgroup");
-            group.label = tempFields.children[key].name;
-            tempOptGroups[tempFields.children[key].dataUUID] = group;
-            tempOptUUIDS.push(tempFields.children[key].dataUUID);
-            select.appendChild(group);
-            for (let key2 in tempFields.children[key].children) {
-                if (!tempFields.children[key].children.hasOwnProperty(key2)) {
-                    continue;
-                }
-                const group2 = document.createElement("optgroup");
-                group2.label = group.label + ">" + tempFields.children[key].children[key2].name;
-                tempOptGroups[tempFields.children[key].children[key2].dataUUID] = group2;
-                tempOptUUIDS.push(tempFields.children[key].children[key2].dataUUID);
-                select.appendChild(group2);
-            }
-        }
-
-        const rebuildGroups = () => {
-            // Clear all Select->Options
-            for (let key in tempOptGroups) {
-                if (tempOptGroups.hasOwnProperty(key)) {
-                    while (tempOptGroups[key].children.length) {
-                        tempOptGroups[key].removeChild(tempOptGroups[key].children[0]);
-                    }
-                }
-            }
-
-            // Recreate all Select Options
-            for (let i = 0; i < resultVariables.length; i++) {
-                let dUUID = resultVariables[i].dataUUID;
-                const optGroup = tempOptGroups[dUUID];
-                const option = new Option(resultVariables[i].name);
-                option.dataUUID = dUUID;
-                optGroup.appendChild(option);
-            }
-        };
-
-        rebuildGroups();
-
-        selectDiv.appendChild(select);
-        selectDiv.style.display = 'inline-block';
-        body.appendChild(selectDiv);
-
-
-        let addButtons = this.createButtons(["Add", "Edit", "Delete", "\uE83B", "\uE83C"], {
-            width: "100px",
-            marginTop: "5px"
-        });
-        let addBtnContainer = document.createElement('div');
-        //addBtnContainer.style.display = ''
-        addBtnContainer.style.padding = "5px";
-        addBtnContainer.style.display = 'inline-block';
-        addBtnContainer.style.verticalAlign = "top";
-
-        // Add Up/Down
-        addButtons[3].style.width = "47px";
-        addButtons[4].style.width = "47px";
-        addBtnContainer.appendChild(addButtons[3]);
-        addBtnContainer.appendChild(addButtons[4]);
-        addBtnContainer.appendChild(document.createElement('br'));
-        addBtnContainer.appendChild(document.createElement('br'));
-
-        for (let i = 0; i < 3; i++) {
-            addBtnContainer.appendChild(addButtons[i]);
-            addBtnContainer.appendChild(document.createElement('br'));
-        }
-
-        body.appendChild(addBtnContainer);
-
-
-        // Move Up
-        addButtons[3].addEventListener("click", () => {
-            if (select.selectedIndex <= 0) {
-                return;
-            }
-            let curIndex = select.selectedIndex;
-            let curGroup = resultVariables[curIndex];
-            let priorGroup = resultVariables[curIndex - 1];
-            if (priorGroup.dataUUID !== curGroup.dataUUID) {
-                return;
-            }
-
-            // Move names in groups...
-            let temp = priorGroup.name;
-            priorGroup.name = curGroup.name;
-            curGroup.name = temp;
-
-            rebuildGroups();
-            select.selectedIndex = curIndex - 1;
-        });
-
-        // Move Down
-        addButtons[4].addEventListener("click", () => {
-            const curIndex = select.selectedIndex;
-            if (curIndex < 0) {
-                return;
-            }
-
-            if (curIndex >= resultVariables.length - 1) {
-                return;
-            }
-
-            let curGroup = resultVariables[curIndex];
-            let nextGroup = resultVariables[curIndex + 1];
-            if (nextGroup.dataUUID !== curGroup.dataUUID) {
-                return;
-            }
-
-            // Move names in groups...
-            let temp = nextGroup.name;
-            nextGroup.name = curGroup.name;
-            curGroup.name = temp;
-
-            rebuildGroups();
-            select.selectedIndex = curIndex + 1;
-        });
-
-
-        // Add
-        addButtons[0].addEventListener("click", () => {
-
-            const fields = this.createDataSelect(report, null, 3);
-            this.dataFieldEditor(fields, (name, idx, dataUUID) => {
-                if (name != null && name !== '') {
-
-                    for (let i = 0; i < resultVariables.length; i++) {
-                        if (resultVariables[i].dataUUID === dataUUID && resultVariables[i].name === name) {
-                            // Already exists, we don't have to re-add it!
-                            return;
-                        }
-                    }
-
-                    // If this value wasn't found; we need to add it
-                    const opt = new Option(name);
-                    opt.dataUUID = dataUUID;
-                    let data = {name: name, dataUUID: dataUUID};
-
-                    // Grab the length before adding.
-                    let count = resultVariables.length;
-                    // Either no records, or this matches the last UUID group
-                    if (count === 0 || tempOptUUIDS[tempOptUUIDS.length - 1] === dataUUID) {
-                        resultVariables.push(data);
-                    } else {
-
-                        // No match for other groups from the same dataset...
-                        let offset = 0;
-                        for (let i = 0; i < tempOptUUIDS.length; i++) {
-                            const group = tempOptGroups[tempOptUUIDS[i]];
-                            offset += group.children.length;
-                            if (tempOptUUIDS[i] === dataUUID) {
-                                break;
-                            }
-                        }
-
-                        // Now that we know where it belongs, lets add it where it goes in the resultVariables
-                        if (offset === 0) {
-                            resultVariables.unshift(data);
-                        } else if (offset === resultVariables.length) {
-                            resultVariables.push(data);
-                        } else {
-                            let temp = resultVariables.splice(0, offset);
-                            temp.push(data);
-                            resultVariables = temp.concat(resultVariables);
-                        }
-
-                    }
-                    tempOptGroups[dataUUID].appendChild(opt);
-                }
-            });
-        });
-
-        // Edit
-        addButtons[1].addEventListener("click", () => {
-            if (select.selectedIndex < 0) {
-                return;
-            }
-            const curIndex = select.selectedIndex;
-            const fields = this.createDataSelect(report, {
-                value: select.value,
-                dataUUID: select.options[curIndex].dataUUID
-            }, 3);
-
-            this.dataFieldEditor(fields, (name, idx, dataUUID) => {
-                let curGroup = resultVariables[curIndex];
-
-                // Check to see if already exists; if so -- we cancel the change...
-                for (let i = 0; i < resultVariables.length; i++) {
-                    if (resultVariables[i].dataUUID === dataUUID && resultVariables[i].name === name) {
-                        return;
-                    }
-                }
-
-                if (dataUUID !== curGroup.dataUUID) {
-                    resultVariables.splice(curIndex, 1);
-                    curGroup.dataUUID = dataUUID;
-                    curGroup.name = name;
-
-                    // No match for other groups from the same dataset...
-                    let offset = 0;
-                    for (let i = 0; i < tempOptUUIDS.length; i++) {
-                        const group = tempOptGroups[tempOptUUIDS[i]];
-                        offset += group.children.length;
-                        if (tempOptUUIDS[i] === dataUUID) {
-                            break;
-                        }
-                    }
-
-                    // Now that we know where it belongs, lets add it where it goes in the resultVariables
-                    if (offset === 0) {
-                        resultVariables.unshift(curGroup);
-                    } else if (offset === resultVariables.length) {
-                        resultVariables.push(curGroup);
-                    } else {
-                        let temp = resultVariables.splice(0, offset);
-                        temp.push(curGroup);
-                        resultVariables = temp.concat(resultVariables);
-                    }
-                } else {
-                    resultVariables[curIndex].name = name;
-                }
-                rebuildGroups();
-            });
-        });
-
-        // Delete
-        addButtons[2].addEventListener("click", () => {
-            if (select.selectedIndex >= 0) {
-                resultVariables.splice(select.selectedIndex, 1);
-                rebuildGroups();
-            }
-        });
-
-
-        let buttons = this.createButtons(["Ok", "Cancel"]);
-        let btnContainer = document.createElement('div');
-        btnContainer.appendChild(buttons[0]);
-        btnContainer.appendChild(buttons[1]);
-        body.appendChild(btnContainer);
-
-        let d = new Dialog("Group data by", body, this.hostElement);
-
-        buttons[0].addEventListener('click', () => {
-            d.hide();
-            if (typeof ok === 'function') {
-                ok(resultVariables);
-            }
-        });
-        buttons[1].addEventListener('click', () => {
-            d.hide();
-            if (typeof cancel === 'function') {
-                cancel();
-            }
-        });
-    }
-
     _preventDefault(evt) {
         evt.preventDefault();
         return false;
@@ -6318,17 +5992,17 @@ class UI { // jshint ignore:line
         return spacer;
     }
 
-    sectionBrowse (reportLayout, ok, cancel) {
+    sectionBrowse(reportLayout, ok, cancel) {
         const body = document.createElement('div');
         const blockLeft = document.createElement('div');
-        blockLeft.classList.add("frSectionEditorTreeView")
+        blockLeft.classList.add("frSectionEditorTreeView");
         const blockLeftBox = document.createElement("div");
-        blockLeftBox.classList.add("frSectionEditorTreeViewContainer")
+        blockLeftBox.classList.add("frSectionEditorTreeViewContainer");
         const treeHolder = document.createElement('div');
-        blockLeftBox.appendChild(treeHolder)
+        blockLeftBox.appendChild(treeHolder);
         blockLeft.appendChild(blockLeftBox);
         const blockRight = document.createElement('div');
-        blockRight.classList.add("frSectionEditorDetailsView")
+        blockRight.classList.add("frSectionEditorDetailsView");
         const settingsHolder = document.createElement('div');
         blockRight.appendChild(settingsHolder);
         body.appendChild(blockLeft);
@@ -6338,15 +6012,15 @@ class UI { // jshint ignore:line
         let UUIDNumber = 0;
         let dragAndDropData = {};
         const treeData = {
-            calcs:{
-                description:"Formulas to get you a values from a data set. These formulas can be: \"sum\", \"average\", \"count\", \"min\", or \"max\".",
-                name:"Formulas",
-                id:"calcs",
-                canContain:[],
-                children:[],
-                deletable:true,
-                movable:false,
-                priority:1,
+            calcs: {
+                description: "Formulas to get you a values from a data set. These formulas can be: \"sum\", \"average\", \"count\", \"min\", or \"max\".",
+                name: "Formulas",
+                id: "calcs",
+                canContain: [],
+                children: [],
+                deletable: true,
+                movable: false,
+                priority: 1,
                 setting: {
                     id: "totals",
                     invalid: false,
@@ -6368,7 +6042,7 @@ class UI { // jshint ignore:line
             },
             titleHeader: {
                 name: "Title header",
-                description:"This is printed for the FIRST PAGE ONLY. This will be printed first.",
+                description: "This is printed for the FIRST PAGE ONLY. This will be printed first.",
                 id: "titleHeader",
                 canContain: [],
                 children: [],
@@ -6389,7 +6063,7 @@ class UI { // jshint ignore:line
             },
             header: {
                 name: "Header",
-                description:"This is printed at the beginning of it's respective group/sub-report.",
+                description: "This is printed at the beginning of it's respective group/sub-report.",
                 id: "header",
                 parent: null,
                 canContain: [],
@@ -6400,7 +6074,7 @@ class UI { // jshint ignore:line
             },
             detail: {
                 name: "Detail",
-                description:"This will print for each record passed in to it's parent. This is printed before any sibling groups/sub-reports but after the header. ",
+                description: "This will print for each record passed in to it's parent. This is printed before any sibling groups/sub-reports but after the header. ",
                 id: "detail",
                 parent: null,
                 canContain: [],
@@ -6411,7 +6085,7 @@ class UI { // jshint ignore:line
             },
             group: {
                 name: "Group",
-                description:"This will allow you to create grouping on data-fields so that you can have separate group headers, footers, details for each group of records.",
+                description: "This will allow you to create grouping on data-fields so that you can have separate group headers, footers, details for each group of records.",
                 id: "group",
                 canContain: ["header", "detail", "group", "subReport", "footer"],
                 children: [],
@@ -6427,9 +6101,9 @@ class UI { // jshint ignore:line
             },
             subReport: {
                 name: "Sub-Report",
-                description:"This acts very similar to the 'The Primary Report'. This doesn't have as many children options, but you can use different data than the 'The Primary Report'.",
+                description: "This acts very similar to the 'The Primary Report'. This doesn't have as many children options, but you can use different data than the 'The Primary Report'.",
                 id: "subReport",
-                canContain: ["calcs","header", "detail", "group", "subReport", "footer"],
+                canContain: ["calcs", "header", "detail", "group", "subReport", "footer"],
                 children: [],
                 deletable: true,
                 movable: true,
@@ -6444,7 +6118,7 @@ class UI { // jshint ignore:line
             },
             footer: {
                 name: "Footer",
-                description:"This is printed at the end of it's respective group/sub-report.",
+                description: "This is printed at the end of it's respective group/sub-report.",
                 id: "footer",
                 canContain: [],
                 children: [],
@@ -6454,7 +6128,7 @@ class UI { // jshint ignore:line
             },
             pageFooter: {
                 name: "Page footer",
-                description:"This is printed as the footer object on all pages. (except for the last page if the finalSummary exists).",
+                description: "This is printed as the footer object on all pages. (except for the last page if the finalSummary exists).",
                 id: "pageFooter",
                 canContain: [],
                 children: [],
@@ -6464,7 +6138,7 @@ class UI { // jshint ignore:line
             },
             finalSummary: {
                 name: "Final Summary",
-                description:"This is printed as the footer on the very final page. This will be printed last.",
+                description: "This is printed as the footer on the very final page. This will be printed last.",
                 id: "finalSummary",
                 canContain: [],
                 children: [],
@@ -6472,54 +6146,69 @@ class UI { // jshint ignore:line
                 movable: false,
                 priority: 8,
             },
-        }
-        const copy = function (obj) {
-            return JSON.parse(JSON.stringify(obj));
-        }
-        const getReportFieldFromTree = function (treeReport) {
-            let returnValue = this._parent.reportFields
+        };
+
+        let userCreatedTree = deepClone(treeData.StarterReport);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
+        let btnContainer = document.createElement('div');
+        let d = new Dialog("Sections", body, this.hostElement);
+        userCreatedTree.parent = {hostee: treeHolder};
+
+        const getReportFieldFromTree = (treeReport) => {
+            let returnValue = this._parent.reportFields;
             for (let i = 0; i < treeReport.length; i++) {
-                if (!(treeReport[i] === "report") && treeReport[i] && returnValue.children && returnValue.children[treeReport[i]]) {
+                if (treeReport[i] && treeReport[i] !== "report" && returnValue.children && returnValue.children[treeReport[i]]) {
                     returnValue = returnValue.children[treeReport[i]];
                 }
             }
-            return returnValue
-        }
-        const convertReportLayoutToTree = (layout, currentTree,  owner, treePathing) => {
+            return returnValue;
+        };
+
+        const checkIfGroupingValueIsUnique = function (tree, value, owner) {
+            if (!owner) { return true; }
+            for (let i = 0; i < owner.children.length; i++) {
+                if (owner.children[i].id === "group" && owner.children[i].setting.value && owner.children[i].UUID !== tree.UUID && owner.children[i].setting.value === value) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        const convertReportLayoutToTree = (layout, currentTree, owner, treePathing) => {
             owner = owner ? owner : currentTree;
 
             function check(type) {
                 if ((layout[type] && treeData[type])) {
-                    let item = copy(treeData[type])
+                    let item = deepClone(treeData[type]);
                     UUIDNumber++;
-                    item.treePathing = [].concat(treePathing)//PATH TO layout[type]
-                    item.treePathing.push({type:type});
+                    item.treePathing = [].concat(treePathing); // PATH TO layout[type]
+                    item.treePathing.push({type: type});
                     item.UUID = UUIDNumber;
                     item.parent = currentTree;
                     currentTree.children.push(item);
                 }
             }
 
-            if (layout.calcs){
-                let calcs = copy(treeData["calcs"])
+            if (layout.calcs) {
+                let calcs = deepClone(treeData.calcs);
                 UUIDNumber++;
-                calcs.treePathing = [].concat(treePathing)
-                calcs.treePathing.push({type:"calcs"});
+                calcs.treePathing = [].concat(treePathing);
+                calcs.treePathing.push({type: "calcs"});
                 let totals = layout.calcs;
-                for(let key in totals){
+                for (let key in totals) {
                     if (!totals.hasOwnProperty(key)) {
                         continue;
                     }
-                    for(let i=0;i<totals[key].length;i++){
-                        totals[key][i] = {total:totals[key][i],treePathing:treePathing};
+                    for (let i = 0; i < totals[key].length; i++) {
+                        totals[key][i] = {total: totals[key][i], treePathing: treePathing};
                     }
                 }
                 calcs.setting.value = totals;
                 calcs.UUID = UUIDNumber;
                 calcs.parent = currentTree;
                 currentTree.children.push(calcs);
-
             }
+
             check("titleHeader");
             check("pageHeader");
             check("header");
@@ -6528,37 +6217,38 @@ class UI { // jshint ignore:line
             if (layout.groupBy) {
                 for (let i = 0; i < layout.groupBy.length; i++) {
                     if (checkIfGroupingValueIsUnique(currentTree, layout.groupBy[i].groupOn, owner)) {
-                        let group = copy(treeData.group);
+                        let group = deepClone(treeData.group);
                         group.setting.value = layout.groupBy[i].groupOn;
                         UUIDNumber++;
-                        group.treePathing = [].concat(treePathing)//PATH TO layout[type]
-                        group.treePathing.push({type:"groupBy", index:i});
+                        group.treePathing = [].concat(treePathing); // PATH TO layout[type]
+                        group.treePathing.push({type: "groupBy", index: i});
                         group.UUID = UUIDNumber;
                         group.parent = currentTree;
                         currentTree.children.push(group);
                         let subPathing = ([].concat(treePathing));
-                        subPathing.push({type:"groupBy", index:i});
-                        convertReportLayoutToTree(layout.groupBy[i], currentTree.children[currentTree.children.length - 1] , owner, subPathing)
+                        subPathing.push({type: "groupBy", index: i});
+                        convertReportLayoutToTree(layout.groupBy[i], currentTree.children[currentTree.children.length - 1], owner, subPathing);
                     } else {
                         console.warn("An invalid reportLayout was passed in. group.groupOn is supposed to be unique, yet I've found 2 groups grouping by [ " + layout.groupBy[i].groupOn + " ] under the same parent. We've skipped creating the 2nd group.");
                     }
                 }
             }
+
             if (layout.subReports) {
                 for (let i = 0; i < layout.subReports.length; i++) {
-                    let subReport = copy(treeData.subReport);
+                    let subReport = deepClone(treeData.subReport);
                     UUIDNumber++;
-                    subReport.treePathing = [].concat(treePathing)//PATH TO layout[type]
-                    subReport.treePathing.push({type:"subReports", index:i});
+                    subReport.treePathing = [].concat(treePathing); //PATH TO layout[type]
+                    subReport.treePathing.push({type: "subReports", index: i});
                     subReport.UUID = UUIDNumber;
                     subReport.parent = currentTree;
                     subReport.setting.value = layout.subReports[i].data;
                     subReport.report = [].concat(owner.report);
                     subReport.report.push(layout.subReports[i].data);
                     let subPathing = ([].concat(treePathing));
-                    subPathing.push({type:"subReports", index:i});
+                    subPathing.push({type: "subReports", index: i});
                     currentTree.children.push(subReport);
-                    convertReportLayoutToTree(layout.subReports[i], currentTree.children[currentTree.children.length - 1], subReport, subPathing)
+                    convertReportLayoutToTree(layout.subReports[i], currentTree.children[currentTree.children.length - 1], subReport, subPathing);
                 }
             }
 
@@ -6566,6 +6256,7 @@ class UI { // jshint ignore:line
             check("pageFooter");
             check("finalSummary");
         };
+
         const convertReportLayoutFromTree = (tree, reportLayout) => {
             // THE PROCESS:
             // Create an NEW reportLayout, copying over the StarterReport top-level but removing ALL children
@@ -6579,9 +6270,8 @@ class UI { // jshint ignore:line
                     let link = child.treePathing[i];
                     if (link.type === "report") {
                         linkedChild = reportLayout;
-                    }
-                    else {
-                        if (!linkedChild) continue;
+                    } else {
+                        if (!linkedChild) { continue; }
                         if (typeof link.index === "number" && (link.type === "groupBy" || link.type === "subReports") && linkedChild[link.type][link.index]) {
                             linkedChild = linkedChild[link.type][link.index];
                         } else if (typeof link.type === "string" && linkedChild[link.type]) {
@@ -6591,67 +6281,74 @@ class UI { // jshint ignore:line
                 }
                 return linkedChild;
             }
-            function forEachChild(toCheck, cb, path=["TOP"]) {
+
+            function forEachChild(toCheck, cb, path = ["TOP"]) {
                 if (toCheck && toCheck.children) {
                     let subReportsUUIDs = [];
                     let groupsUUIDs = [];
                     for (let i = 0; i < toCheck.children.length; i++) {
-                        if(toCheck.children[i].id === "subReport"){
+                        if (toCheck.children[i].id === "subReport") {
                             subReportsUUIDs.push(toCheck.children[i].UUID);
                         }
-                        if(toCheck.children[i].id === "group"){
+                        if (toCheck.children[i].id === "group") {
                             groupsUUIDs.push(toCheck.children[i].UUID);
                         }
                     }
                     for (let i = 0; i < toCheck.children.length; i++) {
                         let subPathing = [].concat(path);
-                        if(toCheck.children[i].id === "group"){
-                            subPathing.push({TreeLocation:i,GroupNumber:groupsUUIDs.indexOf(toCheck.children[i].UUID)});
-                        }
-                        else if(toCheck.children[i].id === "subReport"){
-                            subPathing.push({TreeLocation:i,GroupNumber:subReportsUUIDs.indexOf(toCheck.children[i].UUID)});
-                        }
-                        else {
+                        if (toCheck.children[i].id === "group") {
+                            subPathing.push({
+                                TreeLocation: i,
+                                GroupNumber: groupsUUIDs.indexOf(toCheck.children[i].UUID)
+                            });
+                        } else if (toCheck.children[i].id === "subReport") {
+                            subPathing.push({
+                                TreeLocation: i,
+                                GroupNumber: subReportsUUIDs.indexOf(toCheck.children[i].UUID)
+                            });
+                        } else {
                             subPathing.push(i);
                         }
-                        cb(toCheck.children[i], subPathing)
+                        cb(toCheck.children[i], subPathing);
                         if (toCheck.children[i].children && toCheck.children[i].children.length) {
                             forEachChild(toCheck.children[i], cb, subPathing);
                         }
                     }
-                }
-                else if(toCheck){
-                    for(let i in treeData){
-                        if(toCheck[i]){
+                } else if (toCheck) {
+                    for (let i in treeData) {
+                        if (toCheck[i]) {
                             let subPathing = [].concat(path);
                             subPathing.push(i);
-                            cb(toCheck[i], subPathing)
+                            cb(toCheck[i], subPathing);
                         }
                     }
-                    if(toCheck.subReports){
-                        for(let i =0;i<toCheck.subReports.length;i++) {
+                    if (toCheck.subReports) {
+                        for (let i = 0; i < toCheck.subReports.length; i++) {
                             let subPathing = [].concat(path);
                             subPathing.push({TreeLocation: -1, GroupNumber: i});
-                            cb(toCheck.subReports[i], subPathing)
+                            cb(toCheck.subReports[i], subPathing);
                             forEachChild(toCheck.subReports[i], cb, subPathing);
                         }
                     }
 
-                    if(toCheck.groupBy){
-                        for(let i =0;i<toCheck.groupBy.length;i++) {
+                    if (toCheck.groupBy) {
+                        for (let i = 0; i < toCheck.groupBy.length; i++) {
                             let subPathing = [].concat(path);
                             subPathing.push({TreeLocation: -1, GroupNumber: i});
-                            cb(toCheck.groupBy[i], subPathing)
+                            cb(toCheck.groupBy[i], subPathing);
                             forEachChild(toCheck.groupBy[i], cb, subPathing);
                         }
                     }
                 }
             }
-            function createReportLayoutChildFromTreeChild(tree){
+
+            function createReportLayoutChildFromTreeChild(tree) {
                 let linked = false;
-                if(tree.treePathing) linked = getLinkedChild(tree);
-                if(linked) return linked;
-                switch (tree.id){
+                if (tree.treePathing) { linked = getLinkedChild(tree); }
+                if (linked) {
+                    return linked;
+                }
+                switch (tree.id) {
                     case "titleHeader":
                     case "pageHeader":
                     case "header":
@@ -6659,95 +6356,92 @@ class UI { // jshint ignore:line
                     case "footer":
                     case "pageFooter":
                     case "finalSummary":
-                        return {children:[]};
+                        return {children: []};
                     case "calc":
-                        return tree.setting.value
+                        return tree.setting.value;
                     case "subReport":
                         return {
-                            "dataUUID":10004,
+                            "dataUUID": 10004,
                             "dataType": "parent",
                             "type": "report",
                             "data": tree.setting.value,
-                        }
+                        };
                     case "group":
                         return {
                             "type": "group",
                             "groupOn": tree.setting.value,
-                        }
+                        };
 
                 }
                 return false;
             }
 
             //Create new reportLayout and deleting all children.
-            let newReportLayout = copy(reportLayout);
-            for(let i in treeData){
-                if(newReportLayout[i]) delete newReportLayout[i];
+            let newReportLayout = deepClone(reportLayout);
+            for (let i in treeData) {
+                if (newReportLayout[i]) { delete newReportLayout[i]; }
             }
             delete newReportLayout.subReports;
             delete newReportLayout.groupBy;
 
             //Copy over every single "LINKED" child or create a new child.
-            forEachChild(tree,(child,path)=>{
-                if (child.FIXED) return;
+            forEachChild(tree, (child, path) => {
+                if (child.FIXED) { return; }
                 let linkedChild;
                 if (child.treePathing) {
-                    linkedChild = copy(getLinkedChild(child));
+                    linkedChild = deepClone(getLinkedChild(child));
 
-                    if(!linkedChild) return;
-                    for(let i in treeData){
-                        if(linkedChild[i]) delete linkedChild[i];
+                    if (!linkedChild) { return; }
+                    for (let i in treeData) {
+                        if (linkedChild[i]) { delete linkedChild[i]; }
                     }
-                    if(linkedChild.subReports) delete linkedChild.subReports;
-                    if(linkedChild.groupBy) delete linkedChild.groupBy;
-                }
-                else{
+                    if (linkedChild.subReports) { delete linkedChild.subReports; }
+                    if (linkedChild.groupBy) { delete linkedChild.groupBy; }
+                } else {
                     linkedChild = createReportLayoutChildFromTreeChild(child);
                 }
-                let location = false;
-                let treeAt = false;
-                for(let i =0;i<path.length;i++){
-                    if(path[i] === "TOP") {
+
+                let location = null;
+                let treeAt = null;
+                for (let i = 0; i < path.length; i++) {
+                    if (path[i] === "TOP") {
                         location = newReportLayout;
                         treeAt = tree;
                     }
-                    if(!location || !treeAt) continue;
-                    if(typeof path[i] === "number"){
+                    if (!location || !treeAt) { continue; }
+                    if (typeof path[i] === "number") {
                         location[child.id] = linkedChild;
                     }
-                    if(typeof path[i] === "object"){
-
-                        if(path[i+1] != null) {//UPDATE LOCATION OF SECTION
-                            if (treeAt.children) treeAt = treeAt.children[path[i].TreeLocation];
+                    if (typeof path[i] === "object") {
+                        if (path[i + 1] != null) {//UPDATE LOCATION OF SECTION
+                            if (treeAt.children) { treeAt = treeAt.children[path[i].TreeLocation]; }
                             if (treeAt.id === "group") {
-                                if (!location.groupBy) location.groupBy = [];
-                                if (!location.groupBy[path[i].GroupNumber]){
+                                if (!location.groupBy) { location.groupBy = []; }
+                                if (!location.groupBy[path[i].GroupNumber]) {
                                     location.groupBy[path[i].GroupNumber] = createReportLayoutChildFromTreeChild(child);
                                     location.groupBy[path[i].GroupNumber].FIXED = true;
                                 }
                                 location = location.groupBy[path[i].GroupNumber];
 
-                            }
-                            else if (treeAt.id === "subReport") {
-                                if (!location.subReports) location.subReports = [];
-                                if (!location.subReports[path[i].GroupNumber]){
+                            } else if (treeAt.id === "subReport") {
+                                if (!location.subReports) { location.subReports = []; }
+                                if (!location.subReports[path[i].GroupNumber]) {
                                     location.subReports[path[i].GroupNumber] = createReportLayoutChildFromTreeChild(child);
                                     location.subReports[path[i].GroupNumber].FIXED = true;
                                 }
                                 location = location.subReports[path[i].GroupNumber];
                             }
-                        }
-                        else{//PLACE THE SECTION
-                            if(child.id === "group"){
-                                if(!location.groupBy) location.groupBy = [];
+                        } else {//PLACE THE SECTION
+                            if (child.id === "group") {
+                                if (!location.groupBy) { location.groupBy = []; }
                                 location.groupBy.push(linkedChild);
-                            }
-                            else if(child.id === "subReport"){
-                                if(!location.subReports) location.subReports = [];
+                            } else if (child.id === "subReport") {
+                                if (!location.subReports) {
+                                    location.subReports = [];
+                                }
                                 location.subReports.push(linkedChild);
-                            }
-                            else{
-                                location[child.id] = linkedChild
+                            } else {
+                                location[child.id] = linkedChild;
                             }
                         }
                     }
@@ -6756,343 +6450,28 @@ class UI { // jshint ignore:line
                 child.FIXED = true;
             });
             //Remove all FIXED markers
-            if(newReportLayout.FIXED) delete newReportLayout.FIXED;
-            forEachChild(newReportLayout,(child,path)=>{
-                if(child.FIXED) delete child.FIXED;
+            if (newReportLayout.FIXED) { delete newReportLayout.FIXED; }
+            forEachChild(newReportLayout, (child /*, path */) => {
+                if (child.FIXED) { delete child.FIXED; }
             });
             return newReportLayout;
-        }
+        };
+
         const updateColorOfTree = (tree, selected) => {
-            if(selected){
+            if (selected) {
                 tree.element.classList.remove("frSectionEditorNOTSelectedTree");
-                tree.element.classList.add("frSectionEditorSelectedTree")
-            }
-            else{
+                tree.element.classList.add("frSectionEditorSelectedTree");
+            } else {
 
                 tree.element.classList.add("frSectionEditorNOTSelectedTree");
-                tree.element.classList.remove("frSectionEditorSelectedTree")
+                tree.element.classList.remove("frSectionEditorSelectedTree");
             }
             tree.element.classList.remove("frSectionEditorInvalidTree");
-            if (tree && tree.setting && (tree.setting.value == undefined || tree.setting.invalid)) {
+            if (tree && tree.setting && (tree.setting.value == null || tree.setting.invalid)) {
                 tree.element.classList.add("frSectionEditorInvalidTree");
             }
-        }
-        const checkIfGroupingValueIsUnique = function (tree, value, owner) {
-            if (!owner) return true;
-            for (let i = 0; i < owner.children.length; i++) {
-                if (owner.children[i].id === "group" && owner.children[i].setting.value && owner.children[i].UUID !== tree.UUID && owner.children[i].setting.value === value) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        const showSettingsOfCurrentTree = (tree) => {
-            //Remove all elements in the settings panel.
-            while (settingsHolder.firstElementChild) {
-                settingsHolder.firstElementChild.remove();
-            }
-            /**
-             * [ Owner ] is the parent that gives the "data".
-             * For example. A layout like: Report -> Group -> SubReport
-             * SubReport's owner is "Report" but parent is "Group".
-             * Most times, the owner is the same as parent.
-             * But for the cases like shown. They have to be differentiated
-             */
-            let owner = false;
-            let possibleOwner = tree.parent;
-            while (!owner) {
-                if (!possibleOwner) break;
-                if (possibleOwner.id === "subReport" || possibleOwner.id === "StarterReport") owner = possibleOwner;
-                else possibleOwner = possibleOwner.parent;
-            }
+        };
 
-            let description = document.createElement('p');
-            description.classList.add("frSectionEditorTreeDescription");
-            description.innerText = tree.description;
-            settingsHolder.appendChild(description)
-            settingsHolder.appendChild(document.createElement('br'));
-            if (tree.setting) {
-                let settingHolder = document.createElement('div');
-                if(tree.setting.id === "groupOn" || tree.setting.id === "data") {
-                    let text = document.createElement('span');
-                    text.innerText = tree.setting.text + ": ";
-                    let value;
-                    let defaultOption = document.createElement('option');
-                    defaultOption.innerText = "Select one";
-                    defaultOption.disabled = true;
-                    defaultOption.defaultSelected = true;
-                    defaultOption.hidden = true;
-                    if (tree.setting.id === "groupOn") {
-                        let dataValueToUse = getReportFieldFromTree(owner.report);
-                        if (owner.id === "subReport" && !owner.setting.value) {
-                            dataValueToUse = false;
-                        }
-                        if (!dataValueToUse) {
-                            value = document.createElement('select');
-                            let option = document.createElement('option');
-                            option.innerText = "Parent missing 'data' field.";
-                            option.selected = true;
-                            value.appendChild(option);
-                            value.disabled = true;
-                        }
-                        else {
-                            value = document.createElement('select');
-                            for (let i = 0; i < dataValueToUse.fields.length; i++) {
-                                let option = document.createElement('option');
-                                option.innerText = dataValueToUse.fields[i];
-                                option.value = dataValueToUse.fields[i];
-                                if (tree.setting.value === dataValueToUse.fields[i]) {
-                                    option.selected = true;
-                                } else if (!checkIfGroupingValueIsUnique(tree, dataValueToUse.fields[i], owner)) {
-                                    option.disabled = true;
-                                }
-                                value.appendChild(option);
-                            }
-                            if (tree.setting.invalid) {
-                                let option = document.createElement('option');
-                                option.innerText = "INVALID: " + tree.setting.value;
-                                option.value = tree.setting.value;
-                                option.disabled = true;
-                                option.hidden = true;
-                                option.selected = true;
-                                value.appendChild(option);
-                            }
-                            if (!tree.setting.value) {
-
-                                value.appendChild(defaultOption);
-                            } else value.value = tree.setting.value;
-                        }
-                    }
-                    else if (tree.setting.id === "data") {
-                        value = document.createElement('select');
-                        if (!tree.setting.value) {
-                            value.appendChild(defaultOption);
-                        }
-                        /*
-                        TODO: Allow Primary Data to be a source for SubReports within the JSON api
-                             when Primary Data can be a source for SubReports, allow "calcs" in "canContain" for "StarterReport"
-                             then also, uncomment the following code.
-                        let primaryDataOption = document.createElement('option');
-                        primaryDataOption.innerText = "Primary Data";
-                        primaryDataOption.value = "Primary Data";
-                        if (tree.setting.value === "Primary Data") primaryDataOption.selected = true;
-                        value.appendChild(primaryDataOption);
-                         */
-                        let goThrough = (fields,tabbing)=>{
-                            for (let i = 0; i < fields.childrenIndexed.length; i++) {
-                                let option = document.createElement('option');
-                                option.innerText = fields.childrenIndexed[i].name;
-                                option.value = fields.childrenIndexed[i].name;
-
-                                if (tree.setting.value === fields.childrenIndexed[i].name) option.selected = true;
-                                value.appendChild(option);
-                                if(fields.childrenIndexed[i].childrenIndexed.length){
-                                    goThrough(fields.childrenIndexed[i],tabbing+1);
-                                }
-                            }
-                        }
-                        goThrough(this._parent.reportFields.primary,0)
-                    }
-                    if (value) {
-                        value.addEventListener("change", function () {
-                            if (tree.setting.id === "data") {
-                                tree.setting.value = this.value;
-                                tree.setting.invalid = false;
-                                if (this.value === "Primary Data") tree.report = ['report'];
-                                else {
-                                    let reportField = getReportFieldFromTree(owner.report);
-                                    if (reportField.children[this.value]) {
-                                        tree.report = [].concat(owner.report)
-                                        tree.report.push(this.value);
-                                    }
-                                }
-
-                                for (let i = 0; i < tree.children.length; i++) {
-                                    if (tree.children[i].id === "group" && tree.children[i].setting.value) {
-                                        if (!getReportFieldFromTree(tree.report).fields.includes(tree.children[i].setting.value)) {
-                                            tree.children[i].setting.invalid = true;
-                                            updateColorOfTree(tree.children[i], false)
-                                        } else if (tree.children[i].setting.invalid) {
-                                            tree.children[i].setting.invalid = false;
-                                            updateColorOfTree(tree.children[i], false)
-                                        }
-                                    }
-                                    if(tree.children[i].id === "calcs" && tree.children[i].setting.value){
-                                        let possibleFields = this._parent.reportFields.getDataFieldsFromDataName(tree.setting.value);
-                                        let totals = tree.children[i].setting.value;
-                                        let amount = 0;
-                                        let invalid = false;
-                                        for(let key in totals){
-                                            amount+=totals[key].length;
-                                            if(invalid) break;
-                                            for(let i =0;i<totals[key].length;i++){
-                                                if(possibleFields.indexOf(totals[key][i].total)===-1){
-                                                    invalid = true;
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                        tree.children[i].setting.invalid = !(amount > 0 && !invalid);
-                                        updateColorOfTree(tree.children[i],false)
-                                    }
-                                }
-                            } else if (tree.setting.id === "groupOn") {
-                                if (!checkIfGroupingValueIsUnique(tree, this.value, owner)) {
-                                    this.value = "";
-                                    console.warn("This should not have happened. You've attempted to set group to be grouping the same way as one of it's siblings.");
-                                } else if (!checkIfGroupingValueIsUnique(tree, tree.setting.value, owner)) {
-                                }
-                                tree.setting.value = this.value;
-                                tree.setting.invalid = false;
-                            }
-                        })
-                        settingHolder.appendChild(text);
-                        settingHolder.appendChild(value);
-                        settingsHolder.appendChild(settingHolder);
-                    }
-                }
-                if(tree.setting.id === "totals"){
-                    const editTotals = document.createElement("button");
-                    editTotals.classList.add("frSectionEditorEditSectionButton")
-                    editTotals.type = "button";
-                    editTotals.innerText = tree.setting.text;
-                    let getData = (tree)=>{
-                        if(tree.id === "subReport") return tree.setting.value;
-                        if(tree.id === "StarterReport") return "Primary Data";
-                        return getData(tree.parent);
-                    }
-                    editTotals.addEventListener("click",  () => {
-                        this.subReportTotalsBrowse(tree.treePathing,tree.setting.value || {},getData(tree), (value) => {
-                            tree.setting.value = value;
-                            let amount = 0;
-                            for(let i in value){
-                                amount+=value[i].length;
-                            }
-                            tree.setting.invalid = amount === 0;
-                            updateColorOfTree(tree, false);
-                        });
-                    });
-                    settingsHolder.appendChild(editTotals);
-                }
-            }
-
-            //If the current item can be deleted.
-            if (tree.deletable) {
-                const deleteButton = document.createElement("button");
-                deleteButton.classList.add("frSectionEditorDeleteSectionButton")
-                deleteButton.type = "button";
-                deleteButton.innerText = "Delete Self";
-                deleteButton.addEventListener("click", function () {
-                    if (!tree.parent) return;
-                    for (let i = 0; i < tree.parent.children.length; i++) {
-                        if (tree.parent.children[i].UUID === tree.UUID) {
-                            tree.parent.children.splice(i, 1);
-                            createVisualTree(tree.parent, true);
-                            break;
-                        }
-                    }
-
-                    //Remove all elements in the settings panel
-                    while (settingsHolder.firstElementChild) {
-                        settingsHolder.firstElementChild.remove();
-                    }
-                });
-                settingsHolder.appendChild(deleteButton);
-            }
-
-            //Go through all the items this section can contain inside of it.
-            //To add the "add item" and "remove item" buttons.
-            for (let i = 0; i < tree.canContain.length; i++) {
-                let currentItem = copy(treeData[tree.canContain[i]]);
-                currentItem.parent = tree;
-
-                if (currentItem.id === "group" || currentItem.id === "subReport") {
-                    let itemsExisting = [];
-                    let pushPosition = 0;
-
-                    for (let j = 0; j < tree.children.length; j++) {
-                        if (tree.children[j].id === currentItem.id) itemsExisting.push(j);
-                        if (tree.children[j].priority < currentItem.priority) pushPosition = j + 1;
-                    }
-                    //BUTTON: Add another.
-                    const tempButton = document.createElement("button");
-                    tempButton.classList.add("frSectionEditorEditSectionButton")
-                    tempButton.type = "button";
-                    tempButton.innerText = (itemsExisting.length > 0 ? "Add New " : "Add ") + currentItem.name;
-                    tempButton.addEventListener("click", function () {
-                        //Push into position
-                        UUIDNumber++;
-                        currentItem.UUID = UUIDNumber;
-                        tree.children.splice(pushPosition, 0, currentItem);
-
-                        //create a tree, but re-use the host.
-                        createVisualTree(tree, true);
-
-                        //Update the selectedTree to still be colored as selected.
-                        updateColorOfTree(selectedTree, true);
-                        showSettingsOfCurrentTree(tree);//Update the settings panel to show the changes.
-                    });
-                    if (tree.setting) tempButton.disabled = !(tree.setting.value && !tree.setting.invalid);
-                    settingsHolder.appendChild(tempButton);
-                    //BUTTONS: Remove item.
-                    for (let j = 0; j < itemsExisting.length; j++) {
-                        let item = tree.children[itemsExisting[j]];
-                        const removeButton = document.createElement("button");
-                        removeButton.classList.add("frSectionEditorEditSectionButton")
-                        removeButton.type = "button";
-                        removeButton.innerHTML = "Remove " + item.name + " (<b>" + ((!item.setting.invalid && item.setting.value) || "Invalid") + "</b>)";
-                        removeButton.addEventListener("click", function () {
-                            tree.children.splice(itemsExisting[j], 1);
-                            //create a tree, but re-use the host.
-                            createVisualTree(tree, true);
-
-                            //Update the selectedTree to still be colored as selected.
-                            updateColorOfTree(selectedTree, true);
-                            showSettingsOfCurrentTree(tree);//Update the settings panel to show the changes.
-                        });
-                        if (tree.setting) removeButton.disabled = !(tree.setting.value && !tree.setting.invalid);
-                        settingsHolder.appendChild(removeButton);
-                    }
-
-                } else {
-                    //FOR UNIQUE ITEMS
-                    //Anything in this else, is for things that exist only once per report. Like headers or footers.
-
-                    //Check through the section's children
-                    let alreadyContains = -1;//To see if it contains the child
-                    let pushPosition = 0;//and if not, where to put the child if chosen to add one.
-                    for (let j = 0; j < tree.children.length; j++) {
-                        if (tree.children[j].id === tree.canContain[i]) {
-                            alreadyContains = j;
-                            break;
-                        }
-                        if (tree.children[j].priority < currentItem.priority) pushPosition = j + 1;
-                    }
-                    const button = document.createElement("button");
-                    button.classList.add("frSectionEditorEditSectionButton")
-                    button.type = "button";
-                    button.innerText = (alreadyContains > -1 ? "Delete " : "Add ")  + currentItem.name;
-                    button.addEventListener("click", function () {
-                        //Check if removing or adding. Then update the [tree] variable.
-                        if (alreadyContains > -1 && tree.children[alreadyContains].deletable) {
-                            tree.children.splice(alreadyContains, 1);
-                        } else {
-                            UUIDNumber++;
-                            currentItem.UUID = UUIDNumber;
-                            tree.children.splice(pushPosition, 0, currentItem);
-                        }
-                        //create a tree, but re-use the host.
-                        createVisualTree(tree, true);
-
-                        //Update the selectedTree to still be colored as selected.
-                        updateColorOfTree(selectedTree, true);
-                        showSettingsOfCurrentTree(tree);//Update the settings panel to show the changes.
-                    });
-                    if (tree.setting) button.disabled = !(tree.setting.value && !tree.setting.invalid);
-                    settingsHolder.appendChild(button);
-                }
-            }
-        }
         const createVisualTree = (tree, replaceHost = false) => {
             /**
              * THIS IS THE HOW EACH TREE IS LAID OUT
@@ -7122,28 +6501,28 @@ class UI { // jshint ignore:line
             }
             updateColorOfTree(tree, false);
             let hostNameContainer = document.createElement('span');
-            hostNameContainer.classList.add("frSectionEditorTreeName")
+            hostNameContainer.classList.add("frSectionEditorTreeName");
 
             let hider, childrenContainerShown, childrenContainerHidden, childrenContainerHiddenSpan;
             if (tree.canContain.length > 0) {
                 hider = document.createElement('button');
                 hider.hiddenChildren = false;
                 hider.innerText = tree.children.length > 0 ? "-" : "/";
-                hider.classList.add("frSectionEditorHideChildrenButton")
+                hider.classList.add("frSectionEditorHideChildrenButton");
                 childrenContainerShown = document.createElement("div");
-                childrenContainerShown.classList.add("frSectionEditorChildrenContainer")
+                childrenContainerShown.classList.add("frSectionEditorChildrenContainer");
                 if (tree.children.length) {
                     childrenContainerHidden = document.createElement("div");
-                    childrenContainerHidden.classList.add("frSectionEditorChildrenHidden")
+                    childrenContainerHidden.classList.add("frSectionEditorChildrenHidden");
                     childrenContainerHidden.style.display = "none";
                     childrenContainerHiddenSpan = document.createElement('span');
                     childrenContainerHiddenSpan.innerText = "...";
 
-                    childrenContainerHidden.appendChild(childrenContainerHiddenSpan)
-                    hider.addEventListener("click", function (event) {
+                    childrenContainerHidden.appendChild(childrenContainerHiddenSpan);
+                    hider.addEventListener("click", function (/* event */) {
                         this.hiddenChildren = !this.hiddenChildren;
                         this.innerText = this.hiddenChildren ? "+" : "-";
-                        //SHOW/HIDE children
+                        // SHOW/HIDE children
                         if (this.hiddenChildren) {
                             childrenContainerShown.style.display = "none";
                             childrenContainerHidden.style.display = "block";
@@ -7152,7 +6531,7 @@ class UI { // jshint ignore:line
                             childrenContainerHidden.style.display = "none";
                         }
 
-                    })
+                    });
                 }
                 tree.hostee = childrenContainerShown;
             }
@@ -7161,7 +6540,7 @@ class UI { // jshint ignore:line
             if (tree.id === "group" || tree.id === "subReport") {
                 hostName.innerHTML += " (<b>" + ((!tree.setting.invalid && tree.setting.value) || "Invalid") + "</b>)";
             }
-            if (tree.canContain.length > 0) hostNameContainer.appendChild(hider);
+            if (tree.canContain.length > 0) { hostNameContainer.appendChild(hider); }
             hostNameContainer.appendChild(hostName);
             hostNameContainer.addEventListener("click", function () {
                 showSettingsOfCurrentTree(tree);
@@ -7170,68 +6549,78 @@ class UI { // jshint ignore:line
                 }
                 selectedTree = tree;
                 updateColorOfTree(selectedTree, true);
-            })
+            });
+
             treeView.appendChild(hostNameContainer);
             if (tree.canContain.length > 0) {
                 treeView.appendChild(childrenContainerShown);
-                if (tree.children.length) treeView.appendChild(childrenContainerHidden);
+                if (tree.children.length) {
+                    treeView.appendChild(childrenContainerHidden);
+                }
             }
-            if (!tree.hostElement) tree.hostElement = tree.parent.hostee;
-            if (!replaceHost) tree.parent.hostee.appendChild(treeView);
+            if (!tree.hostElement) {
+                tree.hostElement = tree.parent.hostee;
+            }
+            if (!replaceHost) {
+                tree.parent.hostee.appendChild(treeView);
+            }
             if (tree.canContain.length && childrenContainerShown) {
                 treeView.ondrop = function (ev) {
                     let InValid = document.getElementsByClassName("frSectionEditorInValidDropLocation");
                     let Valid = document.getElementsByClassName("frSectionEditorValidDropLocation");
-                    for(let i =0;i<InValid.length;i++){
-                        InValid[i].classList.remove("frSectionEditorInValidDropLocation")
+                    for (let i = 0; i < InValid.length; i++) {
+                        InValid[i].classList.remove("frSectionEditorInValidDropLocation");
                     }
-                    for(let i =0;i<Valid.length;i++){
-                        Valid[i].classList.remove("frSectionEditorValidDropLocation")
+                    for (let i = 0; i < Valid.length; i++) {
+                        Valid[i].classList.remove("frSectionEditorValidDropLocation");
                     }
 
-                    if(!(tree && dragAndDropData && dragAndDropData.dropTarget && dragAndDropData.dropTarget.tree && dragAndDropData.dropTarget.tree.UUID != undefined)) return;
-                    if(tree.UUID.toString() !== dragAndDropData.dropTarget.tree.UUID.toString()) return;
+                    if (!(tree && dragAndDropData && dragAndDropData.dropTarget && dragAndDropData.dropTarget.tree && dragAndDropData.dropTarget.tree.UUID != null)) { return; }
+                    if (tree.UUID.toString() !== dragAndDropData.dropTarget.tree.UUID.toString()) { return; }
                     ev.preventDefault();
                     if (dragAndDropData.dropTarget && dragAndDropData.dropTarget.validDrop && dragAndDropData.dropTarget.element && dragAndDropData.dragging && dragAndDropData.dragging.element && dragAndDropData.dragging.tree) {
                         let OldParent = dragAndDropData.dragging.tree.parent;
                         let replacement = {};
-                        for(let i =0;i<OldParent.children.length;i++){
-                            if(OldParent.children[i].UUID === dragAndDropData.dragging.tree.UUID){
-                                replacement = OldParent.children.splice(i,1)[0];
+                        for (let i = 0; i < OldParent.children.length; i++) {
+                            if (OldParent.children[i].UUID === dragAndDropData.dragging.tree.UUID) {
+                                replacement = OldParent.children.splice(i, 1)[0];
                                 break;
                             }
                         }
-                        if(replacement) {
+                        if (replacement) {
                             replacement.parent = tree;
                             let spotToPut = 0;
-                            for(let i =0;i<tree.children.length;i++){
-                                if(tree.children[i].priority < replacement.priority) spotToPut++;
-                                else break;
+                            for (let i = 0; i < tree.children.length; i++) {
+                                if (tree.children[i].priority < replacement.priority) { spotToPut++; }
+                                else {
+                                    break;
+                                }
                             }
-                            tree.children.splice(spotToPut,0,replacement);
+                            tree.children.splice(spotToPut, 0, replacement);
                             createVisualTree(userCreatedTree, true);
                         }
                     }
-                    if(dragAndDropData.ghostElement){
+                    if (dragAndDropData.ghostElement) {
                         dragAndDropData.ghostElement.remove();
                         delete dragAndDropData.ghostElement;
                     }
                     dragAndDropData = {};
-                }
+                };
+
                 treeView.ondragover = function (ev) {
                     ev.preventDefault();
                     if (dragAndDropData.dragging && dragAndDropData.dragging.tree && dragAndDropData.dragging.element) {
                         //Due to how treeView.ondragover works. If we hovered over [Report->SubReport->Group], our target is the Group but this function runs for both the parents. So this ID check makes sure we run it only at the lowest level possible.
                         let target = ev.target;
-                        for(let i =0;i<ev.path.length;i++){
-                            if(ev.path[i].id.startsWith("FRG_SECTIONS_UUID_")){
+                        for (let i = 0; i < ev.path.length; i++) {
+                            if (ev.path[i].id.startsWith("FRG_SECTIONS_UUID_")) {
                                 target = ev.path[i];
                                 break;
                             }
                         }
-                        if(tree.UUID.toString() !== target.id.substring("FRG_SECTIONS_UUID_".length,target.id.length)) return;
+                        if (tree.UUID.toString() !== target.id.substring("FRG_SECTIONS_UUID_".length, target.id.length)) { return; }
                         //Make sure we aren't copying a subReport/group INTO itself.
-                        if(target.id.substring("FRG_SECTIONS_UUID_".length,target.id.length) === dragAndDropData.dragging.tree.UUID.toString()) return;
+                        if (target.id.substring("FRG_SECTIONS_UUID_".length, target.id.length) === dragAndDropData.dragging.tree.UUID.toString()) { return; }
 
                         //Check to see if we can drop the item here.
                         if (tree.canContain.includes(dragAndDropData.dragging.tree.id)) {
@@ -7243,39 +6632,38 @@ class UI { // jshint ignore:line
                                     }
                                 }
                             }
-                            if(!dragAndDropData.dropTarget) dragAndDropData.dropTarget = {};
+                            if (!dragAndDropData.dropTarget) { dragAndDropData.dropTarget = {}; }
                             if (dragAndDropData.dropTarget.element) {
-                                dragAndDropData.dropTarget.element.classList.remove("frSectionEditorValidDropLocation")
-                                dragAndDropData.dropTarget.element.classList.remove("frSectionEditorInValidDropLocation")
+                                dragAndDropData.dropTarget.element.classList.remove("frSectionEditorValidDropLocation");
+                                dragAndDropData.dropTarget.element.classList.remove("frSectionEditorInValidDropLocation");
                             }
                             dragAndDropData.dropTarget.tree = tree;
                             dragAndDropData.dropTarget.element = target;
                             dragAndDropData.dropTarget.validDrop = !alreadyContainsOne;
-                            if(!alreadyContainsOne && tree.hostee){
-                                if( dragAndDropData.ghostElement){
+                            if (!alreadyContainsOne && tree.hostee) {
+                                if (dragAndDropData.ghostElement) {
                                     dragAndDropData.ghostElement.remove();
                                 }
                                 delete dragAndDropData.ghostElement;
                                 let ghostElement = dragAndDropData.dragging.element.cloneNode(true);
-                                ghostElement.classList.add("frSectionEditorGhostElement")
+                                ghostElement.classList.add("frSectionEditorGhostElement");
                                 ghostElement.removeAttribute("id");
                                 dragAndDropData.ghostElement = ghostElement;
                                 let spotToPutGhost = 0;
-                                for(let i =0;i<tree.children.length;i++){
-                                    if(tree.children[i].priority < dragAndDropData.dragging.tree.priority) spotToPutGhost++;
-                                    else break;
+                                for (let i = 0; i < tree.children.length; i++) {
+                                    if (tree.children[i].priority < dragAndDropData.dragging.tree.priority) { spotToPutGhost++; }
+                                    else { break; }
                                 }
-                                tree.hostee.insertBefore(ghostElement,tree.hostee.children[spotToPutGhost])
-                            }
-                            else if(dragAndDropData.ghostElement){
+                                tree.hostee.insertBefore(ghostElement, tree.hostee.children[spotToPutGhost]);
+                            } else if (dragAndDropData.ghostElement) {
                                 dragAndDropData.ghostElement.remove();
                                 delete dragAndDropData.ghostElement;
                             }
-                            target.classList.add("frSectionEditor"+(alreadyContainsOne ? "In":"")+"ValidDropLocation")
+                            target.classList.add("frSectionEditor" + (alreadyContainsOne ? "In" : "") + "ValidDropLocation");
                         }
                     }
                     return false;
-                }
+                };
             }
             if (tree.movable) {
                 treeView.draggable = true;
@@ -7283,44 +6671,363 @@ class UI { // jshint ignore:line
                     if (dragAndDropData.dragging && dragAndDropData.dragging.tree) {
                         return;
                     }
-                    if(!dragAndDropData.dragging) dragAndDropData.dragging = {};
+                    if (!dragAndDropData.dragging) { dragAndDropData.dragging = {}; }
                     dragAndDropData.dragging.tree = tree;
                     dragAndDropData.dragging.element = ev.target;
-                }
+                };
             }
             for (let i = 0; i < tree.children.length; i++) {
                 createVisualTree(tree.children[i], false);
             }
-        }
+        };
+
+        const showSettingsOfCurrentTree = (tree) => {
+            //Remove all elements in the settings panel.
+            while (settingsHolder.firstElementChild) {
+                settingsHolder.firstElementChild.remove();
+            }
+            /**
+             * [ Owner ] is the parent that gives the "data".
+             * For example. A layout like: Report -> Group -> SubReport
+             * SubReport's owner is "Report" but parent is "Group".
+             * Most times, the owner is the same as parent.
+             * But for the cases like shown. They have to be differentiated
+             */
+            let owner = false;
+            let possibleOwner = tree.parent;
+            while (!owner) {
+                if (!possibleOwner) { break; }
+                if (possibleOwner.id === "subReport" || possibleOwner.id === "StarterReport") { owner = possibleOwner; }
+                else { possibleOwner = possibleOwner.parent; }
+            }
+
+            let description = document.createElement('p');
+            description.classList.add("frSectionEditorTreeDescription");
+            description.innerText = tree.description;
+            settingsHolder.appendChild(description);
+            settingsHolder.appendChild(document.createElement('br'));
+            if (tree.setting) {
+                let settingHolder = document.createElement('div');
+                if (tree.setting.id === "groupOn" || tree.setting.id === "data") {
+                    let text = document.createElement('span');
+                    text.innerText = tree.setting.text + ": ";
+                    let value;
+                    let defaultOption = document.createElement('option');
+                    defaultOption.innerText = "Select one";
+                    defaultOption.disabled = true;
+                    defaultOption.defaultSelected = true;
+                    defaultOption.hidden = true;
+                    if (tree.setting.id === "groupOn") {
+                        let dataValueToUse = getReportFieldFromTree(owner.report);
+                        if (owner.id === "subReport" && !owner.setting.value) {
+                            dataValueToUse = false;
+                        }
+                        if (!dataValueToUse) {
+                            value = document.createElement('select');
+                            let option = document.createElement('option');
+                            option.innerText = "Parent missing 'data' field.";
+                            option.selected = true;
+                            value.appendChild(option);
+                            value.disabled = true;
+                        } else {
+                            value = document.createElement('select');
+                            for (let i = 0; i < dataValueToUse.fields.length; i++) {
+                                let option = document.createElement('option');
+                                option.innerText = dataValueToUse.fields[i];
+                                option.value = dataValueToUse.fields[i];
+                                if (tree.setting.value === dataValueToUse.fields[i]) {
+                                    option.selected = true;
+                                } else if (!checkIfGroupingValueIsUnique(tree, dataValueToUse.fields[i], owner)) {
+                                    option.disabled = true;
+                                }
+                                value.appendChild(option);
+                            }
+                            if (tree.setting.invalid) {
+                                let option = document.createElement('option');
+                                option.innerText = "INVALID: " + tree.setting.value;
+                                option.value = tree.setting.value;
+                                option.disabled = true;
+                                option.hidden = true;
+                                option.selected = true;
+                                value.appendChild(option);
+                            }
+                            if (!tree.setting.value) {
+
+                                value.appendChild(defaultOption);
+                            } else { value.value = tree.setting.value; }
+                        }
+                    } else if (tree.setting.id === "data") {
+                        value = document.createElement('select');
+                        if (!tree.setting.value) {
+                            value.appendChild(defaultOption);
+                        }
+                        /*
+                        TODO: Allow Primary Data to be a source for SubReports within the JSON api
+                             when Primary Data can be a source for SubReports, allow "calcs" in "canContain" for "StarterReport"
+                             then also, uncomment the following code.
+                        let primaryDataOption = document.createElement('option');
+                        primaryDataOption.innerText = "Primary Data";
+                        primaryDataOption.value = "Primary Data";
+                        if (tree.setting.value === "Primary Data") primaryDataOption.selected = true;
+                        value.appendChild(primaryDataOption);
+                         */
+                        const goThrough = (fields, tabbing) => {
+                            for (let i = 0; i < fields.childrenIndexed.length; i++) {
+                                let option = document.createElement('option');
+                                option.innerText = fields.childrenIndexed[i].name;
+                                option.value = fields.childrenIndexed[i].name;
+
+                                if (tree.setting.value === fields.childrenIndexed[i].name) { option.selected = true; }
+                                value.appendChild(option);
+                                if (fields.childrenIndexed[i].childrenIndexed.length) {
+                                    goThrough(fields.childrenIndexed[i], tabbing + 1);
+                                }
+                            }
+                        };
+                        goThrough(this._parent.reportFields.primary, 0);
+                    }
+                    if (value) {
+                        value.addEventListener("change",  (evt) => {
+                            if (tree.setting.id === "data") {
+                                tree.setting.value = evt.target.value;
+                                tree.setting.invalid = false;
+                                if (evt.target.value === "Primary Data") { tree.report = ['report']; }
+                                else {
+                                    let reportField = getReportFieldFromTree(owner.report);
+                                    if (reportField.children[evt.target.value]) {
+                                        tree.report = [].concat(owner.report);
+                                        tree.report.push(evt.target.value);
+                                    }
+                                }
+
+                                for (let i = 0; i < tree.children.length; i++) {
+                                    if (tree.children[i].id === "group" && tree.children[i].setting.value) {
+                                        if (!getReportFieldFromTree(tree.report).fields.includes(tree.children[i].setting.value)) {
+                                            tree.children[i].setting.invalid = true;
+                                            updateColorOfTree(tree.children[i], false);
+                                        } else if (tree.children[i].setting.invalid) {
+                                            tree.children[i].setting.invalid = false;
+                                            updateColorOfTree(tree.children[i], false);
+                                        }
+                                    }
+                                    if (tree.children[i].id === "calcs" && tree.children[i].setting.value) {
+                                        let possibleFields = this._parent.reportFields.getDataFieldsFromDataName(tree.setting.value);
+                                        let totals = tree.children[i].setting.value;
+                                        let amount = 0;
+                                        let invalid = false;
+                                        for (const key in totals) {
+                                            if (totals.hasOwnProperty(key)) {
+                                                amount += totals[key].length;
+                                                if (invalid) {
+                                                    break;
+                                                }
+                                                for (let i = 0; i < totals[key].length; i++) {
+                                                    if (possibleFields.indexOf(totals[key][i].total) === -1) {
+                                                        invalid = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        tree.children[i].setting.invalid = !(amount > 0 && !invalid);
+                                        updateColorOfTree(tree.children[i], false);
+                                    }
+                                }
+                            } else if (tree.setting.id === "groupOn") {
+                                if (!checkIfGroupingValueIsUnique(tree, evt.target.value, owner)) {
+                                    evt.target.value = "";
+                                    console.warn("This should not have happened. You've attempted to set group to be grouping the same way as one of it's siblings.");
+                                }
+                                tree.setting.value = evt.target.value;
+                                tree.setting.invalid = false;
+                                updateColorOfTree(tree, false);
+                                createVisualTree(tree.parent, true);
+                            }
+                        });
+                        settingHolder.appendChild(text);
+                        settingHolder.appendChild(value);
+                        settingsHolder.appendChild(settingHolder);
+                    }
+                }
+                if (tree.setting.id === "totals") {
+                    const editTotals = document.createElement("button");
+                    editTotals.classList.add("frSectionEditorEditSectionButton");
+                    editTotals.type = "button";
+                    editTotals.innerText = tree.setting.text;
+                    let getData = (tree) => {
+                        if (tree.id === "subReport") { return tree.setting.value; }
+                        if (tree.id === "StarterReport") { return "Primary Data"; }
+                        return getData(tree.parent);
+                    };
+
+                    editTotals.addEventListener("click", () => {
+                        this.subReportTotalsBrowse(tree.treePathing, tree.setting.value || {}, getData(tree), (value) => {
+                            tree.setting.value = value;
+                            let amount = 0;
+                            for (let i in value) {
+                                if (value.hasOwnProperty(i)) {
+                                    amount += value[i].length;
+                                }
+                            }
+                            tree.setting.invalid = amount === 0;
+                            updateColorOfTree(tree, false);
+                        });
+                    });
+                    settingsHolder.appendChild(editTotals);
+                }
+            }
+
+            //If the current item can be deleted.
+            if (tree.deletable) {
+                const deleteButton = document.createElement("button");
+                deleteButton.classList.add("frSectionEditorDeleteSectionButton");
+                deleteButton.type = "button";
+                deleteButton.innerText = "Delete Self";
+                deleteButton.addEventListener("click", function () {
+                    if (!tree.parent) { return; }
+                    for (let i = 0; i < tree.parent.children.length; i++) {
+                        if (tree.parent.children[i].UUID === tree.UUID) {
+                            tree.parent.children.splice(i, 1);
+                            createVisualTree(tree.parent, true);
+                            break;
+                        }
+                    }
+
+                    //Remove all elements in the settings panel
+                    while (settingsHolder.firstElementChild) {
+                        settingsHolder.firstElementChild.remove();
+                    }
+                });
+                settingsHolder.appendChild(deleteButton);
+            }
+
+            // Go through all the items this section can contain it.
+            // To add the "add item" and "remove item" buttons.
+            for (let i = 0; i < tree.canContain.length; i++) {
+                let currentItem = deepClone(treeData[tree.canContain[i]]);
+                currentItem.parent = tree;
+
+                if (currentItem.id === "group" || currentItem.id === "subReport") {
+                    let itemsExisting = [];
+                    let pushPosition = 0;
+
+                    for (let j = 0; j < tree.children.length; j++) {
+                        if (tree.children[j].id === currentItem.id) { itemsExisting.push(j); }
+                        if (tree.children[j].priority < currentItem.priority) {
+                            pushPosition = j + 1;
+                        }
+                    }
+
+                    //BUTTON: Add another.
+                    const tempButton = document.createElement("button");
+                    tempButton.classList.add("frSectionEditorEditSectionButton");
+                    tempButton.type = "button";
+                    tempButton.innerText = (itemsExisting.length > 0 ? "Add New " : "Add ") + currentItem.name;
+                    tempButton.addEventListener("click", function () {
+                        //Push into position
+                        UUIDNumber++;
+                        currentItem.UUID = UUIDNumber;
+                        tree.children.splice(pushPosition, 0, currentItem);
+
+                        //create a tree, but re-use the host.
+                        createVisualTree(tree, true);
+
+                        //Update the selectedTree to still be colored as selected.
+                        updateColorOfTree(selectedTree, true);
+                        showSettingsOfCurrentTree(tree);//Update the settings panel to show the changes.
+                    });
+                    if (tree.setting) { tempButton.disabled = !(tree.setting.value && !tree.setting.invalid); }
+                    settingsHolder.appendChild(tempButton);
+
+                    //BUTTONS: Remove item.
+                    for (let j = 0; j < itemsExisting.length; j++) {
+                        let item = tree.children[itemsExisting[j]];
+                        const removeButton = document.createElement("button");
+                        removeButton.classList.add("frSectionEditorEditSectionButton");
+                        removeButton.type = "button";
+                        removeButton.innerHTML = "Remove " + item.name + " (<b>" + ((!item.setting.invalid && item.setting.value) || "Invalid") + "</b>)";
+                        removeButton.addEventListener("click", function() {
+                            tree.children.splice(itemsExisting[j], 1);
+                            //create a tree, but re-use the host.
+                            createVisualTree(tree, true);
+
+                            //Update the selectedTree to still be colored as selected.
+                            updateColorOfTree(selectedTree, true);
+                            showSettingsOfCurrentTree(tree);//Update the settings panel to show the changes.
+                        });
+                        if (tree.setting) { removeButton.disabled = !(tree.setting.value && !tree.setting.invalid); }
+                        settingsHolder.appendChild(removeButton);
+                    }
+
+                } else {
+                    // FOR UNIQUE ITEMS
+                    // Anything in this else, is for things that exist only once per report. Like headers or footers.
+
+                    //Check through the section's children
+                    let alreadyContains = -1;// To see if it contains the child
+                    let pushPosition = 0;    // and if not, where to put the child if chosen to add one.
+                    for (let j = 0; j < tree.children.length; j++) {
+                        if (tree.children[j].id === tree.canContain[i]) {
+                            alreadyContains = j;
+                            break;
+                        }
+                        if (tree.children[j].priority < currentItem.priority) { pushPosition = j + 1; }
+                    }
+                    const button = document.createElement("button");
+                    button.classList.add("frSectionEditorEditSectionButton");
+                    button.type = "button";
+                    button.innerText = (alreadyContains > -1 ? "Delete " : "Add ") + currentItem.name;
+                    button.addEventListener("click", function () {
+                        //Check if removing or adding. Then update the [tree] variable.
+                        if (alreadyContains > -1 && tree.children[alreadyContains].deletable) {
+                            tree.children.splice(alreadyContains, 1);
+                        } else {
+                            UUIDNumber++;
+                            currentItem.UUID = UUIDNumber;
+                            tree.children.splice(pushPosition, 0, currentItem);
+                        }
+                        //create a tree, but re-use the host.
+                        createVisualTree(tree, true);
+
+                        //Update the selectedTree to still be colored as selected.
+                        updateColorOfTree(selectedTree, true);
+                        showSettingsOfCurrentTree(tree);//Update the settings panel to show the changes.
+                    });
+                    if (tree.setting) { button.disabled = !(tree.setting.value && !tree.setting.invalid); }
+                    settingsHolder.appendChild(button);
+                }
+            }
+        };
+
         const checkTreeIsValid = (tree) => {
-            if (tree.setting && (tree.setting.value == undefined || tree.setting.invalid)) {
-                return {valid:false,tree:tree};
+            if (tree.setting && (tree.setting.value == null || tree.setting.invalid)) {
+                return {valid: false, tree: tree};
             }
             for (let i = 0; i < tree.children.length; i++) {
-                if (tree.children[i].setting && (tree.children[i].setting.value == undefined || tree.children[i].setting.invalid)) {
-                    return {valid:false,tree:tree.children[i]};
+                if (tree.children[i].setting && (tree.children[i].setting.value == null || tree.children[i].setting.invalid)) {
+                    return {valid: false, tree: tree.children[i]};
                 }
                 if ((tree.children[i].id === "subReport" || tree.children[i].id === "group")) {
                     let check = checkTreeIsValid(tree.children[i]);
-                    if(!check.valid){
+                    if (!check.valid) {
                         return check;
                     }
                 }
             }
-            return {valid:true};
-        }
-        let userCreatedTree = copy(treeData.StarterReport);
-        let buttons = this.createButtons(["Ok", "Cancel"]);
-        let btnContainer = document.createElement('div');
-        let d = new Dialog("Sections", body, this.hostElement);
-        userCreatedTree.parent = {hostee: treeHolder};
-        convertReportLayoutToTree(reportLayout, userCreatedTree, false,[{type:"report",dataUUID:reportLayout.dataUUID}]);
+            return {valid: true};
+        };
+
+
+        convertReportLayoutToTree(reportLayout, userCreatedTree, false, [{
+            type: "report",
+            dataUUID: reportLayout.dataUUID
+        }]);
         createVisualTree(userCreatedTree, false);
         buttons[0].addEventListener('click', () => {
-            let treeCheck = checkTreeIsValid(userCreatedTree,[{type:"report"}]);
+            let treeCheck = checkTreeIsValid(userCreatedTree, [{type: "report"}]);
             if (treeCheck.valid) {
                 d.hide();
-                reportLayout = convertReportLayoutFromTree(userCreatedTree, reportLayout)
+                reportLayout = convertReportLayoutFromTree(userCreatedTree, reportLayout);
                 if (typeof ok === 'function') {
                     ok(reportLayout);
                 }
@@ -7331,18 +7038,19 @@ class UI { // jshint ignore:line
                 newBody.appendChild(description);
                 let buttons = this.createButtons(["Ok"]);
                 newBody.appendChild(buttons[0]);
-                buttons[0].addEventListener('click', () => {d2.hide()});
-                if(treeCheck.tree.id === "group"){
-                    description.innerHTML = "<h3 style='margin:0'>You have an invalid 'Group'.</h3>This is probably because the group doesn't have a valid \"groupOn\" set."
+                buttons[0].addEventListener('click', () => {
+                    d2.hide();
+                });
+                if (treeCheck.tree.id === "group") {
+                    description.innerHTML = "<h3 style='margin:0'>You have an invalid 'Group'.</h3>This is probably because the group doesn't have a valid \"groupOn\" set.";
                 }
-                if(treeCheck.tree.id === "subReport"){
-                    description.innerHTML = "<h3 style='margin:0'>You have an invalid 'Sub-Report'.</h3>This is probably because the Sub-Report doesn't have a valid \"data\" established."
+                if (treeCheck.tree.id === "subReport") {
+                    description.innerHTML = "<h3 style='margin:0'>You have an invalid 'Sub-Report'.</h3>This is probably because the Sub-Report doesn't have a valid \"data\" established.";
                 }
-                if(treeCheck.tree.id === "calcs"){
-                    description.innerHTML = "<h3 style='margin:0'>You have an invalid 'Formula'.</h3>This is probably because the Formula is empty or has an invalid \"data\" being used."
+                if (treeCheck.tree.id === "calcs") {
+                    description.innerHTML = "<h3 style='margin:0'>You have an invalid 'Formula'.</h3>This is probably because the Formula is empty or has an invalid \"data\" being used.";
                 }
             }
-
         });
         buttons[1].addEventListener('click', () => {
             d.hide();
@@ -7353,8 +7061,10 @@ class UI { // jshint ignore:line
         btnContainer.appendChild(buttons[0]);
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
+
     }
-    subReportTotalFieldEditor (data, selected, type, ok, cancel) {
+
+    subReportTotalFieldEditor(data, selected, type, ok, cancel) {
         let types = ["sum", "average", "count", "min", "max"];
         const body = document.createElement('div');
         body.style.marginBottom = "5px";
@@ -7377,19 +7087,18 @@ class UI { // jshint ignore:line
         body.appendChild(title);
         const select = document.createElement("select");
         let possibleDataValues = this._parent.reportFields.getDataFieldsFromDataName(data);
-        if(possibleDataValues.length) {
+        if (possibleDataValues.length) {
 
             let optionGroup = document.createElement('optgroup');
-            optionGroup.label = data +">";
+            optionGroup.label = data + ">";
             optionGroup.style.fontWeight = "bold";
             for (let i = 0; i < possibleDataValues.length; i++) {
                 let option = new Option(possibleDataValues[i]);
-                if(selected === possibleDataValues[i]) option.selected = true
+                if (selected === possibleDataValues[i]) { option.selected = true; }
                 optionGroup.appendChild(option);
             }
             select.appendChild(optionGroup);
-        }
-        else{
+        } else {
             let blankOption = document.createElement('option');
             blankOption.disabled = true;
             blankOption.label = "No data values exist.";
@@ -7422,7 +7131,8 @@ class UI { // jshint ignore:line
         });
 
     }
-    subReportTotalsBrowse (treePathing,totals, data, ok, cancel) {
+
+    subReportTotalsBrowse(treePathing, totals, data, ok, cancel) {
         const body = document.createElement('div');
         const span = document.createElement('span');
         span.innerText = "Totals:";
@@ -7493,7 +7203,7 @@ class UI { // jshint ignore:line
 
                     // Add new Total
                     groups[type].appendChild(new Option(name));
-                    resultVariables[type].push({total:name,treePathing:treePathing});
+                    resultVariables[type].push({total: name, treePathing: treePathing});
                 }
             });
         });
@@ -7533,19 +7243,18 @@ class UI { // jshint ignore:line
 
                     // Don't re-add existing totals, basically act like we merged them.
                     let existsAlready = false;
-                    for(let i =0;i<resultVariables.length;i++){
-                        if(resultVariables[i].total === name){
+                    for (let i = 0; i < resultVariables.length; i++) {
+                        if (resultVariables[i].total === name) {
                             existsAlready = true;
                             break;
                         }
                     }
-                    if(!existsAlready){
+                    if (!existsAlready) {
                         groups[newType].appendChild(option);
-                        resultVariables[newType].push({total:name,treePathing:treePathing});
+                        resultVariables[newType].push({total: name, treePathing: treePathing});
                     }
-                }
-                else {
-                    resultVariables[type][idx] = {total:name,treePathing:treePathing};
+                } else {
+                    resultVariables[type][idx] = {total: name, treePathing: treePathing};
                 }
             });
         });
@@ -7595,28 +7304,28 @@ class UI { // jshint ignore:line
             }
         });
     }
-    getDataFieldsFromDataName (name){
-        let goThrough = (data)=>{
+
+    getDataFieldsFromDataName(name) {
+        let goThrough = (data) => {
             let dataToReturn = null;
-            for(let i =0;data.childrenIndexed;i++){
-                if(data.childrenIndexed[i].name === name){
+            for (let i = 0; data.childrenIndexed; i++) {
+                if (data.childrenIndexed[i].name === name) {
                     dataToReturn = data.childrenIndexed[i];
                     break;
-                }
-                else if(data.childrenIndexed[i].childrenIndexed.length){
+                } else if (data.childrenIndexed[i].childrenIndexed.length) {
                     let possibleData = null;
-                    possibleData = goThrough(data.childrenIndexed[i],name);
-                    if(possibleData && possibleData.length){
+                    possibleData = goThrough(data.childrenIndexed[i], name);
+                    if (possibleData && possibleData.length) {
                         dataToReturn = possibleData;
                         break;
                     }
                 }
             }
-            if(dataToReturn && dataToReturn.fields){
+            if (dataToReturn && dataToReturn.fields) {
                 return dataToReturn.fields;
             }
             return [];
-        }
+        };
         return goThrough(this.primary);
     }
 
@@ -8747,7 +8456,7 @@ class UI { // jshint ignore:line
             let text = textArea.value;
             if (typeof ok === 'function') {
                 if (async !== null && asyncCheckbox.checked) {
-                    // Search for either a , or ( then any number of spaces, then "done" then any number of spaces and either a , or ( or an )
+                    // Search for either a "," or "(" then any number of spaces, then "done" then any number of spaces and either a "," or "(" or an ")"
                     if (text.match(/[,(]\s*(done)\s*[,)(]/) === null) {
                         text += "; done();";
                     }
@@ -10377,6 +10086,8 @@ class Dialog { // jshint ignore:line
     }
 }
 
+
+
 /**
  * Simple helper function to do shallow clones
  * @param value
@@ -10396,10 +10107,25 @@ function shallowClone(value, skipValues = []) { // jshint ignore:line
     return result;
 }
 
+/**
+ * deepClone values
+ * @param value
+ * @returns {any}
+ */
+function deepClone(value) {
+    if (window && typeof window.structuredClone === 'function') {
+        return window.structuredClone(value);
+    } else if (global && typeof global.structuredClone === 'function') {
+        return global.structuredClone(value);
+    }
+    return JSON.parse(JSON.stringify(value));
+}
+
+
 /***
  * Used to make sure the number is a valid opacity value
  * @param value
- * @return {number} - 0.0 thru 1.0
+ * @return {number} - 0.0 through 1.0
  */
 function handleOpacity(value) { // jshint ignore:line
     let opacity = parseFloat(value);
