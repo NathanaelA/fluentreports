@@ -1545,7 +1545,7 @@ class FluentReportsGenerator {
     _openSections() {
         // Generate the current layout report so we can easily parse it in the sectionBrowse
         let currentReport = this._generateSave();
-        this.UIBuilder.sectionBrowse(this, currentReport, (updateReport) => {
+        this.UIBuilder.sectionBrowse(currentReport, (updateReport) => {
             this._parseReport(updateReport);
         });
     }
@@ -1565,9 +1565,6 @@ class FluentReportsGenerator {
         this._toolBarLayout.appendChild(this.UIBuilder.createSpacer());
         this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue834", "Report settings", () => {
             this._reportSettings();
-        }));
-        this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue822", "Group data by", () => {
-            this._openGroupings();
         }));
         this._toolBarLayout.appendChild(this.UIBuilder.createToolbarButton("\ue819", "Sections", () => {
             this._openSections();
@@ -6321,156 +6318,1085 @@ class UI { // jshint ignore:line
         return spacer;
     }
 
-    // TODO: Strip out "report" should now point to this._parent
-    sectionBrowse(report, reportLayout, ok, cancel) {
+    sectionBrowse (reportLayout, ok, cancel) {
         const body = document.createElement('div');
-        const span = document.createElement('span');
-        span.innerText = "Sections:";
-        body.appendChild(span);
-        body.appendChild(document.createElement('br'));
-        const elements = {Report: {}};
+        const blockLeft = document.createElement('div');
+        blockLeft.classList.add("frSectionEditorTreeView")
+        const blockLeftBox = document.createElement("div");
+        blockLeftBox.classList.add("frSectionEditorTreeViewContainer")
+        const treeHolder = document.createElement('div');
+        blockLeftBox.appendChild(treeHolder)
+        blockLeft.appendChild(blockLeftBox);
+        const blockRight = document.createElement('div');
+        blockRight.classList.add("frSectionEditorDetailsView")
+        const settingsHolder = document.createElement('div');
+        blockRight.appendChild(settingsHolder);
+        body.appendChild(blockLeft);
+        body.appendChild(blockRight);
 
-        const LI = (value, parent) => {
-            let li = document.createElement("li");
-            let span = document.createElement("div");
-            span.innerHTML = value;
-            li.appendChild(span);
-            parent.appendChild(li);
-            return li;
-        };
-
-        const A = (value, parent, elementKey, tracking) => {
-            let a = document.createElement("a");
-            a.addEventListener("click", () => {
-                if (value === "(delete)") {
-                    tracking[elementKey].style.display = "none";
-                    tracking["add" + elementKey].style.display = "";
-                    tracking.Report[elementKey] = false;
-                } else {
-                    tracking[elementKey].style.display = "";
-                    tracking["add" + elementKey].style.display = "none";
-                    tracking.Report[elementKey] = true;
-                }
-            });
-            a.style.marginLeft = "10px";
-            a.style.cursor = "pointer";
-            a.innerHTML = value;
-            if (parent instanceof HTMLLIElement) {
-                parent.children[0].appendChild(a);
-            } else {
-                parent.appendChild(a);
-            }
-            return a;
-        };
-
-        const createSection = (title, elementKey, parent, tracking, reportLayout) => {
-            tracking[elementKey] = LI(title, parent);
-            A("(delete)", tracking[elementKey], elementKey, tracking);
-            if (reportLayout && reportLayout[elementKey]) {
-                tracking.Report[elementKey] = true;
-                tracking[elementKey].style.display = "";
-                tracking["add" + elementKey].style.display = "none";
-            } else {
-                tracking.Report[elementKey] = false;
-                tracking[elementKey].style.display = "none";
-                tracking["add" + elementKey].style.display = "";
-            }
-        };
-
-        const buildGroupings = (reportLayout, tracking, parent) => {
-            tracking.groupBy = [];
-            const finish = [];
-            for (let i = 0; i < reportLayout.groupBy.length; i++) {
-                let gbk = {name: reportLayout.groupBy[i].groupOn, Report: {}};
-                let pd = LI("Group on <b>" + gbk.name + "</b>", parent);
-                tracking.groupBy.push(gbk);
-                gbk.addheader = A("(Add Header)", pd, "header", gbk);
-                gbk.adddetail = A("(Add Detail)", pd, "detail", gbk);
-                gbk.addfooter = A("(Add Footer)", pd, "footer", gbk);
-                let ndg = document.createElement("ul");
-                pd.appendChild(ndg);
-                createSection("Header", "header", ndg, gbk, reportLayout.groupBy[i]);
-                createSection("Detail: <b>" + gbk.name + "</b>", "detail", ndg, gbk, reportLayout.groupBy[i]);
-                finish.push({title: "Footer", key: "footer", parent: ndg, data: gbk, report: reportLayout.groupBy[i]});
-//                createSection("Footer", "footer", ndg, gbk, reportData.groupBy[i]);
-            }
-            return finish;
-        };
-
-
-        const finishFooters = (finish) => {
-            if (!finish || finish.length === 0) {
-                return;
-            }
-            for (let i = 0; i < finish.length; i++) {
-                createSection(finish[i].title, finish[i].key, finish[i].parent, finish[i].data, finish[i].report);
-            }
-        };
-
-        const buildSubReport = (reportLayout, subLayout, tracking, parent) => {
-            let rbk = {name: reportLayout.data, Report: {}};
-            if (tracking.subReports.indexOf(rbk) < 0) {
-                tracking.subReports.push(rbk);
-            }
-            let pd = LI("SubReport: <b>" + rbk.name + "</b>", parent);
-            rbk.addheader = A("(Add Header)", pd, "header", rbk);
-            rbk.adddetail = A("(Add Detail)", pd, "detail", rbk);
-            rbk.addfooter = A("(Add Footer)", pd, "footer", rbk);
-            let ndg = document.createElement("ul");
-            pd.appendChild(ndg);
-            createSection("Header", "header", ndg, rbk, subLayout);
-
-            let finish;
-            if (reportLayout.groupBy) {
-                finish = buildGroupings(subLayout, rbk, ndg);
-            }
-            createSection("Detail: <b>" + rbk.name + "</b>", "detail", ndg, rbk, subLayout);
-            handleSubReports(reportLayout.childrenIndexed, rbk, ndg);
-
-            finishFooters(finish);
-            createSection("Footer", "footer", ndg, rbk, subLayout);
-        };
-
-        const handleSubReports = (subReports, tracking, parentElement) => { // jshint ignore:line
-            if (!subReports.length) {
-                return;
-            }
-            if (!Array.isArray(tracking.subReports)) {
-                tracking.subReports = [];
-            }
-            for (let i = 0; i < subReports.length; i++) {
-                const subLayout = subReports[i].findMatchingLayoutInfo(reportLayout);
-                buildSubReport(subReports[i], subLayout, tracking, parentElement);
-            }
-        };
-
-        let group = document.createElement("ul");
-        let pd = LI("Primary Report/Data", group);
-        elements.addtitleHeader = A("(Add Title Header)", pd, "titleHeader", elements);
-        elements.addpageHeader = A("(Add Page Header)", pd, "pageHeader", elements);
-        elements.adddetail = A("(Add Detail)", pd, "detail", elements);
-        elements.addpageFooter = A("(Add Page Footer)", pd, "pageFooter", elements);
-        elements.addfinalSummary = A("(Add Final Summary)", pd, "finalSummary", elements);
-
-        let pdg = document.createElement("ul");
-        pd.appendChild(pdg);
-
-        createSection("Title Header", "titleHeader", pdg, elements, reportLayout);
-        createSection("Page Header", "pageHeader", pdg, elements, reportLayout);
-        let finish;
-        if (reportLayout.groupBy) {
-            finish = buildGroupings(reportLayout, elements, pdg);
+        let selectedTree = null;
+        let UUIDNumber = 0;
+        let dragAndDropData = {};
+        const treeData = {
+            calcs:{
+                description:"Formulas to get you a values from a data set. These formulas can be: \"sum\", \"average\", \"count\", \"min\", or \"max\".",
+                name:"Formulas",
+                id:"calcs",
+                canContain:[],
+                children:[],
+                deletable:true,
+                movable:false,
+                priority:1,
+                setting: {
+                    id: "totals",
+                    invalid: false,
+                    text: "Formulas Editor",
+                    value: undefined,
+                },
+            },
+            StarterReport: {
+                description: "This is the head report that gets ALL data passed into it. This has exclusive children: TitleHeader, PageHeader, PageFooter, & FinalSummary.",
+                report: ["report"],
+                name: "Primary Report/Data",
+                id: "StarterReport",
+                UUID: 0,
+                canContain: ["titleHeader", "pageHeader", "detail", "pageFooter", "finalSummary", "subReport", "group"],
+                children: [],
+                deletable: false,
+                movable: false,
+                priority: -1,
+            },
+            titleHeader: {
+                name: "Title header",
+                description:"This is printed for the FIRST PAGE ONLY. This will be printed first.",
+                id: "titleHeader",
+                canContain: [],
+                children: [],
+                deletable: true,
+                movable: false,
+                priority: 0,
+            },
+            pageHeader: {
+                name: "Page header",
+                description: "This is printed for EVERY page except if the titleHeader is set, if the titleHeader is set then this header is skipped on the very first page; this prints first on the page!",
+                id: "pageHeader",
+                parent: null,
+                canContain: [],
+                children: [],
+                deletable: true,
+                movable: false,
+                priority: 1,
+            },
+            header: {
+                name: "Header",
+                description:"This is printed at the beginning of it's respective group/sub-report.",
+                id: "header",
+                parent: null,
+                canContain: [],
+                children: [],
+                deletable: true,
+                movable: true,
+                priority: 2,
+            },
+            detail: {
+                name: "Detail",
+                description:"This will print for each record passed in to it's parent. This is printed before any sibling groups/sub-reports but after the header. ",
+                id: "detail",
+                parent: null,
+                canContain: [],
+                children: [],
+                deletable: true,
+                movable: true,
+                priority: 3,
+            },
+            group: {
+                name: "Group",
+                description:"This will allow you to create grouping on data-fields so that you can have separate group headers, footers, details for each group of records.",
+                id: "group",
+                canContain: ["header", "detail", "group", "subReport", "footer"],
+                children: [],
+                deletable: true,
+                movable: true,
+                priority: 4,
+                setting: {
+                    id: "groupOn",
+                    invalid: false,
+                    text: "Group On",
+                    value: undefined,
+                },
+            },
+            subReport: {
+                name: "Sub-Report",
+                description:"This acts very similar to the 'The Primary Report'. This doesn't have as many children options, but you can use different data than the 'The Primary Report'.",
+                id: "subReport",
+                canContain: ["calcs","header", "detail", "group", "subReport", "footer"],
+                children: [],
+                deletable: true,
+                movable: true,
+                report: ["report"],
+                priority: 5,
+                setting: {
+                    id: "data",
+                    invalid: false,
+                    text: "Data used",
+                    value: undefined,
+                },
+            },
+            footer: {
+                name: "Footer",
+                description:"This is printed at the end of it's respective group/sub-report.",
+                id: "footer",
+                canContain: [],
+                children: [],
+                deletable: true,
+                movable: true,
+                priority: 6,
+            },
+            pageFooter: {
+                name: "Page footer",
+                description:"This is printed as the footer object on all pages. (except for the last page if the finalSummary exists).",
+                id: "pageFooter",
+                canContain: [],
+                children: [],
+                deletable: true,
+                movable: false,
+                priority: 7,
+            },
+            finalSummary: {
+                name: "Final Summary",
+                description:"This is printed as the footer on the very final page. This will be printed last.",
+                id: "finalSummary",
+                canContain: [],
+                children: [],
+                deletable: true,
+                movable: false,
+                priority: 8,
+            },
         }
-        createSection("Page Details", "detail", pdg, elements, reportLayout);
+        const copy = function (obj) {
+            return JSON.parse(JSON.stringify(obj));
+        }
+        const getReportFieldFromTree = function (treeReport) {
+            let returnValue = this._parent.reportFields
+            for (let i = 0; i < treeReport.length; i++) {
+                if (!(treeReport[i] === "report") && treeReport[i] && returnValue.children && returnValue.children[treeReport[i]]) {
+                    returnValue = returnValue.children[treeReport[i]];
+                }
+            }
+            return returnValue
+        }
+        const convertReportLayoutToTree = (layout, currentTree,  owner, treePathing) => {
+            owner = owner ? owner : currentTree;
 
-        handleSubReports(report.reportFields.childrenIndexed, elements, pdg);
+            function check(type) {
+                if ((layout[type] && treeData[type])) {
+                    let item = copy(treeData[type])
+                    UUIDNumber++;
+                    item.treePathing = [].concat(treePathing)//PATH TO layout[type]
+                    item.treePathing.push({type:type});
+                    item.UUID = UUIDNumber;
+                    item.parent = currentTree;
+                    currentTree.children.push(item);
+                }
+            }
 
-        finishFooters(finish);
+            if (layout.calcs){
+                let calcs = copy(treeData["calcs"])
+                UUIDNumber++;
+                calcs.treePathing = [].concat(treePathing)
+                calcs.treePathing.push({type:"calcs"});
+                let totals = layout.calcs;
+                for(let key in totals){
+                    if (!totals.hasOwnProperty(key)) {
+                        continue;
+                    }
+                    for(let i=0;i<totals[key].length;i++){
+                        totals[key][i] = {total:totals[key][i],treePathing:treePathing};
+                    }
+                }
+                calcs.setting.value = totals;
+                calcs.UUID = UUIDNumber;
+                calcs.parent = currentTree;
+                currentTree.children.push(calcs);
 
-        createSection("Page Footer", "pageFooter", pdg, elements, reportLayout);
-        createSection("Final Summary", "finalSummary", pdg, elements, reportLayout);
+            }
+            check("titleHeader");
+            check("pageHeader");
+            check("header");
+            check("detail");
 
-        body.appendChild(group);
+            if (layout.groupBy) {
+                for (let i = 0; i < layout.groupBy.length; i++) {
+                    if (checkIfGroupingValueIsUnique(currentTree, layout.groupBy[i].groupOn, owner)) {
+                        let group = copy(treeData.group);
+                        group.setting.value = layout.groupBy[i].groupOn;
+                        UUIDNumber++;
+                        group.treePathing = [].concat(treePathing)//PATH TO layout[type]
+                        group.treePathing.push({type:"groupBy", index:i});
+                        group.UUID = UUIDNumber;
+                        group.parent = currentTree;
+                        currentTree.children.push(group);
+                        let subPathing = ([].concat(treePathing));
+                        subPathing.push({type:"groupBy", index:i});
+                        convertReportLayoutToTree(layout.groupBy[i], currentTree.children[currentTree.children.length - 1] , owner, subPathing)
+                    } else {
+                        console.warn("An invalid reportLayout was passed in. group.groupOn is supposed to be unique, yet I've found 2 groups grouping by [ " + layout.groupBy[i].groupOn + " ] under the same parent. We've skipped creating the 2nd group.");
+                    }
+                }
+            }
+            if (layout.subReports) {
+                for (let i = 0; i < layout.subReports.length; i++) {
+                    let subReport = copy(treeData.subReport);
+                    UUIDNumber++;
+                    subReport.treePathing = [].concat(treePathing)//PATH TO layout[type]
+                    subReport.treePathing.push({type:"subReports", index:i});
+                    subReport.UUID = UUIDNumber;
+                    subReport.parent = currentTree;
+                    subReport.setting.value = layout.subReports[i].data;
+                    subReport.report = [].concat(owner.report);
+                    subReport.report.push(layout.subReports[i].data);
+                    let subPathing = ([].concat(treePathing));
+                    subPathing.push({type:"subReports", index:i});
+                    currentTree.children.push(subReport);
+                    convertReportLayoutToTree(layout.subReports[i], currentTree.children[currentTree.children.length - 1], subReport, subPathing)
+                }
+            }
+
+            check("footer");
+            check("pageFooter");
+            check("finalSummary");
+        };
+        const convertReportLayoutFromTree = (tree, reportLayout) => {
+            // THE PROCESS:
+            // Create an NEW reportLayout, copying over the StarterReport top-level but removing ALL children
+            // Go through tree, and copy over every single "LINKED" child, so the new report contains as much as it can from the old report
+            // If a linked child is being copied over to a parent that is being created. Create said parent immediately
+            // If no linked child exists for the current tree child, create them.
+
+            function getLinkedChild(child) {
+                let linkedChild = false;
+                for (let i = 0; i < child.treePathing.length; i++) {
+                    let link = child.treePathing[i];
+                    if (link.type === "report") {
+                        linkedChild = reportLayout;
+                    }
+                    else {
+                        if (!linkedChild) continue;
+                        if (typeof link.index === "number" && (link.type === "groupBy" || link.type === "subReports") && linkedChild[link.type][link.index]) {
+                            linkedChild = linkedChild[link.type][link.index];
+                        } else if (typeof link.type === "string" && linkedChild[link.type]) {
+                            linkedChild = linkedChild[link.type];
+                        }
+                    }
+                }
+                return linkedChild;
+            }
+            function forEachChild(toCheck, cb, path=["TOP"]) {
+                if (toCheck && toCheck.children) {
+                    let subReportsUUIDs = [];
+                    let groupsUUIDs = [];
+                    for (let i = 0; i < toCheck.children.length; i++) {
+                        if(toCheck.children[i].id === "subReport"){
+                            subReportsUUIDs.push(toCheck.children[i].UUID);
+                        }
+                        if(toCheck.children[i].id === "group"){
+                            groupsUUIDs.push(toCheck.children[i].UUID);
+                        }
+                    }
+                    for (let i = 0; i < toCheck.children.length; i++) {
+                        let subPathing = [].concat(path);
+                        if(toCheck.children[i].id === "group"){
+                            subPathing.push({TreeLocation:i,GroupNumber:groupsUUIDs.indexOf(toCheck.children[i].UUID)});
+                        }
+                        else if(toCheck.children[i].id === "subReport"){
+                            subPathing.push({TreeLocation:i,GroupNumber:subReportsUUIDs.indexOf(toCheck.children[i].UUID)});
+                        }
+                        else {
+                            subPathing.push(i);
+                        }
+                        cb(toCheck.children[i], subPathing)
+                        if (toCheck.children[i].children && toCheck.children[i].children.length) {
+                            forEachChild(toCheck.children[i], cb, subPathing);
+                        }
+                    }
+                }
+                else if(toCheck){
+                    for(let i in treeData){
+                        if(toCheck[i]){
+                            let subPathing = [].concat(path);
+                            subPathing.push(i);
+                            cb(toCheck[i], subPathing)
+                        }
+                    }
+                    if(toCheck.subReports){
+                        for(let i =0;i<toCheck.subReports.length;i++) {
+                            let subPathing = [].concat(path);
+                            subPathing.push({TreeLocation: -1, GroupNumber: i});
+                            cb(toCheck.subReports[i], subPathing)
+                            forEachChild(toCheck.subReports[i], cb, subPathing);
+                        }
+                    }
+
+                    if(toCheck.groupBy){
+                        for(let i =0;i<toCheck.groupBy.length;i++) {
+                            let subPathing = [].concat(path);
+                            subPathing.push({TreeLocation: -1, GroupNumber: i});
+                            cb(toCheck.groupBy[i], subPathing)
+                            forEachChild(toCheck.groupBy[i], cb, subPathing);
+                        }
+                    }
+                }
+            }
+            function createReportLayoutChildFromTreeChild(tree){
+                let linked = false;
+                if(tree.treePathing) linked = getLinkedChild(tree);
+                if(linked) return linked;
+                switch (tree.id){
+                    case "titleHeader":
+                    case "pageHeader":
+                    case "header":
+                    case "detail":
+                    case "footer":
+                    case "pageFooter":
+                    case "finalSummary":
+                        return {children:[]};
+                    case "calc":
+                        return tree.setting.value
+                    case "subReport":
+                        return {
+                            "dataUUID":10004,
+                            "dataType": "parent",
+                            "type": "report",
+                            "data": tree.setting.value,
+                        }
+                    case "group":
+                        return {
+                            "type": "group",
+                            "groupOn": tree.setting.value,
+                        }
+
+                }
+                return false;
+            }
+
+            //Create new reportLayout and deleting all children.
+            let newReportLayout = copy(reportLayout);
+            for(let i in treeData){
+                if(newReportLayout[i]) delete newReportLayout[i];
+            }
+            delete newReportLayout.subReports;
+            delete newReportLayout.groupBy;
+
+            //Copy over every single "LINKED" child or create a new child.
+            forEachChild(tree,(child,path)=>{
+                if (child.FIXED) return;
+                let linkedChild;
+                if (child.treePathing) {
+                    linkedChild = copy(getLinkedChild(child));
+
+                    if(!linkedChild) return;
+                    for(let i in treeData){
+                        if(linkedChild[i]) delete linkedChild[i];
+                    }
+                    if(linkedChild.subReports) delete linkedChild.subReports;
+                    if(linkedChild.groupBy) delete linkedChild.groupBy;
+                }
+                else{
+                    linkedChild = createReportLayoutChildFromTreeChild(child);
+                }
+                let location = false;
+                let treeAt = false;
+                for(let i =0;i<path.length;i++){
+                    if(path[i] === "TOP") {
+                        location = newReportLayout;
+                        treeAt = tree;
+                    }
+                    if(!location || !treeAt) continue;
+                    if(typeof path[i] === "number"){
+                        location[child.id] = linkedChild;
+                    }
+                    if(typeof path[i] === "object"){
+
+                        if(path[i+1] != null) {//UPDATE LOCATION OF SECTION
+                            if (treeAt.children) treeAt = treeAt.children[path[i].TreeLocation];
+                            if (treeAt.id === "group") {
+                                if (!location.groupBy) location.groupBy = [];
+                                if (!location.groupBy[path[i].GroupNumber]){
+                                    location.groupBy[path[i].GroupNumber] = createReportLayoutChildFromTreeChild(child);
+                                    location.groupBy[path[i].GroupNumber].FIXED = true;
+                                }
+                                location = location.groupBy[path[i].GroupNumber];
+
+                            }
+                            else if (treeAt.id === "subReport") {
+                                if (!location.subReports) location.subReports = [];
+                                if (!location.subReports[path[i].GroupNumber]){
+                                    location.subReports[path[i].GroupNumber] = createReportLayoutChildFromTreeChild(child);
+                                    location.subReports[path[i].GroupNumber].FIXED = true;
+                                }
+                                location = location.subReports[path[i].GroupNumber];
+                            }
+                        }
+                        else{//PLACE THE SECTION
+                            if(child.id === "group"){
+                                if(!location.groupBy) location.groupBy = [];
+                                location.groupBy.push(linkedChild);
+                            }
+                            else if(child.id === "subReport"){
+                                if(!location.subReports) location.subReports = [];
+                                location.subReports.push(linkedChild);
+                            }
+                            else{
+                                location[child.id] = linkedChild
+                            }
+                        }
+                    }
+                }
+                linkedChild.FIXED = true;
+                child.FIXED = true;
+            });
+            //Remove all FIXED markers
+            if(newReportLayout.FIXED) delete newReportLayout.FIXED;
+            forEachChild(newReportLayout,(child,path)=>{
+                if(child.FIXED) delete child.FIXED;
+            });
+            return newReportLayout;
+        }
+        const updateColorOfTree = (tree, selected) => {
+            if(selected){
+                tree.element.classList.remove("frSectionEditorNOTSelectedTree");
+                tree.element.classList.add("frSectionEditorSelectedTree")
+            }
+            else{
+
+                tree.element.classList.add("frSectionEditorNOTSelectedTree");
+                tree.element.classList.remove("frSectionEditorSelectedTree")
+            }
+            tree.element.classList.remove("frSectionEditorInvalidTree");
+            if (tree && tree.setting && (tree.setting.value == undefined || tree.setting.invalid)) {
+                tree.element.classList.add("frSectionEditorInvalidTree");
+            }
+        }
+        const checkIfGroupingValueIsUnique = function (tree, value, owner) {
+            if (!owner) return true;
+            for (let i = 0; i < owner.children.length; i++) {
+                if (owner.children[i].id === "group" && owner.children[i].setting.value && owner.children[i].UUID !== tree.UUID && owner.children[i].setting.value === value) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        const showSettingsOfCurrentTree = (tree) => {
+            //Remove all elements in the settings panel.
+            while (settingsHolder.firstElementChild) {
+                settingsHolder.firstElementChild.remove();
+            }
+            /**
+             * [ Owner ] is the parent that gives the "data".
+             * For example. A layout like: Report -> Group -> SubReport
+             * SubReport's owner is "Report" but parent is "Group".
+             * Most times, the owner is the same as parent.
+             * But for the cases like shown. They have to be differentiated
+             */
+            let owner = false;
+            let possibleOwner = tree.parent;
+            while (!owner) {
+                if (!possibleOwner) break;
+                if (possibleOwner.id === "subReport" || possibleOwner.id === "StarterReport") owner = possibleOwner;
+                else possibleOwner = possibleOwner.parent;
+            }
+
+            let description = document.createElement('p');
+            description.classList.add("frSectionEditorTreeDescription");
+            description.innerText = tree.description;
+            settingsHolder.appendChild(description)
+            settingsHolder.appendChild(document.createElement('br'));
+            if (tree.setting) {
+                let settingHolder = document.createElement('div');
+                if(tree.setting.id === "groupOn" || tree.setting.id === "data") {
+                    let text = document.createElement('span');
+                    text.innerText = tree.setting.text + ": ";
+                    let value;
+                    let defaultOption = document.createElement('option');
+                    defaultOption.innerText = "Select one";
+                    defaultOption.disabled = true;
+                    defaultOption.defaultSelected = true;
+                    defaultOption.hidden = true;
+                    if (tree.setting.id === "groupOn") {
+                        let dataValueToUse = getReportFieldFromTree(owner.report);
+                        if (owner.id === "subReport" && !owner.setting.value) {
+                            dataValueToUse = false;
+                        }
+                        if (!dataValueToUse) {
+                            value = document.createElement('select');
+                            let option = document.createElement('option');
+                            option.innerText = "Parent missing 'data' field.";
+                            option.selected = true;
+                            value.appendChild(option);
+                            value.disabled = true;
+                        }
+                        else {
+                            value = document.createElement('select');
+                            for (let i = 0; i < dataValueToUse.fields.length; i++) {
+                                let option = document.createElement('option');
+                                option.innerText = dataValueToUse.fields[i];
+                                option.value = dataValueToUse.fields[i];
+                                if (tree.setting.value === dataValueToUse.fields[i]) {
+                                    option.selected = true;
+                                } else if (!checkIfGroupingValueIsUnique(tree, dataValueToUse.fields[i], owner)) {
+                                    option.disabled = true;
+                                }
+                                value.appendChild(option);
+                            }
+                            if (tree.setting.invalid) {
+                                let option = document.createElement('option');
+                                option.innerText = "INVALID: " + tree.setting.value;
+                                option.value = tree.setting.value;
+                                option.disabled = true;
+                                option.hidden = true;
+                                option.selected = true;
+                                value.appendChild(option);
+                            }
+                            if (!tree.setting.value) {
+
+                                value.appendChild(defaultOption);
+                            } else value.value = tree.setting.value;
+                        }
+                    }
+                    else if (tree.setting.id === "data") {
+                        value = document.createElement('select');
+                        if (!tree.setting.value) {
+                            value.appendChild(defaultOption);
+                        }
+                        /*
+                        TODO: Allow Primary Data to be a source for SubReports within the JSON api
+                             when Primary Data can be a source for SubReports, allow "calcs" in "canContain" for "StarterReport"
+                             then also, uncomment the following code.
+                        let primaryDataOption = document.createElement('option');
+                        primaryDataOption.innerText = "Primary Data";
+                        primaryDataOption.value = "Primary Data";
+                        if (tree.setting.value === "Primary Data") primaryDataOption.selected = true;
+                        value.appendChild(primaryDataOption);
+                         */
+                        let goThrough = (fields,tabbing)=>{
+                            for (let i = 0; i < fields.childrenIndexed.length; i++) {
+                                let option = document.createElement('option');
+                                option.innerText = fields.childrenIndexed[i].name;
+                                option.value = fields.childrenIndexed[i].name;
+
+                                if (tree.setting.value === fields.childrenIndexed[i].name) option.selected = true;
+                                value.appendChild(option);
+                                if(fields.childrenIndexed[i].childrenIndexed.length){
+                                    goThrough(fields.childrenIndexed[i],tabbing+1);
+                                }
+                            }
+                        }
+                        goThrough(this._parent.reportFields.primary,0)
+                    }
+                    if (value) {
+                        value.addEventListener("change", function () {
+                            if (tree.setting.id === "data") {
+                                tree.setting.value = this.value;
+                                tree.setting.invalid = false;
+                                if (this.value === "Primary Data") tree.report = ['report'];
+                                else {
+                                    let reportField = getReportFieldFromTree(owner.report);
+                                    if (reportField.children[this.value]) {
+                                        tree.report = [].concat(owner.report)
+                                        tree.report.push(this.value);
+                                    }
+                                }
+
+                                for (let i = 0; i < tree.children.length; i++) {
+                                    if (tree.children[i].id === "group" && tree.children[i].setting.value) {
+                                        if (!getReportFieldFromTree(tree.report).fields.includes(tree.children[i].setting.value)) {
+                                            tree.children[i].setting.invalid = true;
+                                            updateColorOfTree(tree.children[i], false)
+                                        } else if (tree.children[i].setting.invalid) {
+                                            tree.children[i].setting.invalid = false;
+                                            updateColorOfTree(tree.children[i], false)
+                                        }
+                                    }
+                                    if(tree.children[i].id === "calcs" && tree.children[i].setting.value){
+                                        let possibleFields = this._parent.reportFields.getDataFieldsFromDataName(tree.setting.value);
+                                        let totals = tree.children[i].setting.value;
+                                        let amount = 0;
+                                        let invalid = false;
+                                        for(let key in totals){
+                                            amount+=totals[key].length;
+                                            if(invalid) break;
+                                            for(let i =0;i<totals[key].length;i++){
+                                                if(possibleFields.indexOf(totals[key][i].total)===-1){
+                                                    invalid = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        tree.children[i].setting.invalid = !(amount > 0 && !invalid);
+                                        updateColorOfTree(tree.children[i],false)
+                                    }
+                                }
+                            } else if (tree.setting.id === "groupOn") {
+                                if (!checkIfGroupingValueIsUnique(tree, this.value, owner)) {
+                                    this.value = "";
+                                    console.warn("This should not have happened. You've attempted to set group to be grouping the same way as one of it's siblings.");
+                                } else if (!checkIfGroupingValueIsUnique(tree, tree.setting.value, owner)) {
+                                }
+                                tree.setting.value = this.value;
+                                tree.setting.invalid = false;
+                            }
+                        })
+                        settingHolder.appendChild(text);
+                        settingHolder.appendChild(value);
+                        settingsHolder.appendChild(settingHolder);
+                    }
+                }
+                if(tree.setting.id === "totals"){
+                    const editTotals = document.createElement("button");
+                    editTotals.classList.add("frSectionEditorEditSectionButton")
+                    editTotals.type = "button";
+                    editTotals.innerText = tree.setting.text;
+                    let getData = (tree)=>{
+                        if(tree.id === "subReport") return tree.setting.value;
+                        if(tree.id === "StarterReport") return "Primary Data";
+                        return getData(tree.parent);
+                    }
+                    editTotals.addEventListener("click",  () => {
+                        this.subReportTotalsBrowse(tree.treePathing,tree.setting.value || {},getData(tree), (value) => {
+                            tree.setting.value = value;
+                            let amount = 0;
+                            for(let i in value){
+                                amount+=value[i].length;
+                            }
+                            tree.setting.invalid = amount === 0;
+                            updateColorOfTree(tree, false);
+                        });
+                    });
+                    settingsHolder.appendChild(editTotals);
+                }
+            }
+
+            //If the current item can be deleted.
+            if (tree.deletable) {
+                const deleteButton = document.createElement("button");
+                deleteButton.classList.add("frSectionEditorDeleteSectionButton")
+                deleteButton.type = "button";
+                deleteButton.innerText = "Delete Self";
+                deleteButton.addEventListener("click", function () {
+                    if (!tree.parent) return;
+                    for (let i = 0; i < tree.parent.children.length; i++) {
+                        if (tree.parent.children[i].UUID === tree.UUID) {
+                            tree.parent.children.splice(i, 1);
+                            createVisualTree(tree.parent, true);
+                            break;
+                        }
+                    }
+
+                    //Remove all elements in the settings panel
+                    while (settingsHolder.firstElementChild) {
+                        settingsHolder.firstElementChild.remove();
+                    }
+                });
+                settingsHolder.appendChild(deleteButton);
+            }
+
+            //Go through all the items this section can contain inside of it.
+            //To add the "add item" and "remove item" buttons.
+            for (let i = 0; i < tree.canContain.length; i++) {
+                let currentItem = copy(treeData[tree.canContain[i]]);
+                currentItem.parent = tree;
+
+                if (currentItem.id === "group" || currentItem.id === "subReport") {
+                    let itemsExisting = [];
+                    let pushPosition = 0;
+
+                    for (let j = 0; j < tree.children.length; j++) {
+                        if (tree.children[j].id === currentItem.id) itemsExisting.push(j);
+                        if (tree.children[j].priority < currentItem.priority) pushPosition = j + 1;
+                    }
+                    //BUTTON: Add another.
+                    const tempButton = document.createElement("button");
+                    tempButton.classList.add("frSectionEditorEditSectionButton")
+                    tempButton.type = "button";
+                    tempButton.innerText = (itemsExisting.length > 0 ? "Add New " : "Add ") + currentItem.name;
+                    tempButton.addEventListener("click", function () {
+                        //Push into position
+                        UUIDNumber++;
+                        currentItem.UUID = UUIDNumber;
+                        tree.children.splice(pushPosition, 0, currentItem);
+
+                        //create a tree, but re-use the host.
+                        createVisualTree(tree, true);
+
+                        //Update the selectedTree to still be colored as selected.
+                        updateColorOfTree(selectedTree, true);
+                        showSettingsOfCurrentTree(tree);//Update the settings panel to show the changes.
+                    });
+                    if (tree.setting) tempButton.disabled = !(tree.setting.value && !tree.setting.invalid);
+                    settingsHolder.appendChild(tempButton);
+                    //BUTTONS: Remove item.
+                    for (let j = 0; j < itemsExisting.length; j++) {
+                        let item = tree.children[itemsExisting[j]];
+                        const removeButton = document.createElement("button");
+                        removeButton.classList.add("frSectionEditorEditSectionButton")
+                        removeButton.type = "button";
+                        removeButton.innerHTML = "Remove " + item.name + " (<b>" + ((!item.setting.invalid && item.setting.value) || "Invalid") + "</b>)";
+                        removeButton.addEventListener("click", function () {
+                            tree.children.splice(itemsExisting[j], 1);
+                            //create a tree, but re-use the host.
+                            createVisualTree(tree, true);
+
+                            //Update the selectedTree to still be colored as selected.
+                            updateColorOfTree(selectedTree, true);
+                            showSettingsOfCurrentTree(tree);//Update the settings panel to show the changes.
+                        });
+                        if (tree.setting) removeButton.disabled = !(tree.setting.value && !tree.setting.invalid);
+                        settingsHolder.appendChild(removeButton);
+                    }
+
+                } else {
+                    //FOR UNIQUE ITEMS
+                    //Anything in this else, is for things that exist only once per report. Like headers or footers.
+
+                    //Check through the section's children
+                    let alreadyContains = -1;//To see if it contains the child
+                    let pushPosition = 0;//and if not, where to put the child if chosen to add one.
+                    for (let j = 0; j < tree.children.length; j++) {
+                        if (tree.children[j].id === tree.canContain[i]) {
+                            alreadyContains = j;
+                            break;
+                        }
+                        if (tree.children[j].priority < currentItem.priority) pushPosition = j + 1;
+                    }
+                    const button = document.createElement("button");
+                    button.classList.add("frSectionEditorEditSectionButton")
+                    button.type = "button";
+                    button.innerText = (alreadyContains > -1 ? "Delete " : "Add ")  + currentItem.name;
+                    button.addEventListener("click", function () {
+                        //Check if removing or adding. Then update the [tree] variable.
+                        if (alreadyContains > -1 && tree.children[alreadyContains].deletable) {
+                            tree.children.splice(alreadyContains, 1);
+                        } else {
+                            UUIDNumber++;
+                            currentItem.UUID = UUIDNumber;
+                            tree.children.splice(pushPosition, 0, currentItem);
+                        }
+                        //create a tree, but re-use the host.
+                        createVisualTree(tree, true);
+
+                        //Update the selectedTree to still be colored as selected.
+                        updateColorOfTree(selectedTree, true);
+                        showSettingsOfCurrentTree(tree);//Update the settings panel to show the changes.
+                    });
+                    if (tree.setting) button.disabled = !(tree.setting.value && !tree.setting.invalid);
+                    settingsHolder.appendChild(button);
+                }
+            }
+        }
+        const createVisualTree = (tree, replaceHost = false) => {
+            /**
+             * THIS IS THE HOW EACH TREE IS LAID OUT
+             host (main div)
+             - hostNameContainer (contains hider and text)
+             - hider (button that hides/shows children)
+             - hostName (span that shows the text)
+             - childrenContainerHidden (shows only (...) to display it's closed)
+             - childrenContainerShown (contains the children)
+             - host (EXAMPLE CHILD)
+             - hostNameContainer
+             - hider
+             - hostName
+             - childrenContainerHidden
+             - childrenContainerShown
+             */
+            let treeView;
+            if (replaceHost) {
+                treeView = tree.element;
+                while (treeView.firstElementChild) {
+                    treeView.firstElementChild.remove();
+                }
+            } else {
+                treeView = document.createElement('div');
+                treeView.id = "FRG_SECTIONS_UUID_" + tree.UUID;
+                tree.element = treeView;
+            }
+            updateColorOfTree(tree, false);
+            let hostNameContainer = document.createElement('span');
+            hostNameContainer.classList.add("frSectionEditorTreeName")
+
+            let hider, childrenContainerShown, childrenContainerHidden, childrenContainerHiddenSpan;
+            if (tree.canContain.length > 0) {
+                hider = document.createElement('button');
+                hider.hiddenChildren = false;
+                hider.innerText = tree.children.length > 0 ? "-" : "/";
+                hider.classList.add("frSectionEditorHideChildrenButton")
+                childrenContainerShown = document.createElement("div");
+                childrenContainerShown.classList.add("frSectionEditorChildrenContainer")
+                if (tree.children.length) {
+                    childrenContainerHidden = document.createElement("div");
+                    childrenContainerHidden.classList.add("frSectionEditorChildrenHidden")
+                    childrenContainerHidden.style.display = "none";
+                    childrenContainerHiddenSpan = document.createElement('span');
+                    childrenContainerHiddenSpan.innerText = "...";
+
+                    childrenContainerHidden.appendChild(childrenContainerHiddenSpan)
+                    hider.addEventListener("click", function (event) {
+                        this.hiddenChildren = !this.hiddenChildren;
+                        this.innerText = this.hiddenChildren ? "+" : "-";
+                        //SHOW/HIDE children
+                        if (this.hiddenChildren) {
+                            childrenContainerShown.style.display = "none";
+                            childrenContainerHidden.style.display = "block";
+                        } else {
+                            childrenContainerShown.style.display = "block";
+                            childrenContainerHidden.style.display = "none";
+                        }
+
+                    })
+                }
+                tree.hostee = childrenContainerShown;
+            }
+            let hostName = document.createElement('span');
+            hostName.innerHTML = tree.name;
+            if (tree.id === "group" || tree.id === "subReport") {
+                hostName.innerHTML += " (<b>" + ((!tree.setting.invalid && tree.setting.value) || "Invalid") + "</b>)";
+            }
+            if (tree.canContain.length > 0) hostNameContainer.appendChild(hider);
+            hostNameContainer.appendChild(hostName);
+            hostNameContainer.addEventListener("click", function () {
+                showSettingsOfCurrentTree(tree);
+                if (selectedTree) {
+                    updateColorOfTree(selectedTree, false);
+                }
+                selectedTree = tree;
+                updateColorOfTree(selectedTree, true);
+            })
+            treeView.appendChild(hostNameContainer);
+            if (tree.canContain.length > 0) {
+                treeView.appendChild(childrenContainerShown);
+                if (tree.children.length) treeView.appendChild(childrenContainerHidden);
+            }
+            if (!tree.hostElement) tree.hostElement = tree.parent.hostee;
+            if (!replaceHost) tree.parent.hostee.appendChild(treeView);
+            if (tree.canContain.length && childrenContainerShown) {
+                treeView.ondrop = function (ev) {
+                    let InValid = document.getElementsByClassName("frSectionEditorInValidDropLocation");
+                    let Valid = document.getElementsByClassName("frSectionEditorValidDropLocation");
+                    for(let i =0;i<InValid.length;i++){
+                        InValid[i].classList.remove("frSectionEditorInValidDropLocation")
+                    }
+                    for(let i =0;i<Valid.length;i++){
+                        Valid[i].classList.remove("frSectionEditorValidDropLocation")
+                    }
+
+                    if(!(tree && dragAndDropData && dragAndDropData.dropTarget && dragAndDropData.dropTarget.tree && dragAndDropData.dropTarget.tree.UUID != undefined)) return;
+                    if(tree.UUID.toString() !== dragAndDropData.dropTarget.tree.UUID.toString()) return;
+                    ev.preventDefault();
+                    if (dragAndDropData.dropTarget && dragAndDropData.dropTarget.validDrop && dragAndDropData.dropTarget.element && dragAndDropData.dragging && dragAndDropData.dragging.element && dragAndDropData.dragging.tree) {
+                        let OldParent = dragAndDropData.dragging.tree.parent;
+                        let replacement = {};
+                        for(let i =0;i<OldParent.children.length;i++){
+                            if(OldParent.children[i].UUID === dragAndDropData.dragging.tree.UUID){
+                                replacement = OldParent.children.splice(i,1)[0];
+                                break;
+                            }
+                        }
+                        if(replacement) {
+                            replacement.parent = tree;
+                            let spotToPut = 0;
+                            for(let i =0;i<tree.children.length;i++){
+                                if(tree.children[i].priority < replacement.priority) spotToPut++;
+                                else break;
+                            }
+                            tree.children.splice(spotToPut,0,replacement);
+                            createVisualTree(userCreatedTree, true);
+                        }
+                    }
+                    if(dragAndDropData.ghostElement){
+                        dragAndDropData.ghostElement.remove();
+                        delete dragAndDropData.ghostElement;
+                    }
+                    dragAndDropData = {};
+                }
+                treeView.ondragover = function (ev) {
+                    ev.preventDefault();
+                    if (dragAndDropData.dragging && dragAndDropData.dragging.tree && dragAndDropData.dragging.element) {
+                        //Due to how treeView.ondragover works. If we hovered over [Report->SubReport->Group], our target is the Group but this function runs for both the parents. So this ID check makes sure we run it only at the lowest level possible.
+                        let target = ev.target;
+                        for(let i =0;i<ev.path.length;i++){
+                            if(ev.path[i].id.startsWith("FRG_SECTIONS_UUID_")){
+                                target = ev.path[i];
+                                break;
+                            }
+                        }
+                        if(tree.UUID.toString() !== target.id.substring("FRG_SECTIONS_UUID_".length,target.id.length)) return;
+                        //Make sure we aren't copying a subReport/group INTO itself.
+                        if(target.id.substring("FRG_SECTIONS_UUID_".length,target.id.length) === dragAndDropData.dragging.tree.UUID.toString()) return;
+
+                        //Check to see if we can drop the item here.
+                        if (tree.canContain.includes(dragAndDropData.dragging.tree.id)) {
+                            let alreadyContainsOne = false;
+                            if (!(dragAndDropData.dragging.tree.id === "group" || dragAndDropData.dragging.tree.id === "subReport")) {
+                                for (let i = 0; i < tree.children.length; i++) {
+                                    if (tree.children[i].id === dragAndDropData.dragging.tree.id) {
+                                        alreadyContainsOne = true;
+                                    }
+                                }
+                            }
+                            if(!dragAndDropData.dropTarget) dragAndDropData.dropTarget = {};
+                            if (dragAndDropData.dropTarget.element) {
+                                dragAndDropData.dropTarget.element.classList.remove("frSectionEditorValidDropLocation")
+                                dragAndDropData.dropTarget.element.classList.remove("frSectionEditorInValidDropLocation")
+                            }
+                            dragAndDropData.dropTarget.tree = tree;
+                            dragAndDropData.dropTarget.element = target;
+                            dragAndDropData.dropTarget.validDrop = !alreadyContainsOne;
+                            if(!alreadyContainsOne && tree.hostee){
+                                if( dragAndDropData.ghostElement){
+                                    dragAndDropData.ghostElement.remove();
+                                }
+                                delete dragAndDropData.ghostElement;
+                                let ghostElement = dragAndDropData.dragging.element.cloneNode(true);
+                                ghostElement.classList.add("frSectionEditorGhostElement")
+                                ghostElement.removeAttribute("id");
+                                dragAndDropData.ghostElement = ghostElement;
+                                let spotToPutGhost = 0;
+                                for(let i =0;i<tree.children.length;i++){
+                                    if(tree.children[i].priority < dragAndDropData.dragging.tree.priority) spotToPutGhost++;
+                                    else break;
+                                }
+                                tree.hostee.insertBefore(ghostElement,tree.hostee.children[spotToPutGhost])
+                            }
+                            else if(dragAndDropData.ghostElement){
+                                dragAndDropData.ghostElement.remove();
+                                delete dragAndDropData.ghostElement;
+                            }
+                            target.classList.add("frSectionEditor"+(alreadyContainsOne ? "In":"")+"ValidDropLocation")
+                        }
+                    }
+                    return false;
+                }
+            }
+            if (tree.movable) {
+                treeView.draggable = true;
+                treeView.ondragstart = function (ev) {
+                    if (dragAndDropData.dragging && dragAndDropData.dragging.tree) {
+                        return;
+                    }
+                    if(!dragAndDropData.dragging) dragAndDropData.dragging = {};
+                    dragAndDropData.dragging.tree = tree;
+                    dragAndDropData.dragging.element = ev.target;
+                }
+            }
+            for (let i = 0; i < tree.children.length; i++) {
+                createVisualTree(tree.children[i], false);
+            }
+        }
+        const checkTreeIsValid = (tree) => {
+            if (tree.setting && (tree.setting.value == undefined || tree.setting.invalid)) {
+                return {valid:false,tree:tree};
+            }
+            for (let i = 0; i < tree.children.length; i++) {
+                if (tree.children[i].setting && (tree.children[i].setting.value == undefined || tree.children[i].setting.invalid)) {
+                    return {valid:false,tree:tree.children[i]};
+                }
+                if ((tree.children[i].id === "subReport" || tree.children[i].id === "group")) {
+                    let check = checkTreeIsValid(tree.children[i]);
+                    if(!check.valid){
+                        return check;
+                    }
+                }
+            }
+            return {valid:true};
+        }
+        let userCreatedTree = copy(treeData.StarterReport);
+        let buttons = this.createButtons(["Ok", "Cancel"]);
+        let btnContainer = document.createElement('div');
+        let d = new Dialog("Sections", body, this.hostElement);
+        userCreatedTree.parent = {hostee: treeHolder};
+        convertReportLayoutToTree(reportLayout, userCreatedTree, false,[{type:"report",dataUUID:reportLayout.dataUUID}]);
+        createVisualTree(userCreatedTree, false);
+        buttons[0].addEventListener('click', () => {
+            let treeCheck = checkTreeIsValid(userCreatedTree,[{type:"report"}]);
+            if (treeCheck.valid) {
+                d.hide();
+                reportLayout = convertReportLayoutFromTree(userCreatedTree, reportLayout)
+                if (typeof ok === 'function') {
+                    ok(reportLayout);
+                }
+            } else {
+                let newBody = document.createElement('div');
+                let d2 = new Dialog("Sections", newBody, this.hostElement);
+                let description = document.createElement("p");
+                newBody.appendChild(description);
+                let buttons = this.createButtons(["Ok"]);
+                newBody.appendChild(buttons[0]);
+                buttons[0].addEventListener('click', () => {d2.hide()});
+                if(treeCheck.tree.id === "group"){
+                    description.innerHTML = "<h3 style='margin:0'>You have an invalid 'Group'.</h3>This is probably because the group doesn't have a valid \"groupOn\" set."
+                }
+                if(treeCheck.tree.id === "subReport"){
+                    description.innerHTML = "<h3 style='margin:0'>You have an invalid 'Sub-Report'.</h3>This is probably because the Sub-Report doesn't have a valid \"data\" established."
+                }
+                if(treeCheck.tree.id === "calcs"){
+                    description.innerHTML = "<h3 style='margin:0'>You have an invalid 'Formula'.</h3>This is probably because the Formula is empty or has an invalid \"data\" being used."
+                }
+            }
+
+        });
+        buttons[1].addEventListener('click', () => {
+            d.hide();
+            if (typeof cancel === 'function') {
+                cancel();
+            }
+        });
+        btnContainer.appendChild(buttons[0]);
+        btnContainer.appendChild(buttons[1]);
+        body.appendChild(btnContainer);
+    }
+    subReportTotalFieldEditor (data, selected, type, ok, cancel) {
+        let types = ["sum", "average", "count", "min", "max"];
+        const body = document.createElement('div');
+        body.style.marginBottom = "5px";
+
+        let title = document.createElement("span");
+        title.style.marginLeft = "5px";
+        title.innerText = "Total type ";
+        body.appendChild(title);
+        const selectType = document.createElement("select");
+        for (let i = 0; i < types.length; i++) {
+            let option = new Option(types[i]);
+            if (types[i] === type) {
+                option.selected = true;
+            }
+            selectType.appendChild(option);
+        }
+        body.appendChild(selectType);
+        title = document.createElement("span");
+        title.innerText = " on field ";
+        body.appendChild(title);
+        const select = document.createElement("select");
+        let possibleDataValues = this._parent.reportFields.getDataFieldsFromDataName(data);
+        if(possibleDataValues.length) {
+
+            let optionGroup = document.createElement('optgroup');
+            optionGroup.label = data +">";
+            optionGroup.style.fontWeight = "bold";
+            for (let i = 0; i < possibleDataValues.length; i++) {
+                let option = new Option(possibleDataValues[i]);
+                if(selected === possibleDataValues[i]) option.selected = true
+                optionGroup.appendChild(option);
+            }
+            select.appendChild(optionGroup);
+        }
+        else{
+            let blankOption = document.createElement('option');
+            blankOption.disabled = true;
+            blankOption.label = "No data values exist.";
+            select.appendChild(blankOption);
+        }
+        body.appendChild(select);
+
 
         let buttons = this.createButtons(["Ok", "Cancel"]);
         let btnContainer = document.createElement('div');
@@ -6478,55 +7404,188 @@ class UI { // jshint ignore:line
         btnContainer.appendChild(buttons[1]);
         body.appendChild(btnContainer);
 
-        let d = new Dialog("Sections", body, this.hostElement);
+        let d = new Dialog("Total Field", body, this.hostElement);
 
-        const rebuildReportSection = (reportInfo, data) => {
-            for (let key in reportInfo) {
-                if (!reportInfo.hasOwnProperty(key)) {
+        // Ok Button
+        buttons[0].addEventListener('click', () => {
+            d.hide();
+            if (typeof ok === 'function') {
+                ok(select.value, selectType.value);
+            }
+        });
+        // Cancel Button
+        buttons[1].addEventListener('click', () => {
+            d.hide();
+            if (typeof cancel === 'function') {
+                cancel();
+            }
+        });
+
+    }
+    subReportTotalsBrowse (treePathing,totals, data, ok, cancel) {
+        const body = document.createElement('div');
+        const span = document.createElement('span');
+        span.innerText = "Totals:";
+        body.appendChild(span);
+        body.appendChild(document.createElement('br'));
+        const selectDiv = document.createElement('div');
+
+        const select = document.createElement('select');
+        select.style.border = "solid black 1px";
+        select.style.margin = "5px";
+        select.style.left = "5px";
+        select.style.right = "5px";
+        select.style.height = "200px";
+        select.style.width = "200px";
+        select.size = 10;
+        const resultVariables = {average: [], count: [], min: [], max: [], sum: []};
+        const groups = {sum: null, average: null, count: null, min: null, max: null};
+
+        for (let key in resultVariables) { // jshint ignore:line
+            if (!resultVariables.hasOwnProperty(key)) {
+                console.log("Error: Total type was not found in results", key);
+                continue;
+            }
+            const group = document.createElement("optgroup");
+            group.label = key;
+            groups[key] = group;
+            select.appendChild(group);
+            if (!totals.hasOwnProperty(key)) {
+                continue;
+            }
+
+            for (let i = 0; i < totals[key].length; i++) {
+                const option = new Option(totals[key][i].total);
+                group.appendChild(option);
+                // Copy variables
+                resultVariables[key].push(totals[key][i]);
+            }
+
+        }
+
+        selectDiv.appendChild(select);
+        selectDiv.style.display = 'inline-block';
+        body.appendChild(selectDiv);
+
+        let addButtons = this.createButtons(["Add", "Edit", "Delete"], {width: "100px", marginTop: "5px"});
+        let addBtnContainer = document.createElement('div');
+        //addBtnContainer.style.display = ''
+        addBtnContainer.style.padding = "5px";
+        addBtnContainer.style.display = 'inline-block';
+        addBtnContainer.style.verticalAlign = "top";
+        addBtnContainer.appendChild(addButtons[0]);
+        addBtnContainer.appendChild(document.createElement('br'));
+        addBtnContainer.appendChild(addButtons[1]);
+        addBtnContainer.appendChild(document.createElement('br'));
+        addBtnContainer.appendChild(addButtons[2]);
+        body.appendChild(addBtnContainer);
+
+
+        // Add
+        addButtons[0].addEventListener("click", () => {
+            this.subReportTotalFieldEditor(data, "", "sum", (name, type) => {
+                if (name != null && name !== '') {
+
+                    // Check to see if total in type already exists
+                    if (resultVariables[type].indexOf(name) >= 0) {
+                        return;
+                    }
+
+                    // Add new Total
+                    groups[type].appendChild(new Option(name));
+                    resultVariables[type].push({total:name,treePathing:treePathing});
+                }
+            });
+        });
+
+        // Edit
+        addButtons[1].addEventListener("click", () => {
+            if (select.selectedIndex < 0) {
+                return;
+            }
+
+            let value = select.value, type = "sum", counter = -1;
+            for (let key in resultVariables) {
+                if (!resultVariables.hasOwnProperty(key)) {
                     continue;
                 }
-                if (reportInfo[key] === true) {
-                    if (typeof data[key] === 'undefined') {
-                        data[key] = [];
-                    }
-                } else {
-                    if (typeof data[key] !== 'undefined') {
-                        delete data[key];
-                    }
+                counter += resultVariables[key].length;
+                if (select.selectedIndex <= counter) {
+                    type = key;
+                    break;
                 }
             }
-        };
+            this.subReportTotalFieldEditor(data, value, type, (name, newType) => {
+                if (name == null || name === '') {
+                    return;
+                }
 
-        const rebuildReport = (tracking, reportData) => {
-            rebuildReportSection(tracking.Report, reportData);
-            if (tracking.groupBy) {
-                for (let i = 0; i < tracking.groupBy.length; i++) {
-                    let found = false;
-                    for (let j = 0; j < reportData.groupBy.length; j++) {
-                        if (reportData.groupBy[j].groupOn === tracking.groupBy[i].name) {
-                            found = true;
-                            rebuildReportSection(tracking.groupBy[i].Report, reportData.groupBy[j]);
+                // Find old index location
+                const idx = resultVariables[type].indexOf(value);
+                if (name !== value) {
+                    resultVariables[type][idx] = name;
+                    select.options[select.selectedIndex].text = name;
+                }
+                if (type !== newType) {
+                    let option = select.options[select.selectedIndex];
+                    groups[type].removeChild(option);
+                    resultVariables[type].splice(idx, 1);
+
+                    // Don't re-add existing totals, basically act like we merged them.
+                    let existsAlready = false;
+                    for(let i =0;i<resultVariables.length;i++){
+                        if(resultVariables[i].total === name){
+                            existsAlready = true;
+                            break;
                         }
                     }
-                    if (!found) {
-                        console.log("Didn't find group", tracking.groupBy[i].name);
+                    if(!existsAlready){
+                        groups[newType].appendChild(option);
+                        resultVariables[newType].push({total:name,treePathing:treePathing});
                     }
                 }
+                else {
+                    resultVariables[type][idx] = {total:name,treePathing:treePathing};
+                }
+            });
+        });
+
+        // Delete
+        addButtons[2].addEventListener("click", () => {
+            let type = "sum", counter = -1;
+            if (select.selectedIndex < 0) {
+                return;
             }
-            if (tracking.subReports) {
-                for (let i = 0; i < tracking.subReports.length; i++) {
-                    rebuildReport(tracking.subReports[i], reportData.subReports[i]);
+
+            for (let key in resultVariables) {
+                if (!resultVariables.hasOwnProperty(key)) {
+                    continue;
+                }
+                counter += resultVariables[key].length;
+                if (select.selectedIndex <= counter) {
+                    type = key;
+                    break;
                 }
             }
-        };
 
+            const idx = resultVariables[type].indexOf(select.value);
+            resultVariables[type].splice(idx, 1);
+            select.options[select.selectedIndex] = null;
+        });
+
+
+        let buttons = this.createButtons(["Ok", "Cancel"]);
+        let btnContainer = document.createElement('div');
+        btnContainer.appendChild(buttons[0]);
+        btnContainer.appendChild(buttons[1]);
+        body.appendChild(btnContainer);
+
+        let d = new Dialog("Totals", body, this.hostElement);
 
         buttons[0].addEventListener('click', () => {
             d.hide();
-            rebuildReport(elements, reportLayout);
-
             if (typeof ok === 'function') {
-                ok(reportLayout);
+                ok(resultVariables);
             }
         });
         buttons[1].addEventListener('click', () => {
@@ -6535,8 +7594,30 @@ class UI { // jshint ignore:line
                 cancel();
             }
         });
-
-
+    }
+    getDataFieldsFromDataName (name){
+        let goThrough = (data)=>{
+            let dataToReturn = null;
+            for(let i =0;data.childrenIndexed;i++){
+                if(data.childrenIndexed[i].name === name){
+                    dataToReturn = data.childrenIndexed[i];
+                    break;
+                }
+                else if(data.childrenIndexed[i].childrenIndexed.length){
+                    let possibleData = null;
+                    possibleData = goThrough(data.childrenIndexed[i],name);
+                    if(possibleData && possibleData.length){
+                        dataToReturn = possibleData;
+                        break;
+                    }
+                }
+            }
+            if(dataToReturn && dataToReturn.fields){
+                return dataToReturn.fields;
+            }
+            return [];
+        }
+        return goThrough(this.primary);
     }
 
     bandBrowse(report, bands, ok, cancel) {
