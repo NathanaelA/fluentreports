@@ -19,6 +19,7 @@ examples/
 examples/test
 test/
 testmem.js
+test.js
 fr.js
 *.txt
 docs/
@@ -29,3 +30,8 @@ docs/
 generator/*.htm
 generator/fonts/
 .editorconfig
+generator/unused/
+generator/build.sh
+generator/fluentReportsBrowser.js
+generator/plain-draggable.js
+generator/webcomponent.html
