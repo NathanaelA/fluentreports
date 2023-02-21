@@ -48,10 +48,13 @@
     "node": "*"
   },
   "files": [
+    "./package.json",
     "./lib/fluentReports.js",
-    "./lib/fluentReports.mjs",
     "./lib/fluentReports.pdfkit.js",
-    "./lib/fluentReportsBuilder.js"
+    "./lib/fluentReportsBuilder.js",
+    "./lib/esm/fluentReports.mjs",
+    "./lib/esm/fluentReportsBuilder.mjs",
+    "./lib/esm/package.json"
   ],
   "devDependencies": {
     "browser-pack-flat": "^3.4.2",

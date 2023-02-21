@@ -26,7 +26,16 @@ Try out the reporting engine in your own browser at [https://www.fluentreports.c
 
 ## Install
 
-```npm install fluentreports```
+`npm install fluentreports`
+
+## Common JS
+
+Use: `const Report = require( 'fluentReports' ).Report;`
+
+## ESM Support
+
+Please use `import { Report } from 'fluentReports/lib/esm/fluentReports.mjs';` as the ESM wrapper is located in the /lib/esm/ folder...
+
 
 ## Documentation
 
