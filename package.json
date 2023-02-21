@@ -31,6 +31,7 @@
   },
   "license": "MIT",
   "lib": "lib",
+  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/Nathanaela/fluentreports/issues"
   },
@@ -41,11 +42,17 @@
     "type": "git",
     "url": "https://github.com/Nathanaela/fluentreports.git"
   },
-  "main": "lib/fluentReports",
-  "version": "1.4.1",
+  "main": "./lib/fluentReports.js",
+  "version": "1.4.2",
   "engines": {
     "node": "*"
   },
+  "files": [
+    "./lib/fluentReports.js",
+    "./lib/fluentReports.mjs",
+    "./lib/fluentReports.pdfkit.js",
+    "./lib/fluentReportsBuilder.js"
+  ],
   "devDependencies": {
     "browser-pack-flat": "^3.4.2",
     "common-shakeify": "^0.6.2",
