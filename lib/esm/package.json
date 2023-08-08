@@ -1,4 +1,5 @@
 {
+  "name": "fluentreports",
   "type": "module",
-  "main": "fluentReports.mjs"
+  "main": "./fluentReports.mjs"
 }

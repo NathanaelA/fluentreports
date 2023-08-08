@@ -43,19 +43,45 @@
     "url": "https://github.com/Nathanaela/fluentreports.git"
   },
   "main": "./lib/fluentReports.js",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "engines": {
     "node": "*"
   },
   "files": [
     "./package.json",
+    "./commands.md",
+    "./LICENSE",
+    "./README.md",
+    "./tutorials.md",
     "./lib/fluentReports.js",
     "./lib/fluentReports.pdfkit.js",
     "./lib/fluentReportsBuilder.js",
     "./lib/esm/fluentReports.mjs",
     "./lib/esm/fluentReportsBuilder.mjs",
-    "./lib/esm/package.json"
+    "./lib/esm/package.json",
+    "./lib/third-party/blob-stream.js",
+    "./lib/third-party/blob.js",
+    "./generator/fluentReportsBrowser.min.js",
+    "./generator/fluentReportsGenerator.js",
+    "./generator/fr.css",
+    "./generator/plain-draggable.min.js",
+    "./generator/readme.md"
   ],
+  "exports": {
+    ".": [
+      {
+        "import": "./lib/esm/fluentReports.mjs",
+        "require": "./lib/fluentReports.js"
+      },
+      "./lib/fluentReports.js"
+    ],
+    "./lib/*": "./lib/*.js",
+    "./lib/*.js": "./lib/*.js",
+    "./lib/esm/*": "./lib/esm/*.mjs",
+    "./lib/esm/*.mjs": "./lib/esm/*.mjs",
+    "./package.json": "./package.json",
+    "./lib/esm/package.json": "./lib/esm/package.json"
+  },
   "devDependencies": {
     "browser-pack-flat": "^3.4.2",
     "common-shakeify": "^0.6.2",

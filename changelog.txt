@@ -56,6 +56,7 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.4.0  - FR: Upgrade engine to use latest PDFKit (0.13.0)
 1.4.1  - FR: Fix a corner case where monkey patching could occur multiple times, update require('fs') to require('node:fs')
 1.4.2  - FR(G): Added esm directory.
+1.4.3  - Fix npm packaging (missing generator directory)
 
 Breaking changes or API inconsistencies:
     In v0.1.2 bandField functionality was removed.  This "feature" didn't make sense since simple detail abilities
