@@ -26,6 +26,19 @@
 </body>
 <script type="application/javascript">
 
+    /*** Notes:
+            1. The above fluentReportsError div is used just so that there is a visible reason why this example does not run out of the box without you copying the fluentReportsBrowser.min.js file to this directory.
+            2. You need to copy the fluentReportBrowser.min.js file from the "generator" folder into this folder to run this report.    You only need to serve that file to your clients.  No other JS from fluent reports is needed to render any type of report from fluentReports.
+            3. You need an iframe to SHOW the report for the client, above we give it an id of  "iframe" so we can find it.  You can generate this iframe dynamically if you want, or hard code it in the html like I do.
+            4. Instead of generating a pdf file on disk, we use a blob stream on browsers to output to, and then direct that blob stream to the iframe, so it then shows the pdf.
+            5. Any functions you can run in fluentReports in node.js, can be run on the browser side.
+            6. printReport is the function I use in this example to generate the report, you CAN easily pull the data and/or JSON report info from your server instead of hard coding it here.
+            7. displayReport function is what I use to send the stream of data to the browser.
+            8. You can re-use the same iframe to generate even more reports and show them in the same browser session.   So if you have several different "printReports" function you could call them based on user interaction and settings and they will then overwrite the report in the same iframe with the new report...
+     ***/
+
+
+
     // This is only used for the example, to make sure people copy the relevant JS to be loaded/served by the JS
     // YOU MUST have the fluentReportsBrowser.min.js file served to the client to use the report engine
     if (typeof fluentReports !== "undefined") {
@@ -62,6 +75,7 @@
     // This is the function that actually generates a report...
     function printReport() {
 
+        // This is the data for the report, you can pull this from a server dynamically if you want...
         const reportData =
                 [
                     {name: "John Doe", week: 20, day: "Monday\nthis is some really long text that shouldn't\noverflow the text container but be wrapped", hours: 4},
@@ -100,11 +114,12 @@
 
                 ];
 
+        // These are the function that will be run to generate the report.
         const dayDetail = function ( report, data ) {
             report.band( [
                 {data:"", width: 80},
-                {data: data.day, width: 100, zborder:{left:1, right: 1, top: 1, bottom: 0}},
-                {data: data.hours, width: 100, underline: true, align: 3, zborder:{left:1, right: 1, top: 0, bottom: 1}}
+                {data: data.day, width: 100},
+                {data: data.hours, width: 100, underline: true, align: 3}
             ], {border:1, width: 0, wrap: 1} );
         };
 
@@ -146,6 +161,7 @@
                 .totalFormatter( totalFormatter ) // Optional
                 .fontSize(8); // Optional
 
+        // Completely optional, we use this to group things, so that it break on Name's and weeks
         rpt.groupBy( "name" )
                 .sum('hours')
                 .header( nameHeader)
@@ -154,17 +170,20 @@
                 .header( weekDetail );
 
 
-        // Debug output is always nice (Optional, to help you see the structure of the report in the console)
+        // Optional Debug output is always nice (to help you see the structure of the report in the console)
         rpt.printStructure(true);
 
 
-        // This does the MAGIC...  :-)
         console.time("Rendered");
-        rpt.render(function(err, info) {
+
+        // This does the MAGIC...  :-)
+        rpt.render(function(err, stream) {
             console.timeEnd("Rendered");
-            console.log(info);
-            displayReport(err, pipeStream);
+            displayReport(err, stream);
         });
+
+        // You can also just do this below rather than adding the additional code above which outputs to the console how much time it took to render the report
+        // rpt.render(displayReport);
 
     }
 
@@ -178,7 +197,8 @@
             if (iFrame) {
                 iFrame.src = pipeStream.toBlobURL('application/pdf');
             } else {
-                console.error("Unable to find iFrame to show Report");
+                console.error("Unable to find iFrame to show report");
+                alert("Unable to find iFrame to show report");
             }
         }
     }
