@@ -78,6 +78,10 @@ In these reports I tried to throw in a chunk of the features to try and give you
 ### Examples
 Currently, we ship multiple [examples](examples).
 
+#### Browser Based Examples
+There is a `demo_html.htm` file in the `examples` folder that shows how to setup a browser ONLY based report the runs 100% in a browser.
+There is a readme.md in the `generator` folder for how to do a browser based reporting system with GUI that runs in the browser. 
+
 ### Simple Sample Report
 This following report is using the a few of the simplest report methods.   We can show you how quickly you can create a simple report.  
 You have the ability to EASILY FULLY override any and all of the Headers, Footers, and Detail bands (and much more).  

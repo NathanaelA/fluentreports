@@ -1,0 +1,188 @@
+<head>
+    <meta charset="utf-8">
+    <title>FluentReport Browser Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="fluentReportsBrowser.min.js"></script>
+    <style type="text/css" media="screen">
+        #fluentReportsError {
+            background-color: red;
+            color: white;
+            margin: 20px;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body onload="startReport()">
+<div id="fluentReportsError">
+    <br>
+    If you are seeing this, this means that the <font color="yellow">"fluentReportsBrowser.min.js"</font> file was not copied into this directory to be used.    Please copy this file from the "../generator" directory to use this example.
+    <br><br>
+</div>
+<div id="fluentReport">
+    <iframe id="iframe" width="100%" height="100%" style="display:none"></iframe>
+</div>
+<pre id="results"></pre>
+</body>
+<script type="application/javascript">
+
+    // This is only used for the example, to make sure people copy the relevant JS to be loaded/served by the JS
+    // YOU MUST have the fluentReportsBrowser.min.js file served to the client to use the report engine
+    if (typeof fluentReports !== "undefined") {
+        hideDiv("fluentReportsError");
+        showDiv("iframe");
+    }
+
+    // This is only used for the example, to make sure people copy the relevant JS to be loaded/served by the JS
+    // YOU MUST have the fluentReportsBrowser.min.js file served to the client to use the report engine
+    function hideDiv(id) {
+        let div = document.getElementById(id)
+        if (div) {
+            div.style.display = "none";
+        }
+    }
+
+    function showDiv(id) {
+        let div = document.getElementById(id)
+        if (div) {
+            div.style.display = "";
+        }
+    }
+
+    function startReport() {
+        if (typeof fluentReports !== "undefined") {
+            hideDiv("fluentReportsError");
+            showDiv("iframe");
+            printReport();
+        } else {
+            console.error("Fluent Reports Browser javascript wasn't loaded")
+        }
+    }
+
+    // This is the function that actually generates a report...
+    function printReport() {
+
+        const reportData =
+                [
+                    {name: "John Doe", week: 20, day: "Monday\nthis is some really long text that shouldn't\noverflow the text container but be wrapped", hours: 4},
+                    {name: "John Doe", week: 20, day: "Tuesday", hours: 8},
+                    {name: "John Doe", week: 20, day: "Wednesday", hours: 8},
+                    {name: "John Doe", week: 21, day: "Thursday", hours: 2},
+                    {name: "John Doe", week: 21, day: "Friday", hours: 8},
+
+                    {name: "Jane Doe", week: 20, day: "Monday", hours: 5},
+                    {name: "Jane Doe", week: 20, day: "Tuesday", hours: 8},
+                    {name: "Jane Doe", week: 21, day: "Wednesday", hours: 7},
+                    {name: "Jane Doe", week: 21, day: "Thursday", hours: 8},
+                    {name: "Jane Doe", week: 21, day: "Friday", hours: 8},
+
+                    {name: "John Doe", week: 22, day: "Monday", hours: 4},
+                    {name: "John Doe", week: 22, day: "Tuesday", hours: 8},
+                    {name: "John Doe", week: 22, day: "Wednesday", hours: 8},
+                    {name: "John Doe", week: 23, day: "Thursday", hours: 2},
+                    {name: "John Doe", week: 23, day: "Friday", hours: 8},
+                    {name: "Jane Doe", week: 22, day: "Monday", hours: 5},
+                    {name: "Jane Doe", week: 22, day: "Tuesday", hours: 8},
+                    {name: "Jane Doe", week: 23, day: "Wednesday", hours: 7},
+                    {name: "Jane Doe", week: 23, day: "Thursday", hours: 8},
+                    {name: "Jane Doe", week: 23, day: "Friday", hours: 8},
+
+                    {name: "John Doe", week: 25, day: "Monday", hours: 4},
+                    {name: "John Doe", week: 25, day: "Tuesday", hours: 8},
+                    {name: "John Doe", week: 25, day: "Wednesday", hours: 8},
+                    {name: "John Doe", week: 26, day: "Thursday", hours: 2},
+                    {name: "John Doe", week: 26, day: "Friday", hours: 8},
+                    {name: "Jane Doe", week: 25, day: "Monday", hours: 5},
+                    {name: "Jane Doe", week: 25, day: "Tuesday", hours: 8},
+                    {name: "Jane Doe", week: 26, day: "Wednesday", hours: 7},
+                    {name: "Jane Doe", week: 26, day: "Thursday\nis- this is some really long text that shouldn't\noverflow the text container but be wrapped", hours: 8},
+                    {name: "Jane Doe", week: 26, day: "Friday\nis- this is some really long text that shouldn't\noverflow the text container but be wrapped", hours: 8}
+
+                ];
+
+        const dayDetail = function ( report, data ) {
+            report.band( [
+                {data:"", width: 80},
+                {data: data.day, width: 100, zborder:{left:1, right: 1, top: 1, bottom: 0}},
+                {data: data.hours, width: 100, underline: true, align: 3, zborder:{left:1, right: 1, top: 0, bottom: 1}}
+            ], {border:1, width: 0, wrap: 1} );
+        };
+
+        const nameFooter = function ( report, data, state ) {
+            report.band([
+                ["Totals for " + data.name, 180],
+                [report.totals.hours, 100, 3]
+            ], {addY: 1});
+            report.newLine();
+        };
+
+        const nameHeader = function ( report, data ) {
+            report.print( data.name, {fontBold: true, underline: true} );
+        };
+
+        const weekDetail = function ( report, data ) {
+            // We could do this -->  report.setCurrentY(report.getCurrentY()+2);   Or use the shortcut below of addY: 2
+            report.print( ["Week Number: " + data.week], {x: 100, addY: 2} );
+        };
+
+        const totalFormatter = function(data, callback) {
+            // if (data.hours) { data.hours = ': ' + data.hours; }
+            callback(null, data);
+        };
+
+
+        // We need a stream for the report to be generated to...
+        const pipeStream = new fluentReports.BlobStream();
+
+        // Tell the engine we are saving rendering it to a stream...
+        const rpt = new fluentReports.Report(pipeStream)
+                .autoPrint(false) // Optional
+                .pageHeader( ["Employee Hours"] )// Optional
+                .pageFooter( "PageFooter" ) // Optional
+                .finalSummary( ["Total Hours:", "hours", 3] )// Optional
+                .data( reportData )	// REQUIRED
+                .sum( "hours" )	// Optional
+                .detail( dayDetail ) // Optional
+                .totalFormatter( totalFormatter ) // Optional
+                .fontSize(8); // Optional
+
+        rpt.groupBy( "name" )
+                .sum('hours')
+                .header( nameHeader)
+                .footer( nameFooter )
+                .groupBy( "week" )
+                .header( weekDetail );
+
+
+        // Debug output is always nice (Optional, to help you see the structure of the report in the console)
+        rpt.printStructure(true);
+
+
+        // This does the MAGIC...  :-)
+        console.time("Rendered");
+        rpt.render(function(err, info) {
+            console.timeEnd("Rendered");
+            console.log(info);
+            displayReport(err, pipeStream);
+        });
+
+    }
+
+
+    function displayReport(err, pipeStream) { // jshint ignore:line
+        if (err) {
+            console.error(err);
+            alert(err);
+        } else {
+            const iFrame = document.getElementById('iframe');
+            if (iFrame) {
+                iFrame.src = pipeStream.toBlobURL('application/pdf');
+            } else {
+                console.error("Unable to find iFrame to show Report");
+            }
+        }
+    }
+
+
+
+</script>
