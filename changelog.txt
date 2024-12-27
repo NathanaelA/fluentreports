@@ -57,11 +57,12 @@ x.x.x - [2015/03/18] - Added ability to Import PDF's
 1.4.1  - FR: Fix a corner case where monkey patching could occur multiple times, update require('fs') to require('node:fs')
 1.4.2  - FR(G): Added esm directory.
 1.4.3  - Fix npm packaging (missing generator directory)
+1.4.4  - Update to PDFKit 0.14.0 to solve security issue with CryptJS (v0.15.x has a regression)
 
 Breaking changes or API inconsistencies:
     In v0.1.2 bandField functionality was removed.  This "feature" didn't make sense since simple detail abilities
         are now supported which are much more powerful, and those still needing bandField like ability can easily
-        emulate it in their own code by creating a array and pushing the fields to it before calling band with it...
+        emulate it in their own code by creating a array and pushing the fields to it before calling band with it.
     In v1.0.0 parent & current Headers now have the ability to be printed only ONCE (old behavior), On all new Pages
         (new default for the current header), and Always.
     In v1.0.0 when print(['hi','','testing']) the old code would ignore the '' in the middle of the array so you
