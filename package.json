@@ -91,7 +91,8 @@
     "uglifyify": "^5.0.2",
     "unassertify": "^2.1.1",
     "blink-diff": "latest",
-    "uncss": "^0.17.3"
+    "uncss": "^0.17.3",
+    "brfs": "^2.0.2"
   },
   "scripts": {
     "test": "chmod +x ./examples/runtests.sh && ./examples/runtests.sh"
